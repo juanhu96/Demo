@@ -14,3 +14,7 @@ format week %tw
 save $datadir/Intermediate/CaliforniaMassVaccination.dta, replace
 
 
+use $datadir/Intermediate/CaliforniaMassVaccination.dta, clear
+
+gen week_closed = wofd(closed)
+
