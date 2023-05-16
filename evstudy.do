@@ -1,9 +1,13 @@
 global datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 global outdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Output"
 global logdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Logs"
-global coefplotdofile "/mnt/staff/zhli/VaxDemandDistance/coefplot_cmd.do"
+
 cap log close
 log using $logdir/evstudy.log , replace
+
+// grab the coefplot command file
+qui do "/mnt/staff/zhli/VaxDemandDistance/coefplot_cmd.do"
+
 
 use $datadir/Analysis/panel.dta, replace
 
@@ -14,18 +18,17 @@ global firstweek = r(min)
 global lastweek = r(max)
 
 
-// define treatment as getting the first site within $tr_dist either this/last week depending on $lag01
-global tr_dist 30 //distance threshold
+// define treatment as getting the first site within $thr either this/last week depending on $lag01
+global thr 30 //distance threshold
 global lag01 = 0
 global lag12 = $lag01+1
-gen treated_thisweek = L${lag01}.dist < $tr_dist & L${lag12}.dist > $tr_dist & week > $firstweek + 1
+gen treated_thisweek = L${lag01}.dist < $thr & L${lag12}.dist > $thr & week > $firstweek + 1
 
 //treatment intensity: new nearest distance upon dropping below 30km
-foreach dthresh of numlist 10(10)$tr_dist{ //10,20,...
-	bys zip (week): gen lowered_to`dthresh' = L${lag01}.dist < `dthresh' & L${lag01}.dist > `dthresh'-10 & L${lag12}.dist > $tr_dist & week > $firstweek + 1
+foreach dthresh of numlist 10(10)$thr{ //10,20,...
+	bys zip (week): gen lowered_to`dthresh' = L${lag01}.dist < `dthresh' & L${lag01}.dist > `dthresh'-10 & L${lag12}.dist > $thr & week > $firstweek + 1
 	bys zip: egen treated`dthresh' = max(lowered_to`dthresh')
 }
-
 
 bys zip: egen treated = max(treated_thisweek)
 tab treated
@@ -36,32 +39,41 @@ bys zip (treatpd): replace treatpd = treatpd[1]
 format treatpd %tw
 
 replace treatpd = 0 if missing(treatpd)
-gen eventtime = week - treatpd if treated
-tab treatpd
-tab eventtime if !missing(eventtime), gen(ieventtime)
-drop ieventtime12 //base level
 
-//for TWFE
+//for simple TWFE
 gen after = treated & week>treatpd
-foreach dthresh of numlist 10(10)$tr_dist{
+foreach dthresh of numlist 10(10)$thr{
 	gen after_`dthresh' = treated`dthresh' & week>treatpd
 }
+
+//for event study
+gen eventtime = week - treatpd if treated
+tab eventtime if !missing(eventtime), gen(ieventtime)
+drop ieventtime12 //base level
+foreach vv of varlist ieventtime*{
+	replace `vv' = 0 if !treated
+}
+
 
 
 //treatment time tabulation
 tabstat treated_thisweek, by(week) stat(count sum mean)
 
 
+// save data for event study regression
+save $datadir/Analysis/panel_toreg.dta, replace
+use $datadir/Analysis/panel_toreg.dta, clear
 
-global yvar newvax_shareunvax
+
+// global yvar newvax_shareunvax
 global yvar partfull
+
 
 //can also use the numerator
 //create doses per person
 
 
-
-
+/*
 //line graphs
 foreach yvar in partfull full{
 foreach wkinyear in 4 5 6 7 8 9{
@@ -81,39 +93,59 @@ legend(order(1 "Never treated" 2 "Treated on week `wkinyear' (`ntreated' ZIP cod
 xline(`xlinewk') ///
 title("Mean of `yvar'") 
 graph display, margin(r+5)
-graph save $outdir/mean_`yvar'_wk`wkinyear'.pdf, replace
+graph save $outdir/`yvar'/trendline/wk`wkinyear'.pdf, replace
 restore
 }
 }
+*/
 
 
 
-//TWFE
 /*
+original: reghdfe yvar logdist control a(zip week)
+new: reghdfe yvar change_logdist control a(zip week)
+0 0 0 0 0 change_logdist change_logdist change_logdist change_logdist change_logdist
+
+cap initial at 100km
+define treatment at the first time something opens within 30km
+after the next time the nearest dist changes, can delete the observations , or keep 
+*/
+
+// generate treatment intensity variable: change in log(dist) upon dropping below 30km
+global dist_cap = 100
+gen dist_forchange = dist
+replace dist_forchange = $dist_cap if dist > $dist_cap
+replace dist_forchange = log(dist_forchange)
+bys zip (week): gen change_logdist = dist_forchange - L.dist_forchange //change in log distance
+replace change_logdist = 0 if !treated_thisweek | missing(change_logdist) | change_logdist>0
+replace change_logdist = -change_logdist
+
+bys zip: egen treatment_scaling = max(change_logdist) 
+assert treatment_scaling ==0 if !treated
+foreach vv of varlist after ieventtime*{
+	gen scaled_`vv' = `vv' * treatment_scaling
+}
+
+// br zip week *dist* *treat* *sc* *after* if treated
+//TWFE
 
 //simple ATT
-reghdfe $yvar after [aweight=population12up], absorb(zip week) vce(cluster zip)
+reghdfe $yvar after [aweight=population12up], absorb(zip week#hpiquartile) vce(cluster zip)
 
 //treatment intensity by distance 
-reghdfe $yvar after_* [aweight=population12up], absorb(zip week) vce(cluster zip)
+reghdfe $yvar after_* [aweight=population12up], absorb(zip week#hpiquartile) vce(cluster zip)
 
 //event study
 reghdfe $yvar ieventtime* [aweight=population12up], absorb(zip week#hpiquartile) vce(cluster zip)
+coefplot_cmd, regtype("twfe") outfile("$outdir/$yvar/coefplot/twfe_thr${thr}.pdf") note("Using ${thr}km as the threshold for treatment.")
 
+//simple ATT, scaled by change in distance upon dropping below 30km
+reghdfe $yvar scaled_after [aweight=population12up], absorb(zip week#hpiquartile) vce(cluster zip)
 
-//make plot
-mat coef =  e(b)[1,"ieventtime1".."ieventtime26"]
-mat varmat = e(V)["ieventtime1".."ieventtime26", "ieventtime1".."ieventtime26"]
-local xlabels 1 "-12" 7 "-6" 13 "0" 19 "6" 25 "12"
-coefplot (matrix(coef), lwidth(thick) recast(line) v(varmat) ciopt(recast(rarea) color(navy%15)) axis(1)), ///
-	vertical nooffsets legend(off) ///
-	yline(0, lcolor(gray%50)) ///
-	xline(13, lcolor(gray) lpattern(dash)) ///
-	xlab($xlabels) xtitle("Weeks Since Treatment") title("TWFE")
+//event study scaled by change in distance upon dropping below 30km
+reghdfe $yvar scaled_ieventtime* [aweight=population12up], absorb(zip week#hpiquartile) vce(cluster zip)
+coefplot_cmd, regtype("twfe") outfile("$outdir/$yvar/coefplot/twfe_thr${thr}_scaled.pdf") note("Using ${thr}km as the threshold. Scaling treatment by change in distance.")
 
-graph display
-graph export  "$outdir/vaxcoefplot_twfe.pdf", replace
-*/
 
 //CSDID
 
@@ -121,25 +153,40 @@ graph export  "$outdir/vaxcoefplot_twfe.pdf", replace
 csdid $yvar [weight=population12up], ivar(zip) time(week) gvar(treatpd) agg(simple)
 
 
-foreach yvar in newvax_shareunvax partfull{
-	global yvar `yvar'
-	// event study
-	csdid $yvar [weight=population12up], ivar(zip) time(week) gvar(treatpd) agg(event) 
-	qui do $coefplotdofile
-	graph export  "$outdir/coef_csdid_${yvar}.pdf", replace
-
-
-	csdid $yvar if !treated | treated10 [weight=population12up], ivar(zip) time(week) gvar(treatpd) agg(event) 
-	qui do $coefplotdofile
-	graph export  "$outdir/coef_csdid_${yvar}_onlytreat10.pdf", replace
+foreach yvar in partfull{ //newvax_shareunvax
+	csdid `yvar' [weight=population12up], ivar(zip) time(week) gvar(treatpd) agg(event) 
+	coefplot_cmd, regtype("csdid") outfile("$outdir/`yvar'/coefplot/csdid_thr${thr}.pdf")
 }
 
-/*
-1. less than 30
-2. less than 10 (exclude 10-30)
-3. some evidence that the pre-trends are not good (the line graphs)
-4. matched based on pre-opening vax rate (for every treated zip, match to 3-5 that had the closest vax rate in the week before treatment) and hpiquartile (exact match). Maybe also pre-treatment distance. See PE paper - cohort#time and facility#cohort FEs. 
-*/
+
+//by intensity
+foreach intensity in 10 20 30{
+	loc intensity_lb = `intensity' - 10
+	csdid $yvar if !treated | treated`intensity' [weight=population12up], ivar(zip) time(week) gvar(treatpd) agg(event) 
+	coefplot_cmd, regtype("csdid") outfile("$outdir/$yvar/coefplot/csdid_onlytreat`intensity'_thr${thr}.pdf") note("Restricting treatment group to `intensity_lb'-`intensity'km after treatment")
+}
+
+//redefining treatment 
+cap drop treated* 
+foreach thr in 10 20 30{
+	bys zip (week): gen treated_thisweek`thr' = dist < $thr & L.dist > $thr & week > $firstweek + 1
+	bys zip: egen treated`thr' = max(treated_thisweek`thr')
+
+	// treatment period
+	bys zip: egen treatpd`thr' = min(treated_thisweek`thr' * week) if treated_thisweek`thr'
+	bys zip (treatpd`thr'): replace treatpd`thr' = treatpd`thr'[1] 
+	format treatpd`thr' %tw
+
+	replace treatpd`thr' = 0 if missing(treatpd`thr')
+
+	csdid $yvar [weight=population12up], ivar(zip) time(week) gvar(treatpd`thr') agg(event) 
+	coefplot_cmd, regtype("csdid") outfile("$outdir/$yvar/coefplot/csdid_thr`thr'.pdf") note("Using `thr'km as the threshold for treatment")
+}
+
+
+
+
+
 
 
 
