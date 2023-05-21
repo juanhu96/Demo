@@ -20,13 +20,22 @@ reg delta hpiquartile#c.logdistnearest race_black race_asian race_hispanic race_
 	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
 	poverty medianhhincome medianhomevalue popdensity population, robust
 
-keep zip vaxpartfull distnearest hpiquartile shares*
+keep zip vaxpartfull distnearest hpiquartile shares* race_black race_asian race_hispanic race_other ///
+	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
+	poverty medianhhincome medianhomevalue popdensity population
 rename distnearest dist
 gen logdist = log(dist)
 
 // reshape long shares, i(zip) j(firm_ids)
 gen market_ids = zip
-gen firm_ids = zip
+gen firm_ids = 1
+
+foreach ii of numlist 1/4{
+	gen distXhpi`ii' = 1
+	replace distXhpi`ii' = dist if hpiquartile == `ii'
+	gen logdistXhpi`ii' = 0
+	replace logdistXhpi`ii' = log(dist) if hpiquartile == `ii'
+}
 
 export delim $datadir/Analysis/demest_data.csv, replace
 
