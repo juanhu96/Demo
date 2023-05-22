@@ -3,7 +3,7 @@ gl datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 import delim $datadir/Raw/MAR01.csv, clear
 
 gen shares = .
-replace shares = vaxpartfull
+replace shares = vaxfull
 loc lb = 0.1
 loc ub = 0.9
 replace shares = `lb' if shares < `lb'
@@ -20,7 +20,7 @@ reg delta hpiquartile#c.logdistnearest race_black race_asian race_hispanic race_
 	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
 	poverty medianhhincome medianhomevalue popdensity population, robust
 
-keep zip vaxpartfull distnearest hpiquartile shares* race_black race_asian race_hispanic race_other ///
+keep zip vaxfull distnearest hpiquartile shares* race_black race_asian race_hispanic race_other ///
 	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
 	poverty medianhhincome medianhomevalue popdensity population
 rename distnearest dist
