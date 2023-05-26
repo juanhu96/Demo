@@ -10,14 +10,18 @@ datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")
 df['prices'] = 0
 df.hpiquartile.unique()
-cat_dtype = pd.CategoricalDtype(categories=[4,3,2,1], ordered=True) #TODO: figure out how to make 4 the reference category
-df.hpiquartile = df.hpiquartile.astype(cat_dtype)
+# cat_dtype = pd.CategoricalDtype(categories=[4,3,2,1], ordered=True) #TODO: figure out how to make 4 the reference category
+# df.hpiquartile = df.hpiquartile.astype(cat_dtype)
 print(df['hpiquartile'])
 
+controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
+            'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
+            'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
+            'medianhomevalue', 'popdensity', 'population']
+formula_str = "1 + prices + log(dist)/C(hpiquartile) + " + " + ".join(controls)
+formulation1 = pyblp.Formulation(formula_str, absorb='C(hpiquartile)')
 
-formulation1 = pyblp.Formulation("1 + prices + log(dist)/C(hpiquartile) + race_black + race_asian + race_hispanic + race_other + health_employer + health_medicare + health_medicaid + health_other + collegegrad + unemployment + poverty + medianhhincome + medianhomevalue + popdensity + population", absorb='C(hpiquartile)')
-
-include_hpi = False
+include_hpi = False #Switch to True to include HPI quartile * distance interaction in the RC
 if include_hpi:
     formulation2 = pyblp.Formulation('0 + log(dist):C(hpiquartile)')
     sigma_init = 0.1*np.eye(4)
@@ -43,7 +47,7 @@ print(problem)
 #################### solve
 
 
-re_estimate = True #Switch to False to read the pickle
+re_estimate = False #Switch to False to read the pickle
 if re_estimate:
     with pyblp.parallel(poolnum):
         res = problem.solve(sigma = sigma_init, optimization=opt_config)
@@ -58,6 +62,42 @@ for ii in range(len(res.beta)):
 print('\nSigma:')
 for ii in range(len(res.sigma)):
     print(res.sigma_labels[ii], res.sigma[ii])
+
+# Margins plots
+# deltas = res.compute_delta()
+# df['shares_fromdelta'] = np.exp(deltas) / (1 + np.exp(deltas))
+# np.corrcoef(df['shares_fromdelta'], df['shares'])
+
+# mean product
+
+df['xi_fe'] = res.xi_fe
+df.groupby('hpiquartile')['xi_fe'].describe()
+meandf = df.groupby('hpiquartile')[controls + ['market_ids', 'firm_ids', 'prices', 'xi_fe']].mean().reset_index()
+distbetas = [res.beta[1], res.beta[1] + res.beta[2], res.beta[1] + res.beta[3], res.beta[1] + res.beta[4]]
+distbetas = np.array(distbetas).flatten()
+meandf['meanutil'] = np.dot(meandf[controls], res.beta[5:])
+meandf['meanutil'] = meandf['meanutil'] + meandf['xi_fe']
+meandf['distbeta'] = distbetas
+dflist = []
+for dd in np.linspace(0.25,10,40):
+    dfdd = meandf.assign(dist = dd)
+    dflist.append(dfdd)
+
+df_marg = pd.concat(dflist)
+# df_marg['meanutil'] = np.dot(df_marg[controls], res.beta[5:])
+# df_marg['meanutil'] = df_marg['meanutil'] + df_marg['xi_fe']
+df_marg['meanutil'] = df_marg['meanutil'] + np.log(df_marg['dist'])*df_marg['distbeta']
+df_marg['shares'] = np.exp(df_marg['meanutil']) / (1 + np.exp(df_marg['meanutil']))
+df_marg.to_csv(f"{datadir}/Analysis/demest_margins.csv")
+
+
+
+# formulation_noabsorb = (pyblp.Formulation(formula_str), formulation2)
+# formulation1
+# beta_withconst = np.concatenate(([[0]],res.beta))
+# res.beta_labels
+# sim = pyblp.Simulation(product_formulations=formulation_noabsorb, product_data=df_marg, beta = beta_withconst, sigma = res.sigma, xi = df_marg.xi_fe, integration=integ_config)
+
 
 
 # summary stats

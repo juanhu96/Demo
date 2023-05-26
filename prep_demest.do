@@ -2,18 +2,17 @@ gl datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 
 import delim $datadir/Raw/MAR01.csv, clear
 
-gen shares = .
-replace shares = vaxfull
-loc lb = 0.1
-loc ub = 0.9
-replace shares = `lb' if shares < `lb'
-replace shares = `ub' if shares > `ub'
-gen shares_out = 0.95 - shares
+gen shares = vaxfull
+replace shares = 0.05 if shares < 0.05
+replace shares = 0.95 if shares > 0.95
+gen shares_out = 1 - shares // outside shares
 
-// plain logit
 gen logshares = log(shares)
 gen logshares_out = log(shares_out)
 gen delta = logshares - logshares_out
+save $datadir/MAR01_vars, replace
+
+// plain logit
 reg delta logdistnearest
 reg delta hpiquartile#c.logdistnearest
 reg delta hpiquartile#c.logdistnearest race_black race_asian race_hispanic race_other ///
