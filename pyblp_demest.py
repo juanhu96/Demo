@@ -1,7 +1,7 @@
 import pandas as pd
 import pyblp
 import numpy as np
-poolnum = 24
+poolnum = 32
 pyblp.options.digits = 4
 
 datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
@@ -63,18 +63,57 @@ print('\nSigma:')
 for ii in range(len(res.sigma)):
     print(res.sigma_labels[ii], res.sigma[ii])
 
+len(res.beta_labels)
+res.beta
+
 # Margins plots
 # deltas = res.compute_delta()
 # df['shares_fromdelta'] = np.exp(deltas) / (1 + np.exp(deltas))
 # np.corrcoef(df['shares_fromdelta'], df['shares'])
 
 # mean product
-
+deltas = res.compute_delta().flatten()
 df['xi_fe'] = res.xi_fe
-df.groupby('hpiquartile')['xi_fe'].describe()
-meandf = df.groupby('hpiquartile')[controls + ['market_ids', 'firm_ids', 'prices', 'xi_fe']].mean().reset_index()
+df['xi'] = res.xi
+df.groupby('hpiquartile')[['xi_fe']].describe()
+
+v = res.problem.agents.nodes.flatten()
+agent_mktids = res.problem.agents.market_ids.flatten()
+rc = res.sigma[0,0]*v
+
+idf = pd.DataFrame({'rc':rc, 'market_ids':agent_mktids})
+idf
+
 distbetas = [res.beta[1], res.beta[1] + res.beta[2], res.beta[1] + res.beta[3], res.beta[1] + res.beta[4]]
 distbetas = np.array(distbetas).flatten()
+
+controlbetas = res.beta[5:].flatten()
+len(controlbetas)
+df['meanutil'] = np.dot(df[controls], controlbetas)
+# create hpiquartile-specific distance betas
+df['distbeta'] = 0
+for ii in range(1,5):
+    df.loc[df['hpiquartile'] == ii, 'distbeta'] = distbetas[ii-1]
+
+# df['meanutil'] = df['meanutil'] + (np.log(df['dist']) * df['distbeta'])
+# mean utility does not contain distance terms right now
+df['meanutil'] = df['meanutil'] + df['xi_fe']  + df['xi']
+
+np.corrcoef(df['meanutil'], deltas)
+pd.Series(deltas).describe()
+pd.Series(df['meanutil']).describe()
+
+# merge df and idf on market_ids
+df_marg = df.merge(idf, on='market_ids', how='right')
+df_marg.drop(columns=['market_ids'], inplace=True)
+df_marg.to_stata(f"{datadir}/Analysis/agents_marg.dta")
+
+
+list(df_marg)
+
+
+
+meandf = df.groupby('hpiquartile')[controls + ['market_ids', 'firm_ids', 'prices', 'xi_fe']].mean().reset_index()
 meandf['meanutil'] = np.dot(meandf[controls], res.beta[5:])
 meandf['meanutil'] = meandf['meanutil'] + meandf['xi_fe']
 meandf['distbeta'] = distbetas
