@@ -18,19 +18,22 @@ combomarginsplot mall, labels("HPI Quartile 1" "HPI Quartile 2" "HPI Quartile 3"
 	ylabel(.5 "50%" .6 "60%" .7 "70%" .8 "80%" .9 "90%", labsize(small)) ytitle("") ///
 	xtitle("Kilometers to Nearest Vaccination Site (log scale)", size(small)) ///
 	xlabel(-.5 ".6" 0 "1" .693 "2" 1.609 "5" 2.303 "10", labsize(small))	
-graph export "$codedir/plots/marg1rep`rep'.png", replace
+graph export "$codedir/plots/marg1.png", replace
 
 
 
 // 2. logit
 use $datadir/MAR01_vars, clear
 reg delta c.logdistnearest##b4.hpiquartile $controlvars
+predict xi, residuals
 expand 31, gen(expd)
 drop logdistnearest
 bys zip (expd): gen logdistnearest = -0.5 if _n==1
 bys zip (expd): replace logdistnearest = logdistnearest[_n-1]+0.1 if _n!=1
 
 predict pred_delta
+replace pred_delta = pred_delta + xi
+
 gen pred_share = exp(pred_delta)/(1+exp(pred_delta))
 
 gcollapse (mean) pred_share [weight=population], by(hpiquartile logdistnearest)
