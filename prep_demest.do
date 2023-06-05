@@ -12,16 +12,10 @@ gen logshares_out = log(shares_out)
 gen delta = logshares - logshares_out
 save $datadir/MAR01_vars, replace
 
-// plain logit
-reg delta logdistnearest
-reg delta hpiquartile#c.logdistnearest
-reg delta hpiquartile#c.logdistnearest race_black race_asian race_hispanic race_other ///
-	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
-	poverty medianhhincome medianhomevalue popdensity population, robust
-
 keep zip vaxfull distnearest hpiquartile shares* race_black race_asian race_hispanic race_other ///
 	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
 	poverty medianhhincome medianhomevalue popdensity population
+	
 rename distnearest dist
 gen logdist = log(dist)
 
