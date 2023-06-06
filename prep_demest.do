@@ -12,7 +12,7 @@ gen logshares_out = log(shares_out)
 gen delta = logshares - logshares_out
 save $datadir/MAR01_vars, replace
 
-keep zip vaxfull distnearest hpiquartile shares* race_black race_asian race_hispanic race_other ///
+keep zip vaxfull distnearest hpi hpiquartile shares* race_black race_asian race_hispanic race_other ///
 	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
 	poverty medianhhincome medianhomevalue popdensity population
 	

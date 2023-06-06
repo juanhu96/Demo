@@ -1,134 +1,162 @@
 import pandas as pd
-import pyblp
-import numpy as np
-poolnum = 32
-pyblp.options.digits = 4
 
 datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 
 # Load data
 
-# Original ZIP-level data with vaccination rates
-df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")
-df['prices'] = 0
-df.zip = df.zip.astype(str)
-list(df.columns)
-
+# Original ZIP-level data with vaccination rates (product_data)
+df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv", dtype={'zip': str})
+df = df.assign(market_ids = df['zip'], prices = 0)
 
 # Tract (geoid) level data with HPI and HPIQuartile
-tract_hpi_df = pd.read_csv(f"{datadir}/tracts/HPItract.csv")
+tract_hpi_df = pd.read_csv(f"{datadir}/tracts/HPItract.csv", dtype={'geoid': str})
 tract_hpi_df
-
+tract_hpi_df.rename(columns={'geoid': 'tract'}, inplace=True)
+tract_hpi_df['tract'].apply(len).value_counts() # all 10-digits that start with 6
 
 # Tract-ZIP crosswalk
-tractzip_df = pd.read_csv(f"{datadir}/tracts/HPITractZip.csv", usecols=['Tract', 'Zip'], dtype={'Tract': str, 'Zip': str})
-tractzip_df.shape
-tractzip_df
-# drop if Zip is NA
-tractzip_df = tractzip_df.dropna(subset=['Zip'])
-tractzip_df.shape
-tractzip_df = tractzip_df.sort_values(by=['Zip'])
-
-# keep if Zip is in df
-tractzip_df = tractzip_df[tractzip_df['Zip'].isin(df['zip'])]
-tractzip_df.shape
-
-tractzip_df['Zip'].unique().shape
-len(np.unique(tractzip_df['Tract']))
-tractzip_df['Tract'].apply(len).value_counts() # all 10
-
-correcttracts = sorted(np.unique(tractzip_df['Tract']))
-correcttracts[:10]
-correcttracts[-30:]
-
-
-
-# This is some tract-ZIP level stuff that has way too many ZIPs
-tract_df = pd.read_csv(f"{datadir}/tracts/tract_zip_032022.csv", usecols=['TRACT', 'ZIP'], dtype={'TRACT': str, 'ZIP': str})
+tractzip_cw = pd.read_csv(f"{datadir}/tracts/tract_zip_032022.csv", usecols=['TRACT', 'ZIP'], dtype={'TRACT': str, 'ZIP': str})
 # verify that TRACT is 11 digits
-tract_df['TRACT'].apply(len).value_counts() # all 11
-tract_df = tract_df.assign(statefips = tract_df['TRACT'].str[:3])
+tractzip_cw['TRACT'].apply(len).value_counts() # all 11
+tractzip_cw = tractzip_cw.assign(statefips = tractzip_cw['TRACT'].str[:3])
 # keep CA only
-tract_df = tract_df[tract_df['statefips'] == '060']
-tract_df = tract_df.assign(countyfips = tract_df['TRACT'].str[3:6])
-tract_df['countyfips'] = tract_df['countyfips'].apply(lambda x: x.zfill(4))
-
-tract_df = tract_df.assign(tractid = tract_df['TRACT'].str[6:])
-# Make the Tract column the same as the one in tract_nearest_df
-tract_df = tract_df.assign(Tract = '6' + tract_df['countyfips'] + tract_df['tractid'])
-
-
+tractzip_cw = tractzip_cw[tractzip_cw['statefips'] == '060']
+tractzip_cw = tractzip_cw.assign(countyfips = tractzip_cw['TRACT'].str[3:6])
+tractzip_cw['countyfips'] = tractzip_cw['countyfips'].apply(lambda x: x.zfill(4))
+tractzip_cw = tractzip_cw.assign(tractid = tractzip_cw['TRACT'].str[6:])
+# Make the Tract column the same as the one in tract_nearest_df (10 digits, start with 6)
+tractzip_cw = tractzip_cw.assign(tract = '6' + tractzip_cw['countyfips'] + tractzip_cw['tractid'])
+tractzip_cw = tractzip_cw[['tract', 'ZIP']]
 
 # 2019 ACS tract demographics (has a ton of variables)
-# tract_demog_df = pd.read_csv(f"{datadir}/tracts/CA_TRACT_demographics.csv", low_memory=False)
-
-
+acs_df = pd.read_csv(f"{datadir}/tracts/CA_TRACT_demographics.csv", low_memory=False)
+acs_df.rename(columns={'GIDTR': 'tract'}, inplace=True)
+demog_cols = [cc for cc in acs_df.columns if 'pct' not in cc and 'avg' not in cc]
+# demog_cols 
+pop_cols = [cc for cc in demog_cols if 'pop' in cc or 'Pop' in cc]
+# pop_cols
+acs_df['tract'] = acs_df['tract'].astype(str)
+acs_df['tract'].apply(len).value_counts() # all 10-digits that start with 6
+tract_demog = acs_df[['tract']]
+tract_demog = tract_demog.assign(trpop = acs_df['Tot_Population_ACS_14_18'])
 
 # read tract-pharmacy distance pairs
 # pre-processed to the 10 nearest pharmacies for each tract.
-pairs_df = pd.read_csv(f"{datadir}/tracts/pairs_filtered.csv", usecols=['Tract', 'CA_Pharm_ID', 'Distance'],dtype={'Tract': str, 'CA_Pharm_ID': str, 'Distance': float})
+pairs_df = pd.read_csv(f"{datadir}/tracts/pairs_filtered.csv", usecols=['Tract', 'Distance'],dtype={'Tract': str, 'Distance': float})
 pairs_df
+pairs_df.rename(columns={'Tract': 'tract', 'Distance': 'dist'}, inplace=True)
 # just the nearest pharmacy for each tract
-tract_nearest_df = pairs_df.groupby('Tract').head(1)
-tract_nearest_df.sort_values(by=['Tract']).iloc[-30:,]
-tract_nearest_df['Tract'].apply(len).value_counts() # between 8 and 11
-# The tract column is messed up. I think there should be county FIPS as the first 5. Followed by a 5 digit tract ID. 
+tract_nearest_df = pairs_df.groupby('tract').head(1)
+
+tract_nearest_df['tract'].apply(len).value_counts() # between 8 and 11
+# The tract column is messed up. I think there should be FIPS as the first 5, with only the first digit being the state (6XXXX). Followed by a 5 digit tract ID. 
 # TODO: verify if my fix is correct
 # look at some examples 
-tract_nearest_df.groupby(tract_nearest_df['Tract'].apply(len)).apply(lambda x: x.sample(10))
+tract_nearest_df.groupby(tract_nearest_df['tract'].apply(len)).apply(lambda x: x.sample(10))
 # check that the first digit is always 0
-tract_nearest_df['Tract'].apply(lambda x: x[0]).value_counts()
-tract_nearest_df = tract_nearest_df.assign(countyfips = tract_nearest_df['Tract'].str[1:6])
+tract_nearest_df['tract'].apply(lambda x: x[0]).value_counts()
+tract_nearest_df = tract_nearest_df.assign(countyfips = tract_nearest_df['tract'].str[1:6])
 tract_nearest_df['countyfips']
-tract_nearest_df['tractid'] = tract_nearest_df['Tract'].str[6:]
+tract_nearest_df['tractid'] = tract_nearest_df['tract'].str[6:]
 tract_nearest_df['tractid']
 # pad the tractid with 0s
 tract_nearest_df['tractid'] = tract_nearest_df['tractid'].apply(lambda x: x.zfill(5))
 # combine the countyfips and tractid
-tract_nearest_df['Tract'] = tract_nearest_df['countyfips'] + tract_nearest_df['tractid']
+tract_nearest_df['tract'] = tract_nearest_df['countyfips'] + tract_nearest_df['tractid']
+
+# merge tract level data
+tract_df = tract_nearest_df.merge(tract_hpi_df, on='tract', how='outer', indicator=True)
+tract_df._merge.value_counts() #6k left, 5k right, 3k both
+tract_df = tract_df.loc[tract_df._merge == 'both', :]
+tract_df.drop(columns=['_merge'], inplace=True)
+
+# merge with tract demographics (just population for now)
+tract_df = tract_df.merge(tract_demog, on='tract', how='outer', indicator=True)
+tract_df._merge.value_counts() # 5k right, 3k both
+tract_df = tract_df.loc[tract_df._merge == 'both', :]
+tract_df.drop(columns=['_merge'], inplace=True)
+
+# merge tract_df with tractzip_cw
+agent_data = tractzip_cw.merge(tract_df, on='tract', how='outer', indicator=True)
+agent_data._merge.value_counts() # 300 left, 6k right, 14k both
+agent_data = agent_data.loc[agent_data._merge == 'both', :]
+agent_data.drop(columns=['_merge'], inplace=True)
+agent_data = agent_data.rename(columns={'ZIP': 'zip', 'HPI': 'hpi', 'HPIQuartile': 'hpiquartile'})
+# 592 zips in df aren't in agent_data
+df['zip'].isin(agent_data['zip']).value_counts()
+
+###### 
+# get the agent_data into pyblp format
+
+list(df.columns)
+list(agent_data.columns)
+
+# If a ZIP has no tracts, create a tract with the ZIP's HPI and population
+aux_tracts = df[['hpi', 'hpiquartile', 'dist', 'market_ids']][~df['zip'].isin(agent_data['zip'])]
+aux_tracts = aux_tracts.assign(weights = 1)
+aux_tracts
+
+# weights to be the population of the tract over the sum of the population of all tracts in the ZIP
+zip_pop = agent_data.groupby('zip')['trpop'].transform('sum')
 
 
-# merge tract_nearest_df with tractzip_df 
+agent_data = agent_data.assign(market_ids = agent_data['zip'],
+                               weights = agent_data['trpop']/zip_pop)
 
-agent_data = tract_nearest_df.merge(tractzip_df, on='Tract', how='outer', indicator=True)
-agent_data._merge.value_counts()
-agent_data = agent_data[agent_data['_merge'] == 'both']
-# agent_data.drop(columns=['_merge', 'countyfips', 'tractid', 'CA_Pharm_ID'], inplace=True)
-agent_data.sort_values(by=['Zip'], inplace=True)
-agent_data
-agent_data['Tract'].unique().shape
-agent_data['Zip'].unique().shape
+agent_data = agent_data[['market_ids', 'weights', 'hpi', 'hpiquartile', 'dist']]
+agent_data = pd.concat([agent_data, aux_tracts], ignore_index=True)
 
+# keep ZIPs that are in df
+agent_data = agent_data[agent_data['market_ids'].isin(df['market_ids'])]
+agent_data['nodes'] = 0 
 
-# see if there's zips in df that aren't in agent_data
-df['zip'].isin(agent_data['Zip']).value_counts()
-df['zip']
-agent_data['Zip']
+# agent_data = agent_data.rename(columns={'dist': 'dist0'})
+# save to csv
+agent_data.to_csv(f"{datadir}/Analysis/agent_data.csv", index=False)
+df.to_csv(f"{datadir}/Analysis/product_data_tracts.csv", index=False)
 
 
-# merge tract_nearest_df with tract_df
-tract_nearest_df['Tract']
-tract_df.Tract
-merged = tract_df.merge(tract_nearest_df, on='Tract', how='outer', indicator=True)
-"merged"._merge.value_counts()
-
-# see if there's zips in df that aren't in merged
-df['zip'].isin(merged['ZIP']).value_counts()
+######## PYBLP ########
+import pyblp
+import pandas as pd
+import numpy as np
 
 
+iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-12, 'max_evaluations':10000})
+optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10, 'verbose':1, 'maxiter':600})
 
 
+datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+agent_data = pd.read_csv(f"{datadir}/Analysis/agent_data.csv")
+df = pd.read_csv(f"{datadir}/Analysis/product_data_tracts.csv")
 
+controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
+            'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
+            'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
+            'medianhomevalue', 'popdensity', 'population']
+formula_str = "1 + prices +  " + " + ".join(controls)
+formulation1 = pyblp.Formulation(formula_str)
+formulation2 = pyblp.Formulation('0+ log(dist)')
+agent_formulation = pyblp.Formulation('0+log(dist)')
+formulation1 = pyblp.Formulation(formula_str + '+ C(hpiquartile)')
+pi_init = -0.1
 
+problem = pyblp.Problem(product_formulations=(formulation1, formulation2), 
+                        product_data=df, 
+                        agent_formulation=agent_formulation, 
+                        agent_data=agent_data)
+print(problem)
 
+with pyblp.parallel(32):
+    results = problem.solve(pi=pi_init,
+                            error_punishment=3,
+                            iteration = iteration_config,
+                            optimization = optimization_config,
+                            sigma = 0
+                            )
 
+dist_elast = results.compute_elasticities('dist')
+pd.Series(dist_elast.flatten()).describe()
 
-
-
-
-
-
-
-
-
+####################
 
