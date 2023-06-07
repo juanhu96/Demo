@@ -134,10 +134,9 @@ controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
             'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
             'medianhomevalue', 'popdensity', 'population']
 formula_str = "1 + prices +  " + " + ".join(controls)
-formulation1 = pyblp.Formulation(formula_str)
-formulation2 = pyblp.Formulation('0+ log(dist)')
-agent_formulation = pyblp.Formulation('0+log(dist)')
 formulation1 = pyblp.Formulation(formula_str + '+ C(hpiquartile)')
+formulation2 = pyblp.Formulation('0+log(dist)')
+agent_formulation = pyblp.Formulation('0+log(dist)')
 pi_init = -0.1
 
 problem = pyblp.Problem(product_formulations=(formulation1, formulation2), 
@@ -145,6 +144,12 @@ problem = pyblp.Problem(product_formulations=(formulation1, formulation2),
                         agent_formulation=agent_formulation, 
                         agent_data=agent_data)
 print(problem)
+
+####
+# agent_data2[agent_data.market_ids == 95129]
+
+
+####
 
 with pyblp.parallel(32):
     results = problem.solve(pi=pi_init,
@@ -174,4 +179,138 @@ agent_data.groupby('market_ids')['dist'].count().describe()
 
 
 ####################
+#### FIX ALL DISTANCES TO ZIP LEVEL DISTANCES ####
+####################
+# replace all tract-pharmacy distances with the distance for the ZIP
+agent_data2 = agent_data.copy()
+agent_data2 = agent_data2.drop(columns=['dist'])
+agent_data2 = agent_data2.merge(df[['market_ids', 'dist']], on='market_ids', how='left', indicator=True)
+agent_data2._merge.value_counts() #all merged
+agent_data2.drop(columns=['_merge'], inplace=True)
+agent_data2 = agent_data2.rename(columns={'dist': 'dist0'})
 
+problem2 = pyblp.Problem(product_formulations=(formulation1, formulation2), 
+                        product_data=df, 
+                        agent_formulation=agent_formulation, 
+                        agent_data=agent_data2)
+print(problem2)
+
+
+with pyblp.parallel(32):
+    results2 = problem2.solve(pi=pi_init,
+                            error_punishment=3,
+                            iteration = iteration_config,
+                            optimization = optimization_config,
+                            sigma = 0
+                            )
+
+
+####################
+# replace all tract data with ZIP data
+####################
+
+agent_data3 = df[['market_ids', 'hpi', 'hpiquartile', 'dist']]
+agent_data3 = agent_data3.assign(weights = 1)
+agent_data3 = agent_data3.rename(columns={'dist': 'dist0'})
+agent_data3['nodes'] = 0
+
+problem3 = pyblp.Problem(product_formulations=(formulation1, formulation2),
+                        product_data=df,
+                        agent_formulation=agent_formulation,
+                        agent_data=agent_data3)
+print(problem3)
+
+with pyblp.parallel(32):
+    results3 = problem3.solve(pi=pi_init,
+                            error_punishment=3,
+                            iteration = iteration_config,
+                            optimization = optimization_config,
+                            sigma = 0
+                            )
+    
+####################TODO:
+# TRY LOGIT
+# mwe - one control, log dist, match with logit 
+# simple data - minimal code
+
+
+logit_formulation = pyblp.Formulation(formula_str + '+ log(dist)*C(hpiquartile)')
+logit_formulation
+logit_problem = pyblp.Problem(logit_formulation, df)
+logit_results = logit_problem.solve()
+logit_results
+# verified that logit matched with stata
+
+# simple logit
+logit_formulation2 = pyblp.Formulation('1 + prices + collegegrad + log(dist)')
+logit_formulation2
+logit_problem2 = pyblp.Problem(logit_formulation2, df)
+logit_results2 = logit_problem2.solve()
+logit_results2
+
+# logit with distance in the agent data
+logit_formulation3 = (pyblp.Formulation('1 + prices + collegegrad'), pyblp.Formulation('0 + log(dist)'))
+logit_agent_formulation = pyblp.Formulation('0 + log(dist)')
+logit_agent_data = df[['market_ids', 'dist']]
+logit_agent_data = logit_agent_data.assign(nodes = 0, weights = 1)
+logit_problem3 = pyblp.Problem(logit_formulation3, df, logit_agent_formulation, logit_agent_data)
+logit_results3 = logit_problem3.solve(pi=-0.1, error_punishment=3, iteration=iteration_config, optimization=optimization_config, sigma=0)
+logit_results3
+
+
+# # try with auxiliary ones column
+# df['aux1'] = 1
+# logit_formulation3 = (pyblp.Formulation('1 + prices + collegegrad'), pyblp.Formulation('0 + aux1'))
+# logit_agent_formulation = pyblp.Formulation('0 + log(dist)')
+# logit_agent_data = df[['market_ids', 'dist']]
+# logit_agent_data = logit_agent_data.assign(nodes = 0, weights = 1)
+# logit_problem3 = pyblp.Problem(logit_formulation3, df, logit_agent_formulation, logit_agent_data)
+# logit_results3 = logit_problem3.solve(pi=-0.1, error_punishment=3, iteration=iteration_config, optimization=optimization_config, sigma=0)
+# logit_results3
+
+
+
+
+
+
+####################
+####################
+####################
+#######  LOG OBJECTIVES MESH
+####################
+
+import matplotlib.pyplot as plt
+
+pyblp.options.verbose = False
+pyblp.options.verbose_tracebacks = False
+
+lb = -2
+ub = 0
+mesh = np.linspace(lb, ub, num=int(round(2*(ub-lb)+1)))
+
+obj_log = []
+pp_log = []
+for pp in mesh:
+    try:
+        with pyblp.parallel(32):
+            results3 = problem3.solve(pi=pi_init, #use the ZIP-level data
+                            error_punishment=3,
+                            iteration = iteration_config,
+                            optimization = optimization_config,
+                            sigma = 0
+                            )
+            obj = results3.objective
+            objval = obj[0][0]
+            print("NL coefficient:", pp, "  Objective:", objval)
+            obj_log.append(objval)
+            pp_log.append(pp)
+    except:
+        continue
+
+
+fig = plt.figure()
+ax = plt.subplot(111)
+
+ax.scatter(pp_log, obj_log)
+
+fig.savefig("/mnt/staff/zhli/vaxobj.pdf", dpi=150)
