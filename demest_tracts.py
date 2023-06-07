@@ -91,14 +91,13 @@ df['zip'].isin(agent_data['zip']).value_counts()
 list(df.columns)
 list(agent_data.columns)
 
-# If a ZIP has no tracts, create a tract with the ZIP's HPI and population
+# If a ZIP has no tracts, create a fake tract that's just the ZIP's HPI and population
 aux_tracts = df[['hpi', 'hpiquartile', 'dist', 'market_ids']][~df['zip'].isin(agent_data['zip'])]
 aux_tracts = aux_tracts.assign(weights = 1)
 aux_tracts
 
 # weights to be the population of the tract over the sum of the population of all tracts in the ZIP
 zip_pop = agent_data.groupby('zip')['trpop'].transform('sum')
-
 
 agent_data = agent_data.assign(market_ids = agent_data['zip'],
                                weights = agent_data['trpop']/zip_pop)
@@ -157,6 +156,22 @@ with pyblp.parallel(32):
 
 dist_elast = results.compute_elasticities('dist')
 pd.Series(dist_elast.flatten()).describe()
+
+pd.Series(np.log(df['dist'])).describe()
+pd.Series(np.log(agent_data['dist'])).describe()
+
+# compute average tract-pharmacy distance by ZIP
+agent_data = agent_data.assign(logdist = np.log(agent_data['dist']))
+agent_data.groupby('market_ids')['dist'].mean().describe()
+
+# mean of log distance
+agent_data.groupby('market_ids')['logdist'].mean().describe()
+
+# log of mean distance
+np.log(agent_data.groupby('market_ids')['dist'].mean()).describe()
+
+agent_data.groupby('market_ids')['dist'].count().describe()
+
 
 ####################
 
