@@ -31,6 +31,8 @@ tractzip_cw = tractzip_cw[['tract', 'ZIP']]
 # 2019 ACS tract demographics (has a ton of variables)
 acs_df = pd.read_csv(f"{datadir}/tracts/CA_TRACT_demographics.csv", low_memory=False)
 acs_df.rename(columns={'GIDTR': 'tract'}, inplace=True)
+# drop one duplicate tract
+acs_df = acs_df.drop_duplicates(subset=['tract'])
 demog_cols = [cc for cc in acs_df.columns if 'pct' not in cc and 'avg' not in cc]
 # demog_cols 
 pop_cols = [cc for cc in demog_cols if 'pop' in cc or 'Pop' in cc]
@@ -64,13 +66,21 @@ tract_nearest_df['tractid'] = tract_nearest_df['tractid'].apply(lambda x: x.zfil
 # combine the countyfips and tractid
 tract_nearest_df['tract'] = tract_nearest_df['countyfips'] + tract_nearest_df['tractid']
 
+
+# TEST tract_nearest_df and tract_zip_cw merge
+testmerge = tract_nearest_df.merge(tractzip_cw, on='tract', how='outer', indicator=True)
+testmerge._merge.value_counts() 
+tract_nearest_df.tract
+tractzip_cw.tract
+
+###
+
 # merge tract level data
 tract_df = tract_nearest_df.merge(tract_hpi_df, on='tract', how='outer', indicator=True)
 tract_df._merge.value_counts() #6k left, 5k right, 3k both
 tract_df = tract_df.loc[tract_df._merge == 'both', :]
 tract_df.drop(columns=['_merge'], inplace=True)
-
-# merge with tract demographics (just population for now)
+# merge with tract demographics 
 tract_df = tract_df.merge(tract_demog, on='tract', how='outer', indicator=True)
 tract_df._merge.value_counts() # 5k right, 3k both
 tract_df = tract_df.loc[tract_df._merge == 'both', :]
@@ -82,7 +92,7 @@ agent_data._merge.value_counts() # 300 left, 6k right, 14k both
 agent_data = agent_data.loc[agent_data._merge == 'both', :]
 agent_data.drop(columns=['_merge'], inplace=True)
 agent_data = agent_data.rename(columns={'ZIP': 'zip', 'HPI': 'hpi', 'HPIQuartile': 'hpiquartile'})
-# 592 zips in df aren't in agent_data
+# 1158 zips in df aren't in agent_data
 df['zip'].isin(agent_data['zip']).value_counts()
 
 ###### 
@@ -90,6 +100,11 @@ df['zip'].isin(agent_data['zip']).value_counts()
 
 list(df.columns)
 list(agent_data.columns)
+agent_data.describe()
+agent_data[agent_data['trpop'].isna()]
+tract_demog[tract_demog['tract'].isin(agent_data[agent_data['trpop'].isna()]['tract'])]
+len(acs_df.tract)
+len(np.unique(acs_df.tract))
 
 # If a ZIP has no tracts, create a fake tract that's just the ZIP's HPI and population
 aux_tracts = df[['hpi', 'hpiquartile', 'dist', 'market_ids']][~df['zip'].isin(agent_data['zip'])]
@@ -102,7 +117,7 @@ zip_pop = agent_data.groupby('zip')['trpop'].transform('sum')
 agent_data = agent_data.assign(market_ids = agent_data['zip'],
                                weights = agent_data['trpop']/zip_pop)
 
-agent_data = agent_data[['market_ids', 'weights', 'hpi', 'hpiquartile', 'dist']]
+agent_data = agent_data[['market_ids', 'weights', 'hpi', 'hpiquartile', 'dist', 'zip']]
 agent_data = pd.concat([agent_data, aux_tracts], ignore_index=True)
 
 # keep ZIPs that are in df
@@ -122,7 +137,7 @@ import numpy as np
 
 
 iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-12, 'max_evaluations':10000})
-optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10, 'verbose':1, 'maxiter':600})
+optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-9, 'verbose':1, 'maxiter':600})
 
 
 datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
@@ -135,9 +150,26 @@ controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
             'medianhomevalue', 'popdensity', 'population']
 formula_str = "1 + prices +  " + " + ".join(controls)
 formulation1 = pyblp.Formulation(formula_str + '+ C(hpiquartile)')
-formulation2 = pyblp.Formulation('0+log(dist)')
+formulation2 = pyblp.Formulation('1')
 agent_formulation = pyblp.Formulation('0+log(dist)')
-pi_init = -0.1
+
+# ADD INSTRUMENT
+# population weighted average distance
+dist_popw = agent_data.groupby('market_ids')['dist'].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights']))
+dist2_popw = dist_popw**2
+
+# population weighted average log distance
+logdist_popw = agent_data.groupby('market_ids')['dist'].apply(lambda x: np.average(np.log(x), weights=agent_data.loc[x.index, 'weights']))
+
+
+iv_config = 'quad'
+if iv_config == 'quad':
+    df['demand_instruments0'] = dist_popw[df['market_ids']].values
+    df['demand_instruments1'] = dist2_popw[df['market_ids']].values
+elif iv_config == 'log':
+    df['demand_instruments0'] = logdist_popw[df['market_ids']].values
+    if 'demand_instruments1' in df.columns:
+        df = df.drop(columns=['demand_instruments1'])
 
 problem = pyblp.Problem(product_formulations=(formulation1, formulation2), 
                         product_data=df, 
@@ -145,22 +177,15 @@ problem = pyblp.Problem(product_formulations=(formulation1, formulation2),
                         agent_data=agent_data)
 print(problem)
 
-####
-# agent_data2[agent_data.market_ids == 95129]
-
-
-####
-
 with pyblp.parallel(32):
-    results = problem.solve(pi=pi_init,
-                            error_punishment=3,
+    results = problem.solve(pi=-0.1,
                             iteration = iteration_config,
                             optimization = optimization_config,
                             sigma = 0
                             )
+    
+agent_data['dist'].describe()
 
-dist_elast = results.compute_elasticities('dist')
-pd.Series(dist_elast.flatten()).describe()
 
 pd.Series(np.log(df['dist'])).describe()
 pd.Series(np.log(agent_data['dist'])).describe()
@@ -176,6 +201,58 @@ agent_data.groupby('market_ids')['logdist'].mean().describe()
 np.log(agent_data.groupby('market_ids')['dist'].mean()).describe()
 
 agent_data.groupby('market_ids')['dist'].count().describe()
+
+####################
+#### DISTANCE BY HPIQUARTILE ####
+####################
+
+df = pd.read_csv(f"{datadir}/Analysis/product_data_tracts.csv")
+
+controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
+            'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
+            'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
+            'medianhomevalue', 'popdensity', 'population']
+formula_str = "1 + prices +  " + " + ".join(controls)
+formulation1 = pyblp.Formulation(formula_str + '+ C(hpiquartile)')
+formulation2 = pyblp.Formulation('1')
+agent_formulation = pyblp.Formulation('0+log(dist)/C(hpiquartile)')
+
+# TODO: just create the four columns ourselves
+
+# ADD INSTRUMENT
+# population weighted average log distance
+logdist_popw = agent_data.groupby('market_ids')['dist'].apply(lambda x: np.average(np.log(x), weights=agent_data.loc[x.index, 'weights']))
+for qq in range(1,5):
+    df[f'demand_instruments{qq-1}'] = logdist_popw[df['market_ids']].values * (df['hpiquartile'] == qq)
+
+# TODO: could also try the log of the average distance, just add
+
+# other possible RCs: the intercept, and the log(dist) in general
+# to have an RC on log(dist), we have to draw 
+
+ivcols = [cc for cc in df.columns if 'demand_instruments' in cc]
+df[ivcols].describe()
+
+
+problem = pyblp.Problem(product_formulations=(formulation1, formulation2), 
+                        product_data=df, 
+                        agent_formulation=agent_formulation, 
+                        agent_data=agent_data)
+print(problem)
+
+with pyblp.parallel(32):
+    results = problem.solve(pi=0.1*np.ones((1,4)),
+                            iteration = iteration_config,
+                            optimization = optimization_config,
+                            sigma = 0
+                            )
+
+
+pyblp.options.digits = 2
+print(results)
+
+
+
 
 
 ####################
@@ -270,47 +347,3 @@ logit_results3
 
 
 
-
-
-
-####################
-####################
-####################
-#######  LOG OBJECTIVES MESH
-####################
-
-import matplotlib.pyplot as plt
-
-pyblp.options.verbose = False
-pyblp.options.verbose_tracebacks = False
-
-lb = -2
-ub = 0
-mesh = np.linspace(lb, ub, num=int(round(2*(ub-lb)+1)))
-
-obj_log = []
-pp_log = []
-for pp in mesh:
-    try:
-        with pyblp.parallel(32):
-            results3 = problem3.solve(pi=pi_init, #use the ZIP-level data
-                            error_punishment=3,
-                            iteration = iteration_config,
-                            optimization = optimization_config,
-                            sigma = 0
-                            )
-            obj = results3.objective
-            objval = obj[0][0]
-            print("NL coefficient:", pp, "  Objective:", objval)
-            obj_log.append(objval)
-            pp_log.append(pp)
-    except:
-        continue
-
-
-fig = plt.figure()
-ax = plt.subplot(111)
-
-ax.scatter(pp_log, obj_log)
-
-fig.savefig("/mnt/staff/zhli/vaxobj.pdf", dpi=150)
