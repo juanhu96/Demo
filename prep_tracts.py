@@ -1,4 +1,4 @@
-# prepare and merge tract data for demest_tracts.py
+# prepare and merge tract data for demest_tracts.py and demest_rc.py
 # Combine the following data sources:
 # 1. tract demographics
 # 2. tract-HPI

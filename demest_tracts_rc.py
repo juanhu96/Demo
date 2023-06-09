@@ -1,4 +1,4 @@
-# run after prep_tracts.py. with RCs on distance
+# run after prep_tracts.py. demest_tracts.py, plus RCs on constant and distance
 import pyblp
 import pandas as pd
 import numpy as np
@@ -89,6 +89,7 @@ results = pyblp.read_pickle(f"{datadir}/Analysis/results_tracts_rc.pkl")
 df = pd.read_csv(f"{datadir}/Analysis/product_data_tracts_rc.csv")
 agent_data = pd.read_csv(f"{datadir}/Analysis/agent_data_tracts_rc.csv")
 
+df['xi_fe'] = results.xi_fe #all zeros
 df['xi'] = results.xi
 
 # add agent component of utility
@@ -125,7 +126,7 @@ for qq in range(2, 5):
     df['meanutil'] = df['meanutil'] + df[f'hpiquartile{qq}'] * betas_fe[qq-2]
 
 # add the unobserved quality
-df['meanutil'] = df['meanutil'] + df['xi']
+df['meanutil'] += df['xi_fe'] + df['xi']
 
 # merge product and agent data
 idf = idf.rename(columns={'hpiquartile': 'hpiquartile_tract'})

@@ -1,3 +1,5 @@
+# Demand estimation with tract-based distances
+# Superceded by demest_tracts_rc.py
 # run after prep_tracts.py
 import pyblp
 import pandas as pd

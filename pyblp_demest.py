@@ -1,3 +1,6 @@
+# Most basic pyblp implementation with no tract data
+# Superceded by demest_tracts.py
+
 import pandas as pd
 import pyblp
 import numpy as np
