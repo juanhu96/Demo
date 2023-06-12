@@ -1,5 +1,7 @@
 global datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 global codedir /mnt/staff/zhli/VaxDemandDistance
+
+
 use $datadir/MAR01_vars, clear
 
 global controlvars race_black race_asian race_hispanic race_other ///
@@ -78,7 +80,19 @@ graph export "$codedir/plots/marg3.png", replace
 
 
 // 4. tract distances
-use $datadir/Analysis/tracts_marg, clear
+
+// loc spec "hpi" 
+loc spec "dshare"
+
+if "`spec'"=="dshare" {
+	loc byvar "dshare_quartile"
+}
+else if "`spec'"=="hpi" {
+	loc byvar "hpiquartile"
+}
+
+use $datadir/Analysis/tracts_marg_by`spec', clear
+
 gen agent_id = _n
 
 expand 31, gen(expd)
@@ -87,19 +101,19 @@ bys agent_id (expd): replace logdist_m = logdist_m[_n-1]+0.1 if _n!=1
 gen u_i = meanutil + distbeta*logdist_m
 gen share_i = exp(u_i)/(1+exp(u_i))
 
-gcollapse (mean) share_i [weight=weights], by(hpiquartile logdist_m)
-twoway line share_i logdist_m if hpiquartile  == 1, sort || ///
-       line share_i logdist_m if hpiquartile  == 2, sort || ///
-       line share_i logdist_m if hpiquartile  == 3, sort || ///
-       line share_i logdist_m if hpiquartile  == 4, sort ///
-       legend(order(1 "hpiquartile=1" 2 "hpiquartile=2" 3 "hpiquartile=3" 4 "hpiquartile=4"))  ///
+gcollapse (mean) share_i [weight=weights], by(`byvar' logdist_m)
+twoway line share_i logdist_m if `byvar' == 1, sort || ///
+       line share_i logdist_m if `byvar' == 2, sort || ///
+       line share_i logdist_m if `byvar' == 3, sort || ///
+       line share_i logdist_m if `byvar' == 4, sort ///
+       legend(order(1 "`byvar'=1" 2 "`byvar'=2" 3 "`byvar'=3" 4 "`byvar'=4"))  ///
 	graphregion(margin(b-4 l+1)) title("") ///
 	legend(size(small) region(color(none))) ///
 	subtitle("Adjusted Vaccination" "Coverage", size(small) position(11) ring(1) span margin(l=-3 b=2.5) justification(center)) ///
 	ylabel(.5 "50%" .6 "60%" .7 "70%" .8 "80%" .9 "90%", labsize(small)) ytitle("") ///
 	xtitle("Kilometers to Nearest Vaccination Site (log scale)", size(small)) ///
 	xlabel(-.5 ".6" 0 "1" .693 "2" 1.609 "5" 2.303 "10", labsize(small))	
-graph export "$codedir/plots/marg4.png", replace
+graph export "$codedir/plots/marg4_by`spec'.png", replace
 
 // 5. tract distances with RC (on log distance and on the constant)
 use $datadir/Analysis/tracts_marg_rc, clear
