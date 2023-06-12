@@ -10,18 +10,21 @@ pyblp.options.digits = 4
 datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 
 # Load data
-df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")
-df['prices'] = 0
+df = pd.read_csv(f"{datadir}/Analysis/product_data_tracts.csv")
 df.hpiquartile.unique()
 # cat_dtype = pd.CategoricalDtype(categories=[4,3,2,1], ordered=True) #TODO: figure out how to make 4 the reference category
 # df.hpiquartile = df.hpiquartile.astype(cat_dtype)
-print(df['hpiquartile'])
+
+# make log(dist) by hpiquartile
+for qq in range(1,5):
+    df[f"logdistXhpi{qq}"] = np.log(df['dist']) * (df['hpiquartile'] == qq)
+    df[f"logdistXhpi{qq}"].describe()
 
 controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
             'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
             'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
-            'medianhomevalue', 'popdensity', 'population']
-formula_str = "1 + prices + log(dist)/C(hpiquartile) + " + " + ".join(controls)
+            'medianhomevalue', 'popdensity', 'population', 'dshare']
+formula_str = "1 + prices + logdistXhpi1 + logdistXhpi2 + logdistXhpi3 + logdistXhpi4 + " + " + ".join(controls)
 formulation1 = pyblp.Formulation(formula_str, absorb='C(hpiquartile)')
 
 include_hpi = False #Switch to True to include HPI quartile * distance interaction in the RC
@@ -40,7 +43,7 @@ product_formulation = (formulation1, formulation2)
 
 
 integ_config = pyblp.Integration('monte_carlo', size=100, specification_options={'seed': 0})
-opt_config = pyblp.Optimization('trust-constr', {'gtol': 1e-10})
+opt_config = pyblp.Optimization('trust-constr', {'gtol': 1e-9})
 
 problem = pyblp.Problem(product_formulations=product_formulation, product_data=df, integration=integ_config)
 
@@ -152,33 +155,3 @@ print(df.groupby('hpiquartile')['dist_elast'].describe())
 # save results
 df.to_csv(dfpath)
 print("saved results at: ", dfpath)
-
-
-####################
-####################
-####################
-# plot objective function for different distance coefficients
-plot_obj = False
-if plot_obj:
-    import matplotlib.pyplot as plt
-    pyblp.options.verbose = False
-
-    objective_log = []
-    dist_coefs = np.linspace(-4,2,25)
-    for bb in dist_coefs:
-        beta_init = res.beta
-        beta_init[res.beta_labels.index('log(dist)')] = bb
-        with pyblp.parallel(poolnum):
-            res = problem.solve(beta = beta_init, sigma = res.sigma, optimization=pyblp.Optimization('return'))
-        objective_log.append(res.objective[0][0])
-        print(bb, res.objective[0][0])
-
-    # Plot
-    fig, ax = plt.subplots()
-    ax.set_xlabel('distance coefficient')
-    ax.set_ylabel('objective')
-    ax.set_title('Objective function')
-    ax.plot(dist_coefs, objective_log)
-    figpath = f"/mnt/staff/zhli/objplot_pyblp_{str(int(dist_coefs[0]))}_{str(int(dist_coefs[-1]))}.png"
-    print("saving figure at: ", figpath)
-    plt.savefig(figpath)

@@ -18,16 +18,16 @@ for qq in range(1,5):
     agent_data[f"logdistXhpi{qq}"].describe()
 
 controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
-            'health_employer', 'health_medicare', 'health_medicaid', 'health_other', 'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 'medianhomevalue', 'popdensity', 'population']
+            'health_employer', 'health_medicare', 'health_medicaid', 'health_other', 'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 'medianhomevalue', 'popdensity', 'population', 'dshare']
 
 # draw nI from standard normal
 nI = 50
 nu_dist_t = np.random.normal(size=(nI))
 nu_dist = np.tile(nu_dist_t, agent_data.shape[0])
 
-# draw RC for the constant
-nu_const_t = np.random.normal(size=(nI))
-nu_const = np.tile(nu_const_t, agent_data.shape[0])
+# # draw RC for the constant
+# nu_const_t = np.random.normal(size=(nI))
+# nu_const = np.tile(nu_const_t, agent_data.shape[0])
 
 
 # repeat the agent data nI times
@@ -36,7 +36,7 @@ agent_data['weights'] = agent_data['weights'] / nI
 agent_data['nu_dist'] = nu_dist
 # pre-multiply logdist by nu, so the estimated pi will be the variance
 agent_data['nuXlogdist'] = agent_data['nu_dist'] * agent_data['logdist']
-agent_data['nu_const'] = nu_const
+# agent_data['nu_const'] = nu_const
 
 df.to_csv(f"{datadir}/Analysis/product_data_tracts_rc.csv", index=False)
 agent_data.to_csv(f"{datadir}/Analysis/agent_data_tracts_rc.csv", index=False)
@@ -44,16 +44,21 @@ agent_data.to_csv(f"{datadir}/Analysis/agent_data_tracts_rc.csv", index=False)
 formula_str = "1 + prices +  " + " + ".join(controls)
 formulation1 = pyblp.Formulation(formula_str + '+ C(hpiquartile)')
 formulation2 = pyblp.Formulation('1')
-agent_formulation = pyblp.Formulation('0 + logdistXhpi1 + logdistXhpi2 + logdistXhpi3 + logdistXhpi4 + nuXlogdist + nu_const')
+agent_formulation = pyblp.Formulation('0 + logdistXhpi1 + logdistXhpi2 + logdistXhpi3 + logdistXhpi4 + nuXlogdist')
 
 # ADD INSTRUMENT
+# population weighted average log distance
+logdist_popw = agent_data.groupby('market_ids')['dist'].apply(lambda x: np.average(np.log(x), weights=agent_data.loc[x.index, 'weights']))
+
 # population-weighted quadratic distance
 dist_popw = agent_data.groupby('market_ids')['dist'].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights']))
-dist2_popw = agent_data.groupby('market_ids')['dist'].apply(lambda x: np.average(x**2, weights=agent_data.loc[x.index, 'weights']))
+# dist2_popw = agent_data.groupby('market_ids')['dist'].apply(lambda x: np.average(x**2, weights=agent_data.loc[x.index, 'weights']))
 
 for qq in range(1,5):
     df[f'demand_instruments{qq-1}'] = dist_popw[df['market_ids']].values * (df['hpiquartile'] == qq)
-    df[f'demand_instruments{qq+3}'] = dist2_popw[df['market_ids']].values * (df['hpiquartile'] == qq)
+    df[f'demand_instruments{qq+3}'] = logdist_popw[df['market_ids']].values * (df['hpiquartile'] == qq)
+
+# TODO: add the interaction of distance and e.g. collegegrad
 
 ivcols = [cc for cc in df.columns if 'demand_instruments' in cc]
 df[ivcols].describe()
@@ -66,11 +71,11 @@ problem = pyblp.Problem(product_formulations=(formulation1, formulation2),
 print(problem)
 
 iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-12, 'max_evaluations':10000})
-optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-9, 'verbose':1, 'maxiter':600})
+optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-8, 'verbose':1, 'maxiter':600})
 
 
 with pyblp.parallel(32):
-    results = problem.solve(pi=-0.1*np.ones((1,6)),
+    results = problem.solve(pi=-0.1*np.ones((1,5)),
                             iteration = iteration_config,
                             optimization = optimization_config,
                             sigma = 0

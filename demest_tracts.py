@@ -23,7 +23,7 @@ for qq in range(1,5):
 controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
             'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
             'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
-            'medianhomevalue', 'popdensity', 'population']
+            'medianhomevalue', 'popdensity', 'population', 'dshare']
 formula_str = "1 + prices +  " + " + ".join(controls)
 formulation1 = pyblp.Formulation(formula_str + '+ C(hpiquartile)')
 formulation2 = pyblp.Formulation('1')
@@ -38,6 +38,9 @@ for qq in range(1,5):
 ivcols = [cc for cc in df.columns if 'demand_instruments' in cc]
 df[ivcols].describe()
 
+df['demand_instruments4'] = df.collegegrad * df.health_medicare
+df['demand_instruments5'] = df.dshare * df.unemployment
+
 # TODO: could also try the log of the average distance, just add
 
 problem = pyblp.Problem(product_formulations=(formulation1, formulation2), 
@@ -47,7 +50,7 @@ problem = pyblp.Problem(product_formulations=(formulation1, formulation2),
 print(problem)
 
 iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-12, 'max_evaluations':10000})
-optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-9, 'verbose':1, 'maxiter':600})
+optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-8, 'verbose':1, 'maxiter':600})
 
 with pyblp.parallel(32):
     results = problem.solve(pi=-0.1*np.ones((1,4)),

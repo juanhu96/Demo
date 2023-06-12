@@ -16,6 +16,14 @@ datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 # Original ZIP-level data with vaccination rates (product_data)
 df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv", dtype={'zip': str})
 df = df.assign(market_ids = df['zip'], prices = 0)
+zip_votes = pd.read_csv(f"{datadir}/tracts/zip_votes.csv", dtype={'zip': str})
+list(zip_votes.columns)
+zip_votes['dshare'] = zip_votes['dvotes'] / (zip_votes['dvotes'] + zip_votes['rvotes']) #make 2-party vote share
+zip_votes = zip_votes[['zip', 'dshare']]
+df = df.merge(zip_votes, on='zip', how='outer', indicator=True)
+df._merge.value_counts() 
+df = df.loc[df._merge == 'both', :]
+df.drop(columns=['_merge'], inplace=True)
 
 # Tract (geoid) level data with HPI and HPIQuartile
 tract_hpi_df = pd.read_csv(f"{datadir}/tracts/HPItract.csv", dtype={'geoid': str})
