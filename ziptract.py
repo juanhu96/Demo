@@ -1,4 +1,4 @@
-# Intersect ZCTA and tract shapefiles to get ZCTA for each tract
+# Intersect ZIP and tract shapefiles. ZIPs are 2020, tracts are 2010 (for compatibility with HPI and ACS data).
 
 import pandas as pd
 import geopandas as gpd
@@ -8,14 +8,15 @@ datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data/tracts"
 
 # read in full national zips
 zips = gpd.read_file(f"{datadir}/tl_2020_us_zcta520/tl_2020_us_zcta520.shp")
+zips.head()
 zips = zips[['ZCTA5CE20', 'geometry']]
 zips = zips.rename(columns={'ZCTA5CE20': 'zip'})
 zips['zip'] = zips['zip'].astype(str)
 
-# read in tract shapefile
-tracts = gpd.read_file(f"{datadir}/tl_2020_06_tract/tl_2020_06_tract.shp")
-tracts = tracts[['GEOID', 'geometry']]
-tracts = tracts.rename(columns={'GEOID': 'tract'})
+# read in tract shapefile (CA, 2010)
+tracts = gpd.read_file(f"{datadir}/tl_2010_06_tract10/tl_2010_06_tract10.shp")
+tracts = tracts[['GEOID10', 'geometry']]
+tracts = tracts.rename(columns={'GEOID10': 'tract'})
 tracts['tract'] = tracts['tract'].astype(str)
 
 tracts

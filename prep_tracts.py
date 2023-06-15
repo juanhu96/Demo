@@ -42,11 +42,16 @@ acs_df = acs_df.drop_duplicates(subset=['tract'])
 demog_cols = [cc for cc in acs_df.columns if 'pct' not in cc and 'avg' not in cc]
 # demog_cols 
 pop_cols = [cc for cc in demog_cols if 'pop' in cc or 'Pop' in cc]
-# pop_cols
+
+
+# for cc in acs_df.columns:
+#     if 'nc' in cc:
+#         print(cc)
+
 acs_df['tract'] = acs_df['tract'].astype(str)
 acs_df['tract'].apply(len).value_counts() # all 10-digits that start with 6
 tract_demog = acs_df[['tract']]
-tract_demog = tract_demog.assign(trpop = acs_df['Tot_Population_ACS_14_18'])
+tract_demog = tract_demog.assign(trpop = acs_df['Tot_Population_ACS_14_18'], race = acs_df['pct_NH_White_alone_ACS_14_18'], income = acs_df['Med_HHD_Inc_ACS_14_18'].replace('[\$,]', '', regex=True).astype(float))
 
 # read tract-pharmacy distance pairs
 # pre-processed to the 10 nearest pharmacies for each tract.
@@ -72,13 +77,6 @@ tract_nearest_df['tractid'] = tract_nearest_df['tractid'].apply(lambda x: x.zfil
 # combine the countyfips and tractid
 tract_nearest_df['tract'] = tract_nearest_df['countyfips'] + tract_nearest_df['tractid']
 
-
-# TEST tract_nearest_df and tract_zip_cw merge
-testmerge = tract_nearest_df.merge(tractzip_cw, on='tract', how='outer', indicator=True)
-testmerge._merge.value_counts() 
-tract_nearest_df.tract
-tractzip_cw.tract
-
 ###
 
 # merge tract level data
@@ -97,7 +95,7 @@ agent_data = tractzip_cw.merge(tract_df, on='tract', how='outer', indicator=True
 agent_data._merge.value_counts() # 3k left, 12k both
 agent_data = agent_data.loc[agent_data._merge == 'both', :]
 agent_data.drop(columns=['_merge'], inplace=True)
-agent_data = agent_data.rename(columns={'ZIP': 'zip', 'HPI': 'hpi', 'HPIQuartile': 'hpiquartile'})
+agent_data = agent_data.rename(columns={'ZIP': 'zip', 'HPI': 'hpi', 'HPIQuartile': 'hpi_quartile'})
 
 # merge with tract-level vote shares
 tract_votes = pd.read_csv(f"{datadir}/tracts/tract_votes.csv", dtype={'tract': str})
@@ -120,15 +118,16 @@ agent_data.describe()
 # Original ZIP-level data with vaccination rates (product_data) - should not be modified in this script
 df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv", dtype={'zip': str})
 df['zip'].isin(agent_data['zip']).value_counts()
-
+df = df.assign(hpi_quartile = df['hpiquartile']) #patch for consistency with other quartile-based variables
 # keep ZIPs that are in df
 agent_data = agent_data[agent_data['zip'].isin(df['zip'])]
 
 
-# If a ZIP has no tracts, create a fake tract that's just the ZIP's HPI and population
-aux_tracts = df[['hpi', 'hpiquartile', 'dist', 'market_ids']][~df['zip'].isin(agent_data['zip'])]
-aux_tracts = aux_tracts.assign(weights = 1)
-aux_tracts
+# approximate race and income for ZIPs that double as its own tract
+df = df.assign(race = 1-df.race_black-df.race_asian-df.race_hispanic-df.race_other)
+df = df.assign(income = df.medianhhincome)
+
+
 
 # weights to be the population of the tract over the sum of the population of all tracts in the ZIP
 zip_pop = agent_data.groupby('zip')['trpop'].transform('sum')
@@ -137,34 +136,29 @@ agent_data = agent_data.assign(market_ids = agent_data['zip'],
                                weights = agent_data['trpop']/zip_pop)
 
 agent_data.describe()
-agent_data = agent_data[['market_ids', 'weights', 'hpi', 'hpiquartile', 'dist', 'zip', 'dshare']]
+agent_data_cols = ['market_ids', 'weights', 'hpi', 'hpi_quartile', 'dist', 'zip', 'dshare', 'race', 'income']
+agent_data = agent_data[agent_data_cols]
+
+# If a ZIP has no tracts, create a fake tract that's just the ZIP's HPI and population
+aux_tracts = df[[cc for cc in agent_data_cols if cc != 'weights']][~df['zip'].isin(agent_data['zip'])]
+aux_tracts = aux_tracts.assign(weights = 1)
+aux_tracts
+
 agent_data = pd.concat([agent_data, aux_tracts], ignore_index=True)
 
 agent_data['nodes'] = 0 
 
 agent_data['logdist'] = np.log(agent_data['dist'])
 
-# MAKE DISTANCE BY HPIQUARTILE
-for qq in range(1,5):
-    agent_data[f"logdistXhpi{qq}"] = agent_data['logdist'] * (agent_data['hpiquartile'] == qq)
-    agent_data[f"logdistXhpi{qq}"].describe()
+# fill in missing dshares with mean
+agent_data['dshare'] = agent_data['dshare'].fillna(agent_data['dshare'].mean())
 
 
-# MAKE DISTANCE BY DSHARE
-agent_data['dshare_quartile'] = pd.qcut(agent_data['dshare'], 4, labels=False)
-agent_data['dshare_quartile'] += 1
-agent_data['dshare_quartile'].describe()
-for qq in range(1,5):
-    agent_data[f"logdistXdshare{qq}"] = agent_data['logdist'] * (agent_data['dshare_quartile'] == qq)
-    agent_data[f"logdistXdshare{qq}"].describe()
-
-
-# agent_data = agent_data.rename(columns={'dist': 'dist0'})
 # save to csv
 agent_data.to_csv(f"{datadir}/Analysis/agent_data.csv", index=False)
 
 # number of tracts per ZIP
-agent_data.groupby('market_ids').nunique().describe()
+print(agent_data.groupby('market_ids').nunique().describe())
 
 # summarize tract distance
-agent_data.groupby('market_ids')['dist'].mean().describe()
+print(agent_data.groupby('market_ids')['dist'].mean().describe())

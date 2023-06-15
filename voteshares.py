@@ -4,13 +4,13 @@ import geopandas as gpd
 datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data/tracts"
 
 # read in CA precinct shapefile
-precincts = gpd.read_file(f"{datadir}/ca_vest_20/ca_vest_20.shp")
-
+precincts = gpd.read_file(f"{datadir}/ca_vest_16/ca_vest_16.shp")
+precincts
 # tally votes
-votecols = [col for col in precincts.columns if 'G20PRE' in col]
+votecols = [col for col in precincts.columns if 'G16PRE' in col]
 precincts['sum_votes'] = precincts[votecols].sum(axis=1)
 precincts = precincts.loc[precincts['sum_votes']>0, :]
-precincts = precincts.rename(columns={'SRPREC': 'precinct', 'G20PREDBID': 'dvotes', 'G20PRERTRU': 'rvotes'})
+precincts = precincts.rename(columns={'SRPREC': 'precinct', 'G16PREDCli': 'dvotes', 'G16PRERTru': 'rvotes'})
 precincts = precincts[['precinct', 'dvotes', 'rvotes', 'sum_votes', 'geometry']]
 
 
@@ -37,6 +37,7 @@ preczip['sum_votes'] = preczip['sum_votes'] * preczip['area_fraction']
 zipagg = preczip[['zip', 'dvotes', 'rvotes', 'sum_votes']].groupby('zip').sum().reset_index()
 zipagg['dshare'] = zipagg['dvotes'] / zipagg['sum_votes']
 zipagg['rshare'] = zipagg['rvotes'] / zipagg['sum_votes']
+
 zipagg.describe()
 
 # write to file
@@ -45,9 +46,9 @@ zipagg.to_csv(f"{datadir}/zip_votes.csv", index=False)
 
 #### 2. TRACT ####
 # read in tract shapefile
-tracts = gpd.read_file(f"{datadir}/tl_2020_06_tract/tl_2020_06_tract.shp")
-tracts = tracts[['GEOID', 'geometry']]
-tracts = tracts.rename(columns={'GEOID': 'tract'})
+tracts = gpd.read_file(f"{datadir}/tl_2010_06_tract/tl_2010_06_tract.shp")
+tracts = tracts[['GEOID10', 'geometry']]
+tracts = tracts.rename(columns={'GEOID10': 'tract'})
 tracts['tract'] = tracts['tract'].astype(str)
 
 # overlay precincts and tracts

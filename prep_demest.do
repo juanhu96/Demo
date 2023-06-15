@@ -25,7 +25,7 @@ gen firm_ids = 1
 gen prices = 0
 
 foreach ii of numlist 1/4{
-	gen distXhpi`ii' = 1
+	gen distXhpi`ii' = 0
 	replace distXhpi`ii' = dist if hpiquartile == `ii'
 	gen logdistXhpi`ii' = 0
 	replace logdistXhpi`ii' = log(dist) if hpiquartile == `ii'
@@ -35,7 +35,10 @@ foreach ii of numlist 1/4{
 tempfile df
 save `df'
 import delim $datadir/tracts/zip_votes.csv, clear
+keep zip dshare
 merge 1:1 zip using `df', keep(2 3)
+summ dshare, d
+replace dshare = r(mean) if dshare == .
 drop _merge
 
 export delim $datadir/Analysis/demest_data.csv, replace
