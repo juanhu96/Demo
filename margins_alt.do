@@ -21,7 +21,7 @@ combomarginsplot mall, labels("HPI Quartile 1" "HPI Quartile 2" "HPI Quartile 3"
 	ylabel(.5 "50%" .6 "60%" .7 "70%" .8 "80%" .9 "90%", labsize(small)) ytitle("") ///
 	xtitle("Kilometers to Nearest Vaccination Site (log scale)", size(small)) ///
 	xlabel(-.5 ".6" 0 "1" .693 "2" 1.609 "5" 2.303 "10", labsize(small))	
-graph export "$outdir/marg1.png", replace
+graph export "$outdir/margins/orig.png", replace
 
 
 

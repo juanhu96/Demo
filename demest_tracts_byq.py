@@ -93,11 +93,14 @@ for spec in ['hpi', 'dshare', 'race', 'income']:
 
     # add the quartile-specific distance coefficients
     dist_coefs = results.pi.flatten()
-    idf = idf.assign(distbeta = 0)
-    for qq in set(agent_data[byvar]):
-        qint = int(qq)
-        agent_data[f"is_q{qint}"] = agent_data[byvar] == qq
-        idf['distbeta'] += agent_data[f"is_q{qint}"] * dist_coefs[qint-1] 
+    dist_coefs_se = results.pi_se.flatten()
+
+    idf = idf.assign(distbeta = 0, distbeta_se = 0)
+    for qq in set(idf[byvar]):
+        qq = int(qq)
+        is_q = idf[byvar] == qq
+        idf['distbeta'] += is_q * dist_coefs[qq-1] 
+        idf['distbeta_se'] += is_q * dist_coefs_se[qq-1]
 
     # mean utility (zip-level)
     df['meanutil'] = results.compute_delta(market_id = df['market_ids'])

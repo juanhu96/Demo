@@ -72,8 +72,7 @@ mat lis e(b)
 mat V = e(V)
 mat lis V
 
-//TODO: from here
-//v is the derivative of the predictions wrt beta at x, which is...
+//v is the derivative of the outcome of interest wrt beta at x, which is...
 //by chain rule: x * d
 
 gl p = invlogit(_b["logdistnearest"]*2)
@@ -88,6 +87,20 @@ mat lis s // this equals the r(V) returned by margins
 margins, at(logdistnearest=(2))
 
 mat lis r(V)
+
+************************** logit without demographics
+// dsdb = dsdv * dvdb
+// b is pi
+// d is logdist
+// s is share
+
+// dsdv = d/dv exp(v)/[1+exp(v)] = exp(v)/[1+exp(v)]^2 = (s)(1-s)
+// dvdb = d
+
+// TODO: do we care about agents and weights?
+
+
+
 
 
 
