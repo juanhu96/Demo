@@ -77,14 +77,15 @@ dudb[0]
 dudb[1]
 dudb[2]
 dudb[3]
-
+dudb[3].shape
+results.parameters
+results
 for (qq,qqval) in enumerate(byvals):
-    for (ii,vv) in enumerate(results.beta_labels):
-        print(vv, qq)
-        mean_vv = np.average(problem.products[vv].flatten()[df[byvar+'_zip']==qqval], weights=df.loc[df[byvar+'_zip']==qqval, 'population']) if vv != '1' else 1
-        dudb[qq][ii,:] = mean_vv
     for (qq2,qqval2) in enumerate(byvals):
-        dudb[qq][ii+1+qq2,:] = dist_mesh * (qqval == qqval2)
+        dudb[qq][qq2,:] = dist_mesh * (qqval == qqval2)
+    for (ii,vv) in enumerate(results.beta_labels):
+        mean_vv = np.average(problem.products[vv].flatten()[df[byvar+'_zip']==qqval], weights=df.loc[df[byvar+'_zip']==qqval, 'population']) if vv != '1' else 1
+        dudb[qq][ii+qq2+1,:] = mean_vv
 
 
 pred_s_df = df_marg.groupby([byvar+"_zip", 'logdist_m']).apply(lambda x: np.average(x['share_i'], weights=x['weights'])).reset_index(name='pred_s')
@@ -126,7 +127,6 @@ else:
 
 
 df_out.to_stata(f"{datadir}/Analysis/tracts_marg_pooled_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.dta", write_index=False)
-
 
 
 
