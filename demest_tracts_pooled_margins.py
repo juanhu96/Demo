@@ -8,8 +8,10 @@ pyblp.options.digits = 3
 
 datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
 
-
-config = [False, False, False]
+# config = [False, False, False]
+# config = [True, False, False]
+# config = [True, True, False]
+config = [True, True, True]
 
 
 # for config in [
@@ -21,7 +23,6 @@ config = [False, False, False]
 
 include_hpiquartile, interact_disthpi, include_controls = config
 
-
 if interact_disthpi:
     byvar = 'hpi_quartile'
 else:
@@ -29,88 +30,99 @@ else:
 
 idf = pd.read_csv(f"{datadir}/Analysis/agent_data.csv")
 df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")
+df.rename(columns={'hpiquartile': 'hpi_quartile'}, inplace=True) #for consistency with the other quartile-based variables
 if byvar == 'pooled':
     idf = idf.assign(pooled = 1)
 
+byvals = set(idf[byvar])
 results = pyblp.read_pickle(f"{datadir}/Analysis/tracts_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
+problem = results.problem
 
+print("parameters", results.parameters)
 Vmat = results.parameter_covariances
+Vmat.shape
 
 dist_coefs = results.pi.flatten()
 dist_coefs_se = results.pi_se.flatten()
 
-idf = idf.assign(distbeta = 0, distbeta_se = 0)
-for qq in set(idf[byvar]):
-    qq = int(qq)
-    is_q = idf[byvar] == qq
-    idf['distbeta'] += is_q * dist_coefs[qq-1] 
-    idf['distbeta_se'] += is_q * dist_coefs_se[qq-1]
-    
-# mean utility (zip-level)
+# mean utility (zip-level, everything but distance)
 df['meanutil'] = results.compute_delta(market_id = df['market_ids'])
 
+# df[['meanutil', byvar]].groupby([byvar]).mean()
+
+df = df.rename(columns={byvar: byvar+'_zip'})
+idf = idf.rename(columns={byvar: byvar+'_tract'})
 df_marg = df.merge(idf, on='market_ids', how='right')
+# Weight = ZIP population * agent weights
 df_marg['weights'] = df_marg['population'] * df_marg['weights']
 
 df_marg.sort_values(by=['market_ids'], inplace=True)
 
-
-
-df_marg['agent_id'] = np.arange(len(df_marg))
-
-# Expand DataFrame and create logdist_m
+# Expand df_marg and create logdist_m (distance mesh)
 dist_mesh = np.linspace(-0.5, 2.5, 31)
 df_marg = df_marg.loc[df_marg.index.repeat(len(dist_mesh))].reset_index(drop=True)
 df_marg['logdist_m'] = np.tile(dist_mesh, len(df_marg) // len(dist_mesh))
 
-df_marg['u_i'] = df_marg['meanutil'] + df_marg['distbeta'] * df_marg['logdist_m']
+df_marg = df_marg.assign(dist_util = 0)
+for (qq, qqval) in enumerate(byvals):
+    df_marg['dist_util'] += df_marg['logdist_m'] * dist_coefs[qq] * (df_marg[byvar+"_tract"] == qqval)
+
+
+df_marg['u_i'] = df_marg['meanutil'] + df_marg['dist_util']
 df_marg['share_i'] = np.exp(df_marg['u_i']) / (1 + np.exp(df_marg['u_i']))
-# df_marg['dsdu'] = df_marg['share_i'] * (1 - df_marg['share_i'])
-
-# # mean dsdu by logdist_m
-# dsdu = df_marg.groupby(['logdist_m'])['dsdu'].mean()
-
 
 # populate a vector with the X values
-dudb = np.zeros((Vmat.shape[0], len(dist_mesh)))
-dudb.shape
+dudb = [np.zeros((Vmat.shape[0], len(dist_mesh))) for _ in range(len(byvals))]
+dudb[0]
+dudb[1]
+dudb[2]
+dudb[3]
 
-results.pi_labels
-results.beta_labels
-dudb[0, :] = dist_mesh
-for (ii,vv) in enumerate(results.beta_labels):
-    print(vv)
-    # TODO: if it's by quartile, this should be the mean within quartile
-    mean_vv = np.average(df[vv], weights=df['population']) if vv != '1' else 1
-    dudb[ii+1, :] = mean_vv
-    
+for (qq,qqval) in enumerate(byvals):
+    for (ii,vv) in enumerate(results.beta_labels):
+        print(vv, qq)
+        mean_vv = np.average(problem.products[vv].flatten()[df[byvar+'_zip']==qqval], weights=df.loc[df[byvar+'_zip']==qqval, 'population']) if vv != '1' else 1
+        dudb[qq][ii,:] = mean_vv
+    for (qq2,qqval2) in enumerate(byvals):
+        dudb[qq][ii+1+qq2,:] = dist_mesh * (qqval == qqval2)
 
-pred_s = df_marg.groupby('logdist_m').apply(lambda x: np.average(x['share_i'], weights=x['weights']))
+
+pred_s_df = df_marg.groupby([byvar+"_zip", 'logdist_m']).apply(lambda x: np.average(x['share_i'], weights=x['weights'])).reset_index(name='pred_s')
+pred_s = pred_s_df.pred_s.values
 dsdu = pred_s * (1 - pred_s)
+dsdu = dsdu.reshape(1, -1)
 
-dsdu = dsdu.values.reshape(1, -1)
-# Multiply each row of dudb with dsdu
-dsdb = dudb * dsdu
+dsdb = [np.zeros((Vmat.shape[0], len(dist_mesh))) for _ in range(len(byvals))]
+Vse = [np.zeros((len(dist_mesh),)) for _ in range(len(byvals))]
+for (qq,qqval) in enumerate(byvals):
+    qqind_in_s = np.where(pred_s_df[byvar+'_zip'] == qqval)[0]
+    dsdu_q = dsdu[:,qqind_in_s]
+    dsdb[qq] = dsdu_q * dudb[qq]
+    Vmarg = dsdb[qq].T @ (Vmat/problem.N) @ dsdb[qq]
+    Vse[qq] = np.diag(Vmarg)**0.5
 
-Vmarg = (dsdb.T @ (Vmat/results.problem.N) @ dsdb)
-Vse = np.diag(Vmarg)**0.5
+Vse[0]
+dudb[qq].shape
+dsdu_q.shape
+dsdb[qq].shape
+Vmat.shape
+Vse[0].shape
+Vmat.shape
 
-s_ub = pred_s + 1.96 * Vse
-s_lb = pred_s - 1.96 * Vse
+Vse_concat = np.concatenate(Vse, axis=0)
 
-s_ub
+s_ub = pred_s + 1.96 * Vse_concat
+s_lb = pred_s - 1.96 * Vse_concat
 
-df_out = pd.DataFrame({'logdist_m': dist_mesh, 'share_i': pred_s, 'share_ub': s_ub, 'share_lb': s_lb})
-
-
+if byvar == 'pooled':
+    df_out = pd.DataFrame({'logdist_m': dist_mesh, 'share_i': pred_s, 'share_ub': s_ub, 'share_lb': s_lb})
+else:
+    byvals_rep = np.concatenate([np.repeat(ii, len(dist_mesh)) for ii in byvals], axis=0)
+    df_out = pd.DataFrame({'logdist_m': np.tile(dist_mesh, len(byvals)), 'share_i': pred_s, 'share_ub': s_ub, 'share_lb': s_lb, byvar: byvals_rep})
 
 # pi_se = results.pi_se[0][0]
 # v_mat = results.parameter_covariances 
-# (v_mat[0,0]/results.problem.N)**0.5
-
-
-
-
+# (v_mat[0,0]/problem.N)**0.5
 
 
 df_out.to_stata(f"{datadir}/Analysis/tracts_marg_pooled_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.dta", write_index=False)
