@@ -1,4 +1,4 @@
-# Demand estimation with tract-based distances. Pooled (not by quartile) specifications.
+# Demand estimation with tract-based distances.
 # run after prep_tracts.py
 import pyblp
 import pandas as pd
@@ -7,6 +7,13 @@ import numpy as np
 pyblp.options.digits = 3
 
 datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+
+
+# config = [False, False, False]
+# config = [True, False, False]
+# config = [True, True, False]
+# config = [True, True, True]
+
 
 for config in [
     [False, False, False],
@@ -22,10 +29,18 @@ for config in [
     df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")
     df.rename(columns={'hpiquartile': 'hpi_quartile'}, inplace=True) #for consistency with the other quartile-based variables
 
+
+
     agent_data = pd.read_csv(f"{datadir}/Analysis/agent_data.csv")
 
+    list(df.columns)
+    df.logdist.describe()
+    agent_data.logdist.describe()
+
+
     if interact_disthpi:
-        agent_formulation = pyblp.Formulation('0 + logdistXhpi1 + logdistXhpi2 + logdistXhpi3 + logdistXhpi4')
+        # agent_formulation = pyblp.Formulation('0 + logdistXhpi1 + logdistXhpi2 + logdistXhpi3 + logdistXhpi4')
+        agent_formulation = pyblp.Formulation('0 + logdist:C(hpi_quartile)')
         pi_init = -0.1*np.ones((1,4))
     else:
         agent_formulation = pyblp.Formulation('0 + logdist')
@@ -57,9 +72,9 @@ for config in [
 
     if interact_disthpi:
         for qq in range(1,5):
-            agent_data['hpi_quartile'] = pd.qcut(agent_data['hpi'], 4, labels=False) + 1
             agent_data[f"logdistXhpi{qq}"] = agent_data['logdist'] * (agent_data['hpi_quartile'] == qq)
-            df[f'demand_instruments{qq-1}'] = agent_data.groupby('market_ids')[f'logdistXhpi{qq}'].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights'])).reset_index(drop=True)
+            demand_instruments_qq = pd.DataFrame({f'demand_instruments{qq-1}': agent_data.groupby('market_ids')[f'logdistXhpi{qq}'].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights']))})
+            df = df.merge(demand_instruments_qq, left_on='market_ids', right_index=True)
     else:
         df['demand_instruments0'] = agent_data.groupby('market_ids')['logdist'].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights'])).reset_index(drop=True)
 
@@ -69,8 +84,11 @@ for config in [
                             agent_data=agent_data)
     print(problem)
 
+
     iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-12})
     optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10, 'verbose':1})
+    # iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-11}) #TODO: remove this line
+    # optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-8, 'verbose':1}) #TODO: remove this line
 
     with pyblp.parallel(32):
         results = problem.solve(pi=pi_init,
