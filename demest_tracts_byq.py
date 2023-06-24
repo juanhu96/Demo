@@ -7,7 +7,7 @@ import sys
 
 pyblp.options.digits = 3
 
-datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+datadir = "/export/storage_covidvaccine/Data"
 
 for spec in ['hpi', 'dshare', 'race', 'income']:
     df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")

@@ -6,7 +6,7 @@ import numpy as np
 
 pyblp.options.digits = 3
 
-datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+datadir = "/export/storage_covidvaccine/Data"
 
 
 vars = 'logdist'

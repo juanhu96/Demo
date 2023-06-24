@@ -1,9 +1,9 @@
 // margins plots for original model, logit, and RC
 
-global datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+global datadir "/export/storage_covidvaccine/Data"
 global outdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Output"
 
-use $datadir/MAR01_vars, clear
+use $datadir/Analysis/MAR01_vars, clear
 
 global controlvars race_black race_asian race_hispanic race_other ///
 health_employer health_medicare health_medicaid health_other collegegrad ///
@@ -26,7 +26,7 @@ graph export "$outdir/margins/orig.png", replace
 
 
 // 2. logit
-use $datadir/MAR01_vars, clear
+use $datadir/Analysis/MAR01_vars, clear
 reg delta c.logdistnearest##b4.hpiquartile $controlvars
 predict xi, residuals
 expand 31, gen(expd)

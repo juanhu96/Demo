@@ -1,5 +1,5 @@
 // Snippet to clean the California Mass Vaccination Site Data
-gl datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+gl datadir "/export/storage_covidvaccine/Data"
 
 import delim $datadir/Raw/CaliforniaMassVaccination.csv, clear
 

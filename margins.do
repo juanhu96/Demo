@@ -1,4 +1,4 @@
-global datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+global datadir "/export/storage_covidvaccine/Data"
 global outdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Output"
 
 cap mkdir "$outdir/margins"

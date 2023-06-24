@@ -1,4 +1,4 @@
-gl datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+gl datadir "/export/storage_covidvaccine/Data"
 
 import delim $datadir/Raw/MAR01.csv, clear
 
@@ -10,7 +10,7 @@ gen shares_out = 1 - shares // outside shares
 gen logshares = log(shares)
 gen logshares_out = log(shares_out)
 gen delta = logshares - logshares_out
-save $datadir/MAR01_vars, replace
+save $datadir/Analysis/MAR01_vars, replace
 
 keep zip vaxfull distnearest hpi hpiquartile shares* race_black race_asian race_hispanic race_other ///
 	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
@@ -34,7 +34,7 @@ foreach ii of numlist 1/4{
 // merge in vote shares
 tempfile df
 save `df'
-import delim $datadir/tracts/zip_votes.csv, clear
+import delim $datadir/Intermediate/zip_votes.csv, clear
 keep zip dshare
 merge 1:1 zip using `df', keep(2 3)
 summ dshare, d

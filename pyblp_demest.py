@@ -7,7 +7,7 @@ import numpy as np
 poolnum = 32
 pyblp.options.digits = 4
 
-datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+datadir = "/export/storage_covidvaccine/Data"
 
 # Load data
 df = pd.read_csv(f"{datadir}/Analysis/product_data_tracts.csv")

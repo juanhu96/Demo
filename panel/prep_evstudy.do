@@ -1,4 +1,4 @@
-gl datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+gl datadir "/export/storage_covidvaccine/Data"
 gl logdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Logs"
 
 cap log close

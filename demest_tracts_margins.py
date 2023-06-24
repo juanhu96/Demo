@@ -6,7 +6,7 @@ import numpy as np
 
 pyblp.options.digits = 3
 
-datadir = "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+datadir = "/export/storage_covidvaccine/Data"
 
 # config = [False, False, False]
 # config = [True, False, False]
@@ -42,87 +42,6 @@ for config in [
     # print(results)
     problem = results.problem
 
-
-    ##### Coefficient table #####
-    # print(results.beta_labels)
-    # print(results.pi_labels)
-
-    betas = results.beta.flatten()
-    betases = results.beta_se.flatten()
-    betalabs = results.beta_labels
-    pis = results.pi.flatten()
-    pises = results.pi_se.flatten()
-    pilabs = results.pi_labels
-    
-    if interact_disthpi:
-        rows = 'hpi_quartile[4.0]*logdist'
-    else:
-        rows = 'logdist'
-
-    rows += ' + hpi_quartile1 + hpi_quartile2 + hpi_quartile3'
-    rows += ' + '
-    rows += ' + '.join(['race_black', 'race_asian', 'race_hispanic', 'race_other', 'health_employer', 'health_medicare', 'health_medicaid', 'health_other', 'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 'medianhomevalue', 'popdensity'])
-    rows += ' + hpi_quartile[1.0]*logdist + hpi_quartile[2.0]*logdist + hpi_quartile[3.0]*logdist'
-    rows += ' + 1'
-
-
-
-    latex = ""
-    latex += "\\begin{tabular}{lcccc}\n \\toprule\n"
-    for (ii,vv) in enumerate(rows.split(' + ')):
-        print(ii, vv)
-        if vv in betalabs:
-            coef = betas[betalabs.index(vv)]
-            coef_fmt = '{:.3f}'.format(coef)
-            se = betases[betalabs.index(vv)]
-            se_fmt = '{:.3f}'.format(se)
-        elif vv in pilabs:
-            coef = pis[pilabs.index(vv)]
-            coef_fmt = '{:.3f}'.format(coef)
-            se = pises[pilabs.index(vv)]
-            se_fmt = '{:.3f}'.format(se)
-        else:
-            coef = 0
-            coef_fmt = ''
-            se = np.inf
-            se_fmt = ''
-
-        if abs(coef/se) > 2.576:
-            coef_fmt += '$^{***}$'
-        elif abs(coef/se) > 1.96:
-            coef_fmt += '$^{**}$'
-        elif abs(coef/se) > 1.645:
-            coef_fmt += '$^{*}$'
-
-        if vv == '1':
-            vv_fmt = 'Constant'
-        elif vv == 'hpi_quartile[4.0]*logdist':
-            vv_fmt = 'logdist'
-        else:
-            vv_fmt = vv
-
-        vv_fmt = vv_fmt.replace('_', ' ')
-        vv_fmt = vv_fmt.replace('.0]', '').replace('[', '')
-        vv_fmt = vv_fmt.replace('logdist', 'log(distance)')
-        vv_fmt = vv_fmt.replace('medianhhincome', 'Median Household Income')
-        vv_fmt = vv_fmt.replace('medianhomevalue', 'Median Home Value')
-        vv_fmt = vv_fmt.replace('popdensity', 'Population Density')
-        vv_fmt = vv_fmt.replace('health_', 'Health Insurance: ')
-        vv_fmt = vv_fmt.replace('collegegrad', 'College Grad')
-        vv_fmt = vv_fmt.title()
-        vv_fmt = vv_fmt.replace('Hpi Quartile', 'HPI Quartile ')
-
-        latex += f"{vv_fmt} & {coef_fmt} \\\\ \n"
-        latex += f" & ({se_fmt}) \\\\ \n \\addlinespace \n"
-    latex += "\\bottomrule\n\\end{tabular}\n"
-    with open(f"{datadir}/Analysis/coeftable_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.tex", "w") as f:
-        f.write(latex)
-
-        
-
-
-
-    ###### Margins ######
 
     print("parameters", results.parameters)
     Vmat = results.parameter_covariances

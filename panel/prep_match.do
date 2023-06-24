@@ -1,7 +1,7 @@
 // Matched analysis based on pre-opening vax rate (for every treated zip, match to 3-5 that had the closest vax rate in the week before treatment) and hpiquartile (exact match). Maybe also pre-treatment distance. See PE paper - cohort#time and facility#cohort FEs. 
 
 
-global datadir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Data"
+global datadir "/export/storage_covidvaccine/Data"
 global outdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Output"
 global logdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Logs"
 cap log close
