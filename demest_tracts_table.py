@@ -7,6 +7,7 @@ import numpy as np
 pyblp.options.digits = 3
 
 datadir = "/export/storage_covidvaccine/Data"
+outdir = "/export/storage_covidvaccine/Result"
 
 
 vars = 'logdist'
@@ -65,7 +66,7 @@ for config in [
     print(f"config: include_hpiquartile={include_hpiquartile}, interact_disthpi={interact_disthpi}, include_controls={include_controls}")
 
 
-    results = pyblp.read_pickle(f"{datadir}/Analysis/tracts_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
+    results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
     print(results)
 
     betas = results.beta.flatten()
@@ -119,5 +120,5 @@ for (ii,vv) in enumerate(varlabels):
     latex += serows[ii]
 
 latex += "\\bottomrule\n\\end{tabular}\n"
-with open(f"{datadir}/Analysis/coeftable.tex", "w") as f:
+with open(f"{outdir}/Demand/coeftable.tex", "w") as f:
     f.write(latex)

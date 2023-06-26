@@ -1,9 +1,5 @@
 // Matched analysis based on pre-opening vax rate (for every treated zip, match to 3-5 that had the closest vax rate in the week before treatment) and hpiquartile (exact match). Maybe also pre-treatment distance. See PE paper - cohort#time and facility#cohort FEs. 
 
-
-global datadir "/export/storage_covidvaccine/Data"
-global outdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Output"
-global logdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Logs"
 cap log close
 log using $logdir/prep_match.log , replace
 
@@ -13,7 +9,7 @@ global num_neighbors_init 5
 global match_vars unvax_pct
 global ematch_vars hpiquartile week
 
-use zip week treated treated_thisweek $match_vars $ematch_vars using $datadir/Analysis/panel_toreg.dta, clear
+use zip week treated treated_thisweek $match_vars $ematch_vars using $datadir/Analysis/Demand/panel_toreg.dta, clear
 
 bys zip (week): gen weekb4treatment = f.treated_thisweek
 replace weekb4treatment = 0 if missing(weekb4treatment)
@@ -55,7 +51,7 @@ save $datadir/Intermediate/matching, replace
 use $datadir/Intermediate/matching, clear
 
 
-joinby zip using $datadir/Analysis/panel_toreg.dta
+joinby zip using $datadir/Analysis/Demand/panel_toreg.dta
 
 //fill in event time variables for control group
 gsort match_group week -treated

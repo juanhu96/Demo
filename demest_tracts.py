@@ -8,27 +8,29 @@ pyblp.options.digits = 3
 
 datadir = "/export/storage_covidvaccine/Data"
 
-config = [False, False, False]
+# config = [False, False, False]
 # config = [True, False, False]
-config = [True, True, False]
+# config = [True, True, False]
 # config = [True, True, True]
 
 for config in [
     [False, False, False],
-    [True, False, False],
+    # [True, False, False],
     [True, True, False],
-    [True, True, True]
+    # [True, True, True]
     ]:
 
     include_hpiquartile, interact_disthpi, include_controls = config
 
     print(f"Running config: include_hpiquartile={include_hpiquartile}, interact_disthpi={interact_disthpi}, include_controls={include_controls}")
     
-    df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")
+    df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
     df.rename(columns={'hpiquartile': 'hpi_quartile'}, inplace=True) #for consistency with the other quartile-based variables
 
-    agent_data = pd.read_csv(f"{datadir}/Analysis/agent_data.csv")
+    agent_data = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv")
 
+    agent_data.describe()
+    
     if interact_disthpi:
         agent_formulation = pyblp.Formulation('0 + logdist:C(hpi_quartile)')
         pi_init = -0.1*np.ones((1,4))
@@ -72,7 +74,9 @@ for config in [
                             agent_data=agent_data)
     print(problem)
 
-    tighter_tols = False
+    df.describe()
+    agent_data.describe()
+    tighter_tols = True
     if tighter_tols:
         iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-12})
         optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10, 'verbose':0})
@@ -88,24 +92,36 @@ for config in [
                                 sigma = 0)
 
     print(results)
-    results.to_pickle(f"{datadir}/Analysis/tracts_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
+    results.to_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
 
 
 # export results to csv
 
 include_hpiquartile, interact_disthpi, include_controls = [False, False, False]
-results = pyblp.read_pickle(f"{datadir}/Analysis/tracts_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
+results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
 m1coefs = np.array([results.beta[0][0], results.pi[0][0]])
 
 
 include_hpiquartile, interact_disthpi, include_controls = [True, True, False]
-results = pyblp.read_pickle(f"{datadir}/Analysis/tracts_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
+results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
 print(results)
 m2coefs = np.array([results.beta[0][0], results.pi[0][3], results.beta[2][0], results.beta[3][0], results.beta[4][0], results.pi[0][0], results.pi[0][1], results.pi[0][2]])
 
-datadir = "/export/storage_covidvaccine/Data"
-np.save(f'{datadir}/Analysis/m1coefs.npy', m1coefs)
-np.save(f'{datadir}/Analysis/m2coefs.npy', m2coefs)
+useold = False #TODO:
+if useold:
+    np.save(f'{datadir}/Analysis/m1coefs_0622.npy', m1coefs)
+    np.save(f'{datadir}/Analysis/m2coefs_0622.npy', m2coefs)
+else:
+    np.save(f'{datadir}/Analysis/m1coefs.npy', m1coefs)
+    np.save(f'{datadir}/Analysis/m2coefs.npy', m2coefs)
 
 m1coefs = np.load(f'{datadir}/Analysis/m1coefs.npy')
 m2coefs = np.load(f'{datadir}/Analysis/m2coefs.npy')
+print(m1coefs)
+print(m2coefs)
+
+
+m1coefs = np.load(f'{datadir}/Analysis/m1coefs_0622.npy')
+m2coefs = np.load(f'{datadir}/Analysis/m2coefs_0622.npy')
+print(m1coefs)
+print(m2coefs)

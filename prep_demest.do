@@ -1,6 +1,6 @@
 gl datadir "/export/storage_covidvaccine/Data"
 
-import delim $datadir/Raw/MAR01.csv, clear
+import delim $datadir/Raw/notreallyraw/MAR01.csv, clear
 
 gen shares = vaxfull
 replace shares = 0.05 if shares < 0.05
@@ -10,7 +10,7 @@ gen shares_out = 1 - shares // outside shares
 gen logshares = log(shares)
 gen logshares_out = log(shares_out)
 gen delta = logshares - logshares_out
-save $datadir/Analysis/MAR01_vars, replace
+save $datadir/Analysis/Demand/MAR01_vars, replace
 
 keep zip vaxfull distnearest hpi hpiquartile shares* race_black race_asian race_hispanic race_other ///
 	health_employer health_medicare health_medicaid health_other collegegrad unemployment ///
@@ -41,7 +41,7 @@ summ dshare, d
 replace dshare = r(mean) if dshare == .
 drop _merge
 
-export delim $datadir/Analysis/demest_data.csv, replace
+export delim $datadir/Analysis/Demand/demest_data.csv, replace
 
 
 

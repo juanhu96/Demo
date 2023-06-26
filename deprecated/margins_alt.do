@@ -1,9 +1,9 @@
 // margins plots for original model, logit, and RC
 
 global datadir "/export/storage_covidvaccine/Data"
-global outdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Output"
+global outdir "/export/storage_covidvaccine/Result/Demand"
 
-use $datadir/Analysis/MAR01_vars, clear
+use $datadir/Analysis/Demand/MAR01_vars, clear
 
 global controlvars race_black race_asian race_hispanic race_other ///
 health_employer health_medicare health_medicaid health_other collegegrad ///
@@ -26,7 +26,7 @@ graph export "$outdir/margins/orig.png", replace
 
 
 // 2. logit
-use $datadir/Analysis/MAR01_vars, clear
+use $datadir/Analysis//Demand/MAR01_vars, clear
 reg delta c.logdistnearest##b4.hpiquartile $controlvars
 predict xi, residuals
 expand 31, gen(expd)
@@ -56,7 +56,7 @@ graph export "$outdir/marg2.png", replace
 
 
 // 3. RC
-use $datadir/Analysis/agents_marg, clear
+use $datadir/Analysis/Demand/agents_marg, clear
 gen agent_id = _n
 
 expand 31, gen(expd)
@@ -81,7 +81,7 @@ graph export "$outdir/marg3.png", replace
 
 
 // 5. tract distances with RC (on log distance and on the constant)
-use $datadir/Analysis/tracts_marg_rc, clear
+use $datadir/Analysis/Demand/tracts_marg_rc, clear
 
 gen agent_id = _n
 

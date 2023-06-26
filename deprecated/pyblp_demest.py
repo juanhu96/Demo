@@ -10,7 +10,7 @@ pyblp.options.digits = 4
 datadir = "/export/storage_covidvaccine/Data"
 
 # Load data
-df = pd.read_csv(f"{datadir}/Analysis/product_data_tracts.csv")
+df = pd.read_csv(f"{datadir}/Analysis/Demand/product_data_tracts.csv")
 df.hpiquartile.unique()
 # cat_dtype = pd.CategoricalDtype(categories=[4,3,2,1], ordered=True) #TODO: figure out how to make 4 the reference category
 # df.hpiquartile = df.hpiquartile.astype(cat_dtype)
@@ -31,13 +31,13 @@ include_hpi = False #Switch to True to include HPI quartile * distance interacti
 if include_hpi:
     formulation2 = pyblp.Formulation('0 + log(dist):C(hpiquartile)')
     sigma_init = 0.1*np.eye(4)
-    picklepath = f"{datadir}/Analysis/res_byhpi.pkl"
-    dfpath = f"{datadir}/Analysis/demest_byhpi.csv"
+    picklepath = f"{datadir}/Analysis/Demand/res_byhpi.pkl"
+    dfpath = f"{datadir}/Analysis/Demand/demest_byhpi.csv"
 else:
     formulation2 = pyblp.Formulation('0 + log(dist)')
     sigma_init = 0.1
-    picklepath = f"{datadir}/Analysis/res_pyblp.pkl"
-    dfpath = f"{datadir}/Analysis/demest_pyblp.csv"
+    picklepath = f"{datadir}/Analysis/Demand/res_pyblp.pkl"
+    dfpath = f"{datadir}/Analysis/Demand/demest_pyblp.csv"
 
 product_formulation = (formulation1, formulation2)
 
@@ -112,7 +112,7 @@ pd.Series(df['meanutil']).describe()
 # merge df and idf on market_ids
 df_marg = df.merge(idf, on='market_ids', how='right')
 df_marg.drop(columns=['market_ids'], inplace=True)
-df_marg.to_stata(f"{datadir}/Analysis/agents_marg.dta")
+df_marg.to_stata(f"{datadir}/Analysis/Demand/agents_marg.dta")
 
 
 list(df_marg)
@@ -133,7 +133,7 @@ df_marg = pd.concat(dflist)
 # df_marg['meanutil'] = df_marg['meanutil'] + df_marg['xi_fe']
 df_marg['meanutil'] = df_marg['meanutil'] + np.log(df_marg['dist'])*df_marg['distbeta']
 df_marg['shares'] = np.exp(df_marg['meanutil']) / (1 + np.exp(df_marg['meanutil']))
-df_marg.to_csv(f"{datadir}/Analysis/demest_margins.csv")
+df_marg.to_csv(f"{datadir}/Analysis/Demand/demest_margins.csv")
 
 
 

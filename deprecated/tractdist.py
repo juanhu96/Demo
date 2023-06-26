@@ -9,7 +9,7 @@ datadir = "/export/storage_covidvaccine/Data"
 
 
 # read in tract centroids
-tracts = gpd.read_file(f"{datadir}/Raw/popctr_tracts2010/popctr_tracts2010.shp")
+tracts = gpd.read_file(f"{datadir}/Raw/Location/popctr_tracts2010/popctr_tracts2010.shp")
 tracts = tracts.loc[tracts['STATE'] == '06', :]
 tracts.rename(columns={'FIPS': 'tract'}, inplace=True)
 tracts = tracts[['tract', 'geometry']]
@@ -24,7 +24,7 @@ crs = f'EPSG:326{str(utm_zone).zfill(2)}'  # This is the EPSG code for UTM zones
 tracts = tracts.to_crs(crs)
 
 # Read in pharmacy locations
-pharm = pd.read_csv(f"{datadir}/Raw/00_Pharmacies.csv")
+pharm = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv")
 pharm = pharm.loc[pharm['state'].isin(['CA']), ['state', 'latitude', 'longitude']] 
 pharm['geometry'] = [Point(xy) for xy in zip(pharm.longitude, pharm.latitude)]
 pharm = gpd.GeoDataFrame(pharm, geometry='geometry')

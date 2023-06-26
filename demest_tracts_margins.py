@@ -11,12 +11,12 @@ datadir = "/export/storage_covidvaccine/Data"
 # config = [False, False, False]
 # config = [True, False, False]
 # config = [True, True, False]
-config = [True, True, True]
+# config = [True, True, True]
 
 
 for config in [
-    # [False, False, False],
-    # [True, False, False],
+    [False, False, False],
+    [True, False, False],
     [True, True, False],
     [True, True, True]
     ]:
@@ -30,15 +30,15 @@ for config in [
     else:
         byvar = 'pooled'
 
-    idf = pd.read_csv(f"{datadir}/Analysis/agent_data.csv")
-    df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")
+    idf = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv")
+    df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
     df.rename(columns={'hpiquartile': 'hpi_quartile'}, inplace=True) #for consistency with the other quartile-based variables
     if byvar == 'pooled':
         idf = idf.assign(pooled = 1)
         df = df.assign(pooled = 1)
 
     byvals = set(idf[byvar])
-    results = pyblp.read_pickle(f"{datadir}/Analysis/tracts_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
+    results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
     # print(results)
     problem = results.problem
 
@@ -114,7 +114,8 @@ for config in [
         df_out = pd.DataFrame({'logdist_m': np.tile(dist_mesh, len(byvals)), 'share_i': pred_s, 'share_ub': s_ub, 'share_lb': s_lb, byvar: byvals_rep})
 
     print(df_out.describe())
-    savepath = f"{datadir}/Analysis/tracts_marg_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.dta"
+    savepath = f"{datadir}/Analysis/Demand/marg_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.dta"
     print("Saving to", savepath)
     df_out.to_stata(savepath, write_index=False)
 
+# next, run margins.do

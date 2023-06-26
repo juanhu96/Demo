@@ -1,5 +1,7 @@
 global datadir "/export/storage_covidvaccine/Data"
-global outdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Output"
+global outdir "/export/storage_covidvaccine/Result/Demand"
+
+// run after demest_tracts_margins.py
 
 cap mkdir "$outdir/margins"
 cap mkdir "$outdir/margins/pooled"
@@ -11,7 +13,7 @@ foreach config in "000" "100"{ //pooled
     if `incl_hpiq'==1{
     	loc notes "Notes: Including HPI quartile controls."
     }
-    use "$datadir/Analysis/tracts_marg_`config'.dta", clear
+    use "$datadir/Analysis/Demand/marg_`config'.dta", clear
     twoway rarea share_lb share_ub logdist_m, color(gs14%50) || ///
     line share_i logdist_m , ///
         graphregion(margin(b-4 l+1)) title("") ///
@@ -35,7 +37,7 @@ foreach config in "110" "111"{ //by quartile
     	loc notes "Notes: Including demographic and HPI quartile controls."
     }
 
-    use "$datadir/Analysis/tracts_marg_`config'.dta", clear
+    use "$datadir/Analysis/Demand/marg_`config'.dta", clear
 	twoway ///
 	rarea share_lb share_ub logdist_m  if `byvar' == 1, color(gs14%50) || ///
 	rarea share_lb share_ub logdist_m  if `byvar' == 2, color(gs14%50) || ///

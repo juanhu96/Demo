@@ -1,5 +1,3 @@
-gl datadir "/export/storage_covidvaccine/Data"
-gl logdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Logs"
 
 cap log close
 log using $logdir/prep_evstudy.log , replace

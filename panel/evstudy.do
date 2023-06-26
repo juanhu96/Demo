@@ -1,7 +1,3 @@
-global datadir "/export/storage_covidvaccine/Data"
-global outdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Output"
-global logdir "/export/storage_adgandhi/MiscLi/VaccineDemandLiGandhi/Logs"
-
 cap log close
 log using $logdir/evstudy.log , replace
 
@@ -61,8 +57,8 @@ tabstat treated_thisweek, by(week) stat(count sum mean)
 
 
 // save data for event study regression
-save $datadir/Analysis/panel_toreg.dta, replace
-use $datadir/Analysis/panel_toreg.dta, clear
+save $datadir/Analysis/Demand/panel_toreg.dta, replace
+use $datadir/Analysis/Demand/panel_toreg.dta, clear
 
 
 // global yvar newvax_shareunvax

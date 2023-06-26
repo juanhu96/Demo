@@ -10,10 +10,10 @@ pyblp.options.digits = 3
 datadir = "/export/storage_covidvaccine/Data"
 
 for spec in ['hpi', 'dshare', 'race', 'income']:
-    df = pd.read_csv(f"{datadir}/Analysis/demest_data.csv")
+    df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
     df.rename(columns={'hpiquartile': 'hpi_quartile'}, inplace=True) #for consistency with the other quartile-based variables
 
-    agent_data = pd.read_csv(f"{datadir}/Analysis/agent_data.csv")
+    agent_data = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv")
 
     print(f"Running {spec} specification")
 
@@ -76,19 +76,19 @@ for spec in ['hpi', 'dshare', 'race', 'income']:
                                 )
 
     print(results)
-    results.to_pickle(f"{datadir}/Analysis/tracts_results_by{spec}.pkl")
+    results.to_pickle(f"{datadir}/Analysis/Demand/tracts_results_by{spec}.pkl")
 
     # output pi to csv
     if spec == 'hpi':
         pi = pd.DataFrame({'hpi_quartile':list(range(1,5)), 'pi':results.pi.flatten()})
-        pi.to_csv(f"{datadir}/Analysis/tracts_pi_byhpi.csv", index=False)
+        pi.to_csv(f"{datadir}/Analysis/Demand/tracts_pi_byhpi.csv", index=False)
 
     ###################
     # Margins plots
     ###################
 
     # load results
-    results = pyblp.read_pickle(f"{datadir}/Analysis/tracts_results_by{spec}.pkl")
+    results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/tracts_results_by{spec}.pkl")
     idf = agent_data[['market_ids', 'weights', byvar]]
 
     # add the quartile-specific distance coefficients
@@ -109,6 +109,6 @@ for spec in ['hpi', 'dshare', 'race', 'income']:
     df_marg['weights'] = df_marg['population'] * df_marg['weights']
 
     df_marg.sort_values(by=['market_ids'], inplace=True)
-    df_marg.to_stata(f"{datadir}/Analysis/tracts_marg_by{spec}.dta")
+    df_marg.to_stata(f"{datadir}/Analysis/Demand/tracts_marg_by{spec}.dta")
 
 

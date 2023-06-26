@@ -15,7 +15,7 @@ precincts = precincts[['precinct', 'dvotes', 'rvotes', 'sum_votes', 'geometry']]
 
 #### TRACT ####
 # read in tract shapefile
-tracts = gpd.read_file(f"{datadir}/Raw/tl_2010_06_tract10/tl_2010_06_tract10.shp")
+tracts = gpd.read_file(f"{datadir}/Raw/AdminShapefiles/tl_2010_06_tract10/tl_2010_06_tract10.shp")
 tracts = tracts[['GEOID10', 'geometry']]
 tracts = tracts.rename(columns={'GEOID10': 'tract'})
 tracts['tract'] = tracts['tract'].astype(str)
@@ -44,7 +44,7 @@ print("Done with tract votes")
 
 #### ZIP ####
 # read in full national zips
-zips = gpd.read_file(f"{datadir}/Raw/tl_2020_us_zcta520/tl_2020_us_zcta520.shp")
+zips = gpd.read_file(f"{datadir}/Raw/AdminShapefiles/tl_2020_us_zcta520/tl_2020_us_zcta520.shp")
 zips = zips[['ZCTA5CE20', 'geometry']]
 zips = zips.rename(columns={'ZCTA5CE20': 'zip'})
 zips['zip'] = zips['zip'].astype(str)

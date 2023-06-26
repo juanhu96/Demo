@@ -1,7 +1,6 @@
 // Snippet to clean the California Mass Vaccination Site Data
-gl datadir "/export/storage_covidvaccine/Data"
 
-import delim $datadir/Raw/CaliforniaMassVaccination.csv, clear
+import delim $datadir/Raw/notreallyraw/CaliforniaMassVaccination.csv, clear
 
 gen opendate = date(opened,"MDY")
 gen closedate = date(closed,"MDY")
