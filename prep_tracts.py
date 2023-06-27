@@ -84,7 +84,6 @@ else:
     # testmerge = tract_demog.merge(tract_nearest_df, on='tract', how='outer', indicator=True)
     # testmerge._merge.value_counts() # perfect match with centroids
     tract_demog.columns = tract_demog.columns.str.lower()
-    print(tract_demog.columns.tolist())
     tract_demog.rename(columns={'population': 'tr_pop'}, inplace=True)
     tract_demog.drop(columns=['state_id', 'county_id', 'tract_id', 'hpi', 'hpiquartile', 'dshare', 'rshare', 'dvotes', 'rvotes', 'sum_votes', 'latitude', 'longitude', 'land_area', 'health_none', 'race_white'], inplace=True) #TODO: re-construct these things 
     tract_demog['tract'] 
@@ -170,7 +169,6 @@ agent_data = agent_data.assign(market_ids = agent_data['zip'],
 pd.set_option('display.max_columns', None)
 agent_data.describe()
 
-print(agent_data.columns.tolist())
 agent_data[['hpi']].describe()
 
 # If a ZIP has no tracts, create a fake tract that's just the ZIP
@@ -192,10 +190,17 @@ agent_data['nodes'] = 0 # for pyblp (no random coefficients)
 agent_data['logdist'] = np.log(agent_data['dist']) 
 
 print("agent_data.describe() \n", agent_data.describe())
+print("product data describe() \n", df.describe())
 
 # save to csv
 agent_data.to_csv(f"{datadir}/Analysis/Demand/agent_data.csv", index=False)
 
 # summarize tract distance
+print("Distance (tract-level):")
+print(agent_data['dist'].describe())
+print("Log distance (tract-level):")
+print(agent_data['logdist'].describe())
+print("Distance (mean within ZIP):")
 print(agent_data.groupby('market_ids')['dist'].mean().describe())
+print("Log distance (mean within ZIP):")
 print(agent_data.groupby('market_ids')['logdist'].mean().describe())
