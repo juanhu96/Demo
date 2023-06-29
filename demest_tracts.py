@@ -10,8 +10,9 @@ datadir = "/export/storage_covidvaccine/Data"
 
 # config = [False, False, False]
 # config = [True, False, False]
-# config = [True, True, False]
+config = [True, True, False]
 # config = [True, True, True]
+
 
 for config in [
     [False, False, False],
@@ -32,11 +33,17 @@ for config in [
     agent_data.describe()
     
     if interact_disthpi:
-        agent_formulation = pyblp.Formulation('0 + logdist:C(hpi_quartile)')
-        pi_init = -0.1*np.ones((1,4))
+        agent_data = agent_data.assign(
+            logdistXhpi_quartile1 = agent_data['logdist'] * (agent_data['hpi_quartile'] == 1),
+            logdistXhpi_quartile2 = agent_data['logdist'] * (agent_data['hpi_quartile'] == 2),
+            logdistXhpi_quartile3 = agent_data['logdist'] * (agent_data['hpi_quartile'] == 3),
+            logdistXhpi_quartile4 = agent_data['logdist'] * (agent_data['hpi_quartile'] == 4))
+        agent_formulation = pyblp.Formulation('0 + logdistXhpi_quartile1 + logdistXhpi_quartile2 + logdistXhpi_quartile3 + logdist')
+        # agent_formulation = pyblp.Formulation('0 + logdistXhpi_quartile1 + logdistXhpi_quartile2 + logdistXhpi_quartile3 + logdistXhpi_quartile4')
+        pi_init = -0.001*np.ones((1,4))
     else:
         agent_formulation = pyblp.Formulation('0 + logdist')
-        pi_init = -0.1*np.ones((1,1))
+        pi_init = -0.001*np.ones((1,1))
 
     if include_controls:
         controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
@@ -58,7 +65,9 @@ for config in [
     
     formulation2 = pyblp.Formulation('1')
 
+    # Instruments
     if interact_disthpi:
+        # (a) distance * hpi_quartile IVs
         for qq in range(1,5):
             agent_data[f"logdistXhpi{qq}"] = agent_data['logdist'] * (agent_data['hpi_quartile'] == qq)
             demand_instruments_qq = pd.DataFrame({f'demand_instruments{qq-1}': agent_data.groupby('market_ids')[f'logdistXhpi{qq}'].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights']))})
@@ -66,25 +75,19 @@ for config in [
     else:
         df['demand_instruments0'] = agent_data.groupby('market_ids')['logdist'].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights'])).reset_index(drop=True)
 
-    problem = pyblp.Problem(product_formulations=(formulation1, formulation2), 
-                            product_data=df, 
-                            agent_formulation=agent_formulation, 
-                            agent_data=agent_data)
+    problem = pyblp.Problem(product_formulations=(formulation1, formulation2), product_data=df, agent_formulation=agent_formulation, agent_data=agent_data)
 
-    tighter_tols = True
+    iteration_config = pyblp.Iteration(method='lm')
+    # iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-13})
+    tighter_tols = True #TODO: switch
     if tighter_tols:
-        iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-12})
-        optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10, 'verbose':0})
+        optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-12})
     else:
-        iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-11})
-        optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-8, 'verbose':1})
+        optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-8})
 
 
     with pyblp.parallel(32):
-        results = problem.solve(pi=pi_init,
-                                iteration = iteration_config,
-                                optimization = optimization_config,
-                                sigma = 0)
+        results = problem.solve(pi=pi_init, sigma = 0, iteration = iteration_config, optimization = optimization_config)
 
 
     results.to_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
