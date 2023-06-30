@@ -23,7 +23,7 @@ for config in [
 
     include_hpiquartile, interact_disthpi, include_controls = config
 
-    print(f"Running config: include_hpiquartile={include_hpiquartile}, interact_disthpi={interact_disthpi}, include_controls={include_controls}")
+    print(f"***********\nRunning config: include_hpiquartile={include_hpiquartile}, interact_disthpi={interact_disthpi}, include_controls={include_controls}")
     
     df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
     df.rename(columns={'hpiquartile': 'hpi_quartile'}, inplace=True) #for consistency with the other quartile-based variables
@@ -77,13 +77,11 @@ for config in [
 
     problem = pyblp.Problem(product_formulations=(formulation1, formulation2), product_data=df, agent_formulation=agent_formulation, agent_data=agent_data)
 
+    # Iteration and Optimization Configurations for PyBLP
+    tighter_tols = False #TODO: switch
+    gtol = 1e-12 if tighter_tols else 1e-8
     iteration_config = pyblp.Iteration(method='lm')
-    # iteration_config = pyblp.Iteration(method='squarem', method_options={'atol':1e-13})
-    tighter_tols = True #TODO: switch
-    if tighter_tols:
-        optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-12})
-    else:
-        optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-8})
+    optimization_config = pyblp.Optimization('trust-constr', {'gtol':gtol})
 
 
     with pyblp.parallel(32):
