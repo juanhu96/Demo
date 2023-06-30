@@ -9,12 +9,14 @@ pyblp.options.digits = 3
 datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result"
 
+# TODO: tract-control version
+controls_tract = True
 
 vars = 'logdist'
 vars += ' + hpi_quartile1 + hpi_quartile2 + hpi_quartile3'
 vars += ' + '
 vars += ' + '.join(['race_black', 'race_asian', 'race_hispanic', 'race_other', 'health_employer', 'health_medicare', 'health_medicaid', 'health_other', 'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 'medianhomevalue', 'popdensity'])
-vars += ' + hpi_quartile[1.0]*logdist + hpi_quartile[2.0]*logdist + hpi_quartile[3.0]*logdist'
+vars += ' + logdistXhpi_quartile1 + logdistXhpi_quartile2 + logdistXhpi_quartile3'
 vars += ' + 1'
 
 # NOTE: `vars` should match variable names in the pyblp formulation, `vv_fmt` is the formatted version for the table
@@ -30,7 +32,9 @@ for vv in vars.split(' + '):
         vv_fmt = vv
 
     vv_fmt = vv_fmt.replace('_', ' ')
+    vv_fmt = vv_fmt.replace('Xhpi', '*hpi')
     vv_fmt = vv_fmt.replace('.0]', '').replace('[', '')
+    vv_fmt = vv_fmt.replace('hpi_quartile', 'HPI Quartile ')
     vv_fmt = vv_fmt.replace('logdist', 'log(distance)')
     vv_fmt = vv_fmt.replace('medianhhincome', 'Median Household Income')
     vv_fmt = vv_fmt.replace('medianhomevalue', 'Median Home Value')
@@ -61,7 +65,7 @@ for config in [ #loop over configs (columns)
 
     print(f"config: include_hpiquartile={include_hpiquartile}, interact_disthpi={interact_disthpi}, include_controls={include_controls}")
 
-    results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}.pkl")
+    results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}{int(controls_tract)}.pkl")
 
     betas = results.beta.flatten()
     betases = results.beta_se.flatten()
@@ -71,8 +75,8 @@ for config in [ #loop over configs (columns)
     pilabs = results.pi_labels
 
     for (ii,vv) in enumerate(vars.split(' + ')):
-        if interact_disthpi and vv == 'logdist':
-            vv = 'hpi_quartile[4.0]*logdist'
+        # if interact_disthpi and vv == 'logdist':
+        #     vv = 'hpi_quartile[4.0]*logdist'
 
         if vv in betalabs:
             coef = betas[betalabs.index(vv)]
@@ -89,6 +93,8 @@ for config in [ #loop over configs (columns)
             coef_fmt = ''
             se = np.inf
             se_fmt = ''
+        
+        #TODO: account for scaling if tract demographics
 
         # add significance stars 
         if abs(coef/se) > 2.576:
@@ -112,5 +118,5 @@ for (ii,vv) in enumerate(varlabels):
     latex += serows[ii]
 
 latex += "\\bottomrule\n\\end{tabular}\n"
-with open(f"{outdir}/Demand/coeftable.tex", "w") as f:
+with open(f"{outdir}/Demand/coeftable_tractctrl{int(controls_tract)}.tex", "w") as f:
     f.write(latex)
