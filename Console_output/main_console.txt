@@ -1,0 +1,268 @@
+Start importing the problem for Dollar with N =10 and 14000
+Constructing demand vectors...
+../Result/N10_gamma14000/Dollar/HPI_Dist/z_total.csv
+Start solving the problem
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.005
+Constructing objective function
+Constructing capacity constraints
+Constructing demand constraints
+Constructing budget constraint
+Constructing closest constraint
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 32522088 rows, 32514030 columns and 97404900 nonzeros
+Model fingerprint: 0x5540d157
+Variable types: 32509995 continuous, 4035 integer (4035 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 4e+04]
+  Objective range  [3e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.551989e+07
+Presolve removed 0 rows and 0 columns (presolve time = 7s) ...
+Presolve removed 0 rows and 0 columns (presolve time = 11s) ...
+Presolve removed 0 rows and 133155 columns (presolve time = 18s) ...
+Presolve removed 213428 rows and 133155 columns (presolve time = 29s) ...
+Presolve removed 32510038 rows and 133155 columns (presolve time = 33s) ...
+Presolve removed 32510038 rows and 133155 columns (presolve time = 36s) ...
+Presolve removed 32510038 rows and 32433790 columns (presolve time = 42s) ...
+Presolve removed 32510038 rows and 32433790 columns (presolve time = 46s) ...
+Presolve removed 32510038 rows and 32433896 columns (presolve time = 50s) ...
+Presolve removed 32510038 rows and 32433896 columns (presolve time = 55s) ...
+Presolve removed 32510049 rows and 32433924 columns (presolve time = 61s) ...
+Presolve removed 32510049 rows and 32433924 columns (presolve time = 66s) ...
+Presolve removed 32510120 rows and 32434279 columns
+Presolve time: 69.67s
+Presolved: 11968 rows, 79751 columns, 159502 nonzeros
+Found heuristic solution: objective 2.553412e+07
+Variable types: 79751 continuous, 0 integer (0 binary)
+Deterministic concurrent LP optimizer: primal and dual simplex
+Showing first log only...
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.7199563e+07   0.000000e+00   2.351123e+06     85s
+   33724    2.8039858e+07   0.000000e+00   0.000000e+00     85s
+Concurrent spin time: 0.30s
+
+Solved with primal simplex
+
+Root relaxation: objective 2.803986e+07, 33724 iterations, 0.64 seconds (0.24 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    2.803986e+07 2.8040e+07  0.00%     -   86s
+
+Explored 1 nodes (33724 simplex iterations) in 90.82 seconds (57.53 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 2: 2.80399e+07 2.55199e+07 
+
+Optimal solution found (tolerance 5.00e-03)
+Best objective 2.803985792967e+07, best bound 2.803985792967e+07, gap 0.0000%
+../Result/N10_gamma14000/Dollar/HPI_Dist/z_total.csv
+Start solving the problem
+
+Set parameter MIPGap to value 0.005
+Constructing objective function
+Constructing capacity constraints
+Constructing demand constraints
+Constructing budget constraint
+Constructing closest constraint
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709016 rows, 40700958 columns and 121931140 nonzeros
+Model fingerprint: 0x21459031
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 4e+04]
+  Objective range  [3e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.589349e+07
+Presolve removed 0 rows and 0 columns (presolve time = 5s) ...
+Presolve removed 40695940 rows and 166683 columns (presolve time = 10s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 15s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 20s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 25s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 31s) ...
+Presolve removed 40695940 rows and 40615667 columns
+Presolve time: 31.79s
+Presolved: 13076 rows, 85291 columns, 170582 nonzeros
+Variable types: 80240 continuous, 5051 integer (5051 binary)
+Deterministic concurrent LP optimizer: primal and dual simplex
+Showing first log only...
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   2.664569e+06     39s
+   70213    2.8380528e+07   0.000000e+00   0.000000e+00     40s
+Concurrent spin time: 0.23s
+
+Solved with primal simplex
+
+Root relaxation: objective 2.838053e+07, 70213 iterations, 1.19 seconds (1.58 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.8381e+07    0   92 2.5893e+07 2.8381e+07  9.60%     -   40s
+H    0     0                    2.837790e+07 2.8381e+07  0.01%     -   40s
+
+Explored 1 nodes (72819 simplex iterations) in 42.95 seconds (62.33 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 2: 2.83779e+07 2.58935e+07 
+
+Optimal solution found (tolerance 5.00e-03)
+Best objective 2.837790435104e+07, best bound 2.838052751868e+07, gap 0.0092%
+Start importing the problem for Dollar with N =10 and 16000
+Constructing demand vectors...
+../Result/N10_gamma16000/Dollar/HPI_Dist/z_total.csv
+Start solving the problem
+
+Set parameter MIPGap to value 0.005
+Constructing objective function
+Constructing capacity constraints
+Constructing demand constraints
+Constructing budget constraint
+Constructing closest constraint
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 32522088 rows, 32514030 columns and 97404900 nonzeros
+Model fingerprint: 0xdd5b4658
+Variable types: 32509995 continuous, 4035 integer (4035 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 4e+04]
+  Objective range  [3e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.584332e+07
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 0 rows and 133155 columns (presolve time = 13s) ...
+Presolve removed 213428 rows and 133155 columns (presolve time = 21s) ...
+Presolve removed 32510040 rows and 133155 columns (presolve time = 26s) ...
+Presolve removed 32510040 rows and 32433790 columns (presolve time = 32s) ...
+Presolve removed 32510040 rows and 32433963 columns (presolve time = 35s) ...
+Presolve removed 32510040 rows and 32433963 columns (presolve time = 40s) ...
+Presolve removed 32510057 rows and 32434001 columns (presolve time = 45s) ...
+Presolve removed 32510057 rows and 32434001 columns (presolve time = 50s) ...
+Presolve removed 32510128 rows and 32434356 columns
+Presolve time: 53.79s
+Presolved: 11960 rows, 79674 columns, 159348 nonzeros
+Found heuristic solution: objective 2.586199e+07
+Variable types: 79674 continuous, 0 integer (0 binary)
+Deterministic concurrent LP optimizer: primal and dual simplex
+Showing first log only...
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.7653275e+07   0.000000e+00   2.344099e+06     64s
+   25358    2.8110004e+07   0.000000e+00   0.000000e+00     65s
+Concurrent spin time: 0.22s
+
+Solved with primal simplex
+
+Root relaxation: objective 2.811000e+07, 25358 iterations, 0.43 seconds (0.20 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    2.811000e+07 2.8110e+07  0.00%     -   65s
+
+Explored 1 nodes (25358 simplex iterations) in 68.50 seconds (57.48 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 2: 2.811e+07 2.58433e+07 
+
+Optimal solution found (tolerance 5.00e-03)
+Best objective 2.811000440823e+07, best bound 2.811000440823e+07, gap 0.0000%
+../Result/N10_gamma16000/Dollar/HPI_Dist/z_total.csv
+Start solving the problem
+
+Set parameter MIPGap to value 0.005
+Constructing objective function
+Constructing capacity constraints
+Constructing demand constraints
+Constructing budget constraint
+Constructing closest constraint
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709016 rows, 40700958 columns and 121931140 nonzeros
+Model fingerprint: 0x211f7f94
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 4e+04]
+  Objective range  [3e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.622773e+07
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 0 rows and 166683 columns (presolve time = 15s) ...
+Presolve removed 246956 rows and 166683 columns (presolve time = 16s) ...
+Presolve removed 246956 rows and 166683 columns (presolve time = 24s) ...
+Presolve removed 40695940 rows and 166683 columns (presolve time = 27s) ...
+Presolve removed 40695940 rows and 166683 columns (presolve time = 30s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 37s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 40s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 47s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 50s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 55s) ...
+Presolve removed 40695940 rows and 40615667 columns (presolve time = 61s) ...
+Presolve removed 40695940 rows and 40615667 columns
+Presolve time: 61.80s
+Presolved: 13076 rows, 85291 columns, 170582 nonzeros
+Variable types: 80240 continuous, 5051 integer (5051 binary)
+Deterministic concurrent LP optimizer: primal and dual simplex
+Showing first log only...
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   2.664569e+06     71s
+   62429    2.8405972e+07   0.000000e+00   0.000000e+00     72s
+Concurrent spin time: 0.20s
+
+Solved with primal simplex
+
+Root relaxation: objective 2.840597e+07, 62429 iterations, 0.94 seconds (1.24 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    2.840597e+07 2.8406e+07  0.00%     -   72s
+
+Explored 1 nodes (64020 simplex iterations) in 75.01 seconds (61.72 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 2: 2.8406e+07 2.62277e+07 
+
+Optimal solution found (tolerance 5.00e-03)
+Best objective 2.840597191883e+07, best bound 2.840597191883e+07, gap 0.0000%
+All problems solved!

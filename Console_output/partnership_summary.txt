@@ -1,0 +1,10 @@
+/export/storage_covidvaccine/Code/partnership_summary.py:145: RuntimeWarning: invalid value encountered in true_divide
+  assigned_dist_total_hpi = np.nan_to_num(np.sum(np.multiply(C_total, mat_y_total_hpi), axis = 1) / np.sum(mat_y_total_hpi, axis = 1), posinf=0)
+/export/storage_covidvaccine/Code/partnership_summary.py:222: RuntimeWarning: invalid value encountered in true_divide
+  assigned_dist_current_hpi = np.nan_to_num(np.sum(np.multiply(C_current, mat_y_current_hpi), axis = 1) / np.sum(mat_y_current_hpi, axis = 1), posinf=0)
+/export/storage_covidvaccine/Code/partnership_summary.py:145: RuntimeWarning: invalid value encountered in true_divide
+  assigned_dist_total_hpi = np.nan_to_num(np.sum(np.multiply(C_total, mat_y_total_hpi), axis = 1) / np.sum(mat_y_total_hpi, axis = 1), posinf=0)
+/export/storage_covidvaccine/Code/partnership_summary.py:222: RuntimeWarning: invalid value encountered in true_divide
+  assigned_dist_current_hpi = np.nan_to_num(np.sum(np.multiply(C_current, mat_y_current_hpi), axis = 1) / np.sum(mat_y_current_hpi, axis = 1), posinf=0)
+Start creating summary table for N =10 and 14000
+Start creating summary table for N =10 and 16000

@@ -1,0 +1,60 @@
+Coefficients are imported
+
+[[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]]
+Start importing the problem for Dollar under Model MaxRateHPIDist with BLP demand function, M = 5 and K = 8000...
+
+../Result/MaxRateHPIDist/M5_K8000/Dollar/
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter IntegralityFocus to value 1
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 32522088 rows, 32514030 columns and 97404900 nonzeros
+Model fingerprint: 0xad4770c2
+Variable types: 32509995 continuous, 4035 integer (4035 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+04]
+  Objective range  [1e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 1.999928e+07
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 173308 rows and 133155 columns (presolve time = 11s) ...
+Presolve removed 32510076 rows and 32473910 columns (presolve time = 17s) ...
+Presolve removed 32510076 rows and 32473910 columns (presolve time = 20s) ...
+Presolve removed 32510076 rows and 32474027 columns (presolve time = 26s) ...
+Presolve removed 32510107 rows and 32474098 columns (presolve time = 30s) ...
+Presolve removed 32514922 rows and 32490493 columns (presolve time = 35s) ...
+Presolve removed 32514922 rows and 32490493 columns
+Presolve time: 36.34s
+Presolved: 7166 rows, 23537 columns, 47068 nonzeros
+Found heuristic solution: objective 2.100328e+07
+Variable types: 23537 continuous, 0 integer (0 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.4663578e+07   5.380379e+05   0.000000e+00     45s
+   11592    2.2546858e+07   0.000000e+00   0.000000e+00     45s
+
+Root relaxation: objective 2.254686e+07, 11592 iterations, 0.12 seconds (0.05 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    2.254686e+07 2.2547e+07  0.00%     -   45s
+
+Explored 1 nodes (11592 simplex iterations) in 104.02 seconds (125.49 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 3: 2.25469e+07 2.25469e+07 1.99993e+07 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 2.254685764139e+07, best bound 2.254685764139e+07, gap 0.0000%
+Set parameter IntegralityFocus to value 1
