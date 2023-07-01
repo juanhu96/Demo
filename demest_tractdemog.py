@@ -275,3 +275,6 @@ with open(f"{outdir}/Demand/coeftable_tractctrl{int(bool(controls_tract))}.tex",
     f.write(latex)
 
 print("Done!")
+
+
+# np.load(f'{datadir}/Analysis/m2coefs.npy')
