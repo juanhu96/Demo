@@ -49,7 +49,19 @@ $(datadir)/CA_dist_matrix_HighSchools.csv \
 $(datadir)/CA_dist_matrix_Libraries.csv \
 $(datadir)/CA_dist_matrix_Mcdonald.csv \
 $(datadir)/CA_dist_matrix_PostOffices.csv: \
-		$(datadir)/Raw/Location/ \
+		$(datadir)/Raw/Location/popctr_tracts2010/ \
+		$(datadir)/Raw/Location/00_Pharmacies.csv \
+		$(datadir)/Raw/Location/01_DollarStores.csv \
+		$(datadir)/Raw/Location/02_DiscountRetailers.csv \
+		$(datadir)/Raw/Location/03_FastFood.csv \
+		$(datadir)/Raw/Location/04_Coffee.csv \
+		$(datadir)/Raw/Location/05_ConvenienceStores.csv \
+		$(datadir)/Raw/Location/06_GasStations.csv \
+		$(datadir)/Raw/Location/07_CarDealers.csv \
+		$(datadir)/Raw/Location/08_PostOffices.csv \
+		$(datadir)/Raw/Location/09_HighSchools.csv \
+		$(datadir)/Raw/Location/09_PublicSchools.xlsx \
+		$(datadir)/Raw/Location/10_Libraries.csv \
 		$(datadir)/Raw/Census/pdb2020trv2_us.csv \
 		$(codedir)/process_raw_data.R
 	$(R_CMD) $(codedir)/process_raw_data.R
@@ -104,15 +116,14 @@ $(datadir)/Analysis/Demand/demest_results_111.pkl: \
 	python3 $(codedir)/Demand/demest_tracts.py
 
 
-$(datadir)/Analysis/m1coefs.csv \
-$(datadir)/Analysis/m2coefs.csv \
+$(datadir)/Analysis/m1coefs.npy \
+$(datadir)/Analysis/m2coefs.npy \
 ${resultdir}/Demand/coeftable_tractctrl1.tex: \
 		$(datadir)/Analysis/Demand/agent_data.csv \
 		$(datadir)/Analysis/Demand/demest_data.csv \
 		$(datadir)/Analysis/Demand/demest_results_111.pkl \
-		$(codedir)/Demand/demest_tracts.py
+		$(codedir)/Demand/demest_tractdemog.py
 	python3 $(codedir)/Demand/demest_tractdemog.py
-
 
 
 # OPTIMIZATION:
@@ -133,8 +144,8 @@ $(datadir)/Result/summary_table_BLP: \
 		$(datadir)/CA_dist_matrix_Libraries.csv \
 		$(datadir)/CA_dist_matrix_Mcdonald.csv \
 		$(datadir)/CA_dist_matrix_PostOffices.csv \
-		$(datadir)/Analysis/m1coefs.csv \
-		$(datadir)/Analysis/m2coefs.csv \
+		$(datadir)/Analysis/m1coefs.npy \
+		$(datadir)/Analysis/m2coefs.npy \
 		$(codedir)/utils/create_row.py \
 		$(codedir)/utils/optimize_chain.py \
 		$(codedir)/utils/optimize_model.py \
