@@ -97,11 +97,7 @@ $(datadir)/Analysis/Demand/agent_data.csv: \
 	python3 $(codedir)/Demand/prep_tracts.py
 
 
-
-$(datadir)/Analysis/Demand/demest_results_000.pkl \
-$(datadir)/Analysis/Demand/demest_results_100.pkl \
-$(datadir)/Analysis/Demand/demest_results_110.pkl \
-$(datadir)/Analysis/Demand/demest_results_111.pkl &: \
+$(datadir)/Analysis/Demand/demest_results_111.pkl: \
 		$(datadir)/Analysis/Demand/agent_data.csv \
 		$(datadir)/Analysis/Demand/demest_data.csv \
 		$(codedir)/Demand/demest_tracts.py
@@ -110,40 +106,12 @@ $(datadir)/Analysis/Demand/demest_results_111.pkl &: \
 
 $(datadir)/Analysis/m1coefs.csv \
 $(datadir)/Analysis/m2coefs.csv \
-${resultdir}/Demand/coeftable_tractctrl1.tex \
-$(datadir)/Analysis/Demand/demest_results_0001.pkl \
-$(datadir)/Analysis/Demand/demest_results_1001.pkl \
-$(datadir)/Analysis/Demand/demest_results_1101.pkl \
-$(datadir)/Analysis/Demand/demest_results_1111.pkl &: \
+${resultdir}/Demand/coeftable_tractctrl1.tex: \
 		$(datadir)/Analysis/Demand/agent_data.csv \
 		$(datadir)/Analysis/Demand/demest_data.csv \
 		$(datadir)/Analysis/Demand/demest_results_111.pkl \
 		$(codedir)/Demand/demest_tracts.py
 	python3 $(codedir)/Demand/demest_tractdemog.py
-
-
-$(datadir)/Analysis/Demand/marg_000.dta \
-$(datadir)/Analysis/Demand/marg_100.dta \
-$(datadir)/Analysis/Demand/marg_110.dta \
-$(datadir)/Analysis/Demand/marg_111.dta &: \
-		$(datadir)/Analysis/Demand/demest_results_000.pkl \
-		$(datadir)/Analysis/Demand/demest_results_100.pkl \
-		$(datadir)/Analysis/Demand/demest_results_110.pkl \
-		$(datadir)/Analysis/Demand/demest_results_111.pkl \
-		$(codedir)/Demand/demest_tracts_margins.py
-	python3 $(codedir)/Demand/demest_tracts_margins.py
-
-
-$(resultdir)/Demand/margins/pooled/hpiq0_ctrl0.png \
-$(resultdir)/Demand/margins/pooled/hpiq1_ctrl0.png \
-$(resultdir)/Demand/margins/byqrtl/hpiq1_ctrl0.png \
-$(resultdir)/Demand/margins/byqrtl/hpiq1_ctrl1.png &: \
-		$(datadir)/Analysis/Demand/marg_000.dta \
-		$(datadir)/Analysis/Demand/marg_100.dta \
-		$(datadir)/Analysis/Demand/marg_110.dta \
-		$(datadir)/Analysis/Demand/marg_111.dta \
-		$(codedir)/Demand/margins.do
-	$(STATA_CMD) $(codedir)/Demand/margins.do
 
 
 
