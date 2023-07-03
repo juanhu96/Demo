@@ -21,7 +21,7 @@ from gurobipy import GRB, quicksum
 
 def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
                   num_current_stores, num_total_stores, num_tracts, 
-                  scale_factor, path, MIPGap = 1e-4):
+                  scale_factor, path, MIPGap = 1e-3):
     
     """
     Parameters
@@ -163,7 +163,7 @@ def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
 
 def optimize_dist(scenario, pc, pf, ncp, p, K,
                   num_current_stores, num_total_stores, num_tracts,
-                  scale_factor, path, MIPGap = 3e-3):
+                  scale_factor, path, MIPGap = 1e-2):
     
     '''
     See optimize_rate()

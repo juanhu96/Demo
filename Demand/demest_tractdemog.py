@@ -92,7 +92,7 @@ iteration_config = pyblp.Iteration(method='lm')
 optimization_config = pyblp.Optimization('trust-constr', {'gtol':gtol})
 
 
-# config = [False, False, False]
+config = [False, False, False]
 # config = [True, False, False]
 # config = [True, True, False]
 # config = [True, True, True]
@@ -201,7 +201,7 @@ for config in [
     # Save results
     results.to_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}{int(bool(controls_tract))}.pkl")
 
-
+    results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results_{int(include_hpiquartile)}{int(interact_disthpi)}{int(include_controls)}{int(bool(controls_tract))}.pkl")
     # Coefficients table
     betas = results.beta.flatten()
     betases = results.beta_se.flatten()
@@ -244,8 +244,9 @@ for config in [
 
     # Save coefficients for optimization step
     if config == [False, False, False]: #save constant and logdist coefficients
-        m1coefs = np.array(betas[0], pis[0])
+        m1coefs = np.array([betas[0], pis[0]])
         np.save(f'{datadir}/Analysis/m1coefs.npy', m1coefs)
+        print(f"m1coefs saved to {datadir}/Analysis/m1coefs.npy", m1coefs)
     elif config == [True, True, False]: #save constant, log(dist), HPI quartile 1, HPI quartile 2, HPI quartile 3, HPI quartile 1 * log(dist), HPI quartile 2 * log(dist), HPI quartile 3 * log(dist)]
         m2coefs = [betas[0]]
         for vv in ['logdist', 'hpi_quartile1', 'hpi_quartile2', 'hpi_quartile3', 'logdistXhpi_quartile1', 'logdistXhpi_quartile2', 'logdistXhpi_quartile3']:
@@ -258,6 +259,7 @@ for config in [
                 m2coefs.append(0)
         m2coefs = np.array(m2coefs)
         np.save(f'{datadir}/Analysis/m2coefs.npy', m2coefs)
+        print(f"m2coefs saved to {datadir}/Analysis/m2coefs.npy", m2coefs)
 
 
 
@@ -277,4 +279,5 @@ with open(f"{outdir}/Demand/coeftable_tractctrl{int(bool(controls_tract))}.tex",
 print("Done!")
 
 
-# np.load(f'{datadir}/Analysis/m2coefs.npy')
+np.load(f'{datadir}/Analysis/m1coefs.npy')
+np.load(f'{datadir}/Analysis/m2coefs.npy')

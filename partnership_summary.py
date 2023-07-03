@@ -17,10 +17,10 @@ def main():
 
     print('Start creating summary table...')
 
-    # create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV'], Chain_list = ['Dollar'], Demand_estimation = 'linear') # optimize w/ linear, compute w/ blp
-    # create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV'], Chain_list = ['Dollar'], Demand_estimation = 'BLP') # optimize w/ blp, compute w/ blp
-    
-    create_summary(Model_list = ['MaxRateHPIDist', 'MinDistNew'], M_list = [5], K_list = [10000], Chain_list = ['Dollar'], export_tract_table=False, filename='test')
+    create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV'], Chain_list = ['Dollar'], Demand_estimation = 'linear') # optimize w/ linear, compute w/ blp
+    create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV'], Chain_list = ['Dollar'], Demand_estimation = 'BLP') # optimize w/ blp, compute w/ blp
+    create_summary(Model_list = ['MinDistNew'], Chain_list = ['Dollar'],  K_list = [10000, 12000], filename = 'MinDist')
+
 
     print('Finish creating the table!')
 
@@ -140,25 +140,6 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
             
             F_DH_total = np.asarray(F_DH_total)
             F_DH_current = F_DH_total[:,0:num_current_stores]
-       
-            ###########################################################################
-
-            ####### DEBUG (TEMP)
-
-            # n copies of demand
-            p_total = np.tile(Population, num_total_stores)
-            p_total = np.reshape(p_total, (num_total_stores, num_tracts))
-            p_total = p_total.T.flatten()
-            
-            p_current = np.tile(Population, num_current_stores)
-            p_current = np.reshape(p_current, (num_current_stores, num_tracts))
-            p_current = p_current.T.flatten()
-
-            f_dh_current = F_DH_current.flatten()
-            f_dh_total = F_DH_total.flatten()
-
-            pfdh_total = p_total * f_dh_total
-            pfdh_current = p_current * f_dh_current
 
 
             ###########################################################################
@@ -192,8 +173,8 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
                     
                     print('Start creating summary table for ' + Chain_type + ' under Model ' + Model + ' with M = '  + str(M) + ' and K = ' + str(K) + '...\n')                    
                         
-                    if Model == 'MinDist': path = main_path = '../Result/' + Model + '/' + 'M5_K' + str(K) + '/'  + Chain_type + '/'
-                    else: path = main_path = '../Result/' + Model + '/' + 'M' + str(M) + '_K' + str(K) + '/'  + Chain_type + '/'
+                    if Model == 'MinDist': path = '../Result/' + Model + '/' + 'M5_K' + str(K) + '/'  + Chain_type + '/'
+                    else: path = '../Result/' + Model + '/' + 'M' + str(M) + '_K' + str(K) + '/'  + Chain_type + '/'
 
 
                     if Model == 'MaxRateHPIDist' or Model == 'MaxRateDist':
@@ -204,8 +185,6 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
                         result_total_hpi = pd.read_csv(path + 'result_total.csv', delimiter = ",")
                         y_total_hpi = np.genfromtxt(path + 'y_total.csv', delimiter = ",", dtype = float)
 
-                        
-                    print(np.sum(y_total_hpi * pfdh_total)) # TEMP    
 
                     y_total_hpi_closest = y_total_hpi * Closest_total_chains
                     y_total_hpi_farthest = y_total_hpi * Farthest_total_chains
@@ -234,8 +213,6 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
                             y_current_hpi = np.genfromtxt(path + 'y_current.csv', delimiter = ",", dtype = float)
                         
 
-                        print(np.sum(y_current_hpi * pfdh_current)) # TEMP
-
                         y_current_hpi_closest = y_current_hpi * Closest_current
                         y_current_hpi_farthest = y_current_hpi * Farthest_current   
 
@@ -248,10 +225,13 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
       
                         
                         if export_tract_table==True:
+                                
                                 print('Start creating tract-level summaries for ' + Chain_type + ' under Model ' + Model + ' with M = '  + str(M) + ' and K = ' + str(K) + '...\n')
+
                                 tract_summary(Model, Chain_type, M, K, Quartile, Population,\
                                 mat_y_current_hpi, mat_y_current_hpi_closest, mat_y_current_hpi_farthest, result_current_hpi, F_DH_current, C_current, C_current_walkable,\
                                 mat_y_total_hpi, mat_y_total_hpi_closest, mat_y_total_hpi_farthest, result_total_hpi, F_DH_total, C_total, C_total_walkable)
+
 
                         chain_summary_table.append(chain_summary)  
                     

@@ -12,6 +12,7 @@
 # (to update only targets)
 # for example:
 # make43 -f ${VAXdir}/Makefile ${FRdir}/Data/Intermediate/...
+# To draw graph: ```make -Bnd | make2graph > /mnt/staff/zhli/mfgraph.dot```
 
 
 ifeq ($(STATA_CMD),)
@@ -29,9 +30,7 @@ codedir = ${VAXdir}/Code
 resultdir = ${VAXdir}/Result
 
 
-all: \
-$(datadir)/Result/summary_table_linear \
-$(datadir)/Result/summary_table_BLP
+all: $(datadir)/Result/summary_table_BLP
 
 
 $(datadir)/CA_demand.csv \
@@ -39,8 +38,17 @@ $(datadir)/CA_tractID.csv \
 $(datadir)/CA_demand_over_5.csv \
 $(datadir)/HPIQuartile_TRACT.csv \
 $(datadir)/CA_dist_matrix_current.csv \
+$(datadir)/CA_dist_matrix_CarDealers.csv \
+$(datadir)/CA_dist_matrix_Coffee.csv \
+$(datadir)/CA_dist_matrix_ConvenienceStores.csv \
+$(datadir)/CA_dist_matrix_DiscountRetailers.csv \
 $(datadir)/CA_dist_matrix_Dollar.csv \
-$(datadir)/CA_dist_matrix_Mcdonald.csv &: \
+$(datadir)/CA_dist_matrix_FastFood.csv \
+$(datadir)/CA_dist_matrix_GasStations.csv \
+$(datadir)/CA_dist_matrix_HighSchools.csv \
+$(datadir)/CA_dist_matrix_Libraries.csv \
+$(datadir)/CA_dist_matrix_Mcdonald.csv \
+$(datadir)/CA_dist_matrix_PostOffices.csv: \
 		$(datadir)/Raw/Location/ \
 		$(datadir)/Raw/Census/pdb2020trv2_us.csv \
 		$(codedir)/process_raw_data.R
@@ -61,7 +69,8 @@ $(datadir)/Intermediate/tract_zip_crosswalk.csv: \
 	python3 $(codedir)/Demand/ziptract.py
 
 
-$(datadir)/Intermediate/zip_votes.csv: \
+$(datadir)/Intermediate/zip_votes.csv \
+$(datadir)/Intermediate/tract_votes.csv: \
 		$(datadir)/Raw/AdminShapefiles/tl_2020_us_zcta520/ \
 		$(datadir)/Raw/AdminShapefiles/tl_2010_06_tract10/ \
 		$(datadir)/Raw/ca_vest_16/ \
@@ -141,8 +150,7 @@ $(resultdir)/Demand/margins/byqrtl/hpiq1_ctrl1.png &: \
 # OPTIMIZATION:
 
 # Jingyuan: populations/demand, quartile, and distance matrices
-$(datadir)/Result/summary_table_linear \
-$(datadir)/Result/summary_table_BLP &: \
+$(datadir)/Result/summary_table_BLP: \
 		$(datadir)/CA_demand_over_5.csv \
 		$(datadir)/HPIQuartile_TRACT.csv \
 		$(datadir)/CA_dist_matrix_current.csv \
