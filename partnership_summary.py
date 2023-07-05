@@ -17,9 +17,11 @@ def main():
 
     print('Start creating summary table...')
 
-    create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV'], Chain_list = ['Dollar'], Demand_estimation = 'linear') # optimize w/ linear, compute w/ blp
-    create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV'], Chain_list = ['Dollar'], Demand_estimation = 'BLP') # optimize w/ blp, compute w/ blp
-    create_summary(Model_list = ['MinDistNew'], Chain_list = ['Dollar'],  K_list = [10000, 12000], filename = 'MinDist')
+    create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist'], Chain_list = ['Dollar'], M_list = [5], K_list = [10000], Demand_estimation = 'linear', export_tract_table = True) # optimize w/ linear, compute w/ blp
+    # create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV'], Chain_list = ['Dollar'], Demand_estimation = 'BLP') # optimize w/ blp, compute w/ blp
+    # create_summary(Model_list = ['MinDistNew'], Chain_list = ['Dollar'],  K_list = [10000, 12000], filename = 'MinDist')
+
+    # create_summary(Model_list = ['MinDist'], Chain_list = ['Dollar'],  K_list = [10000, 12000], filename = 'MinDistOLD')
 
 
     print('Finish creating the table!')

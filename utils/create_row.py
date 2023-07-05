@@ -286,7 +286,7 @@ def create_row(Scenario, Model, Chain_type, M, K, Quartile, Population, mat_y_hp
     drop_proportion = np.round(drop * 100)[0]
     
     
-    ## Assigned within Walkable
+    ## Vaccination within Walkable
     assigned_hpi = np.sum(np.multiply(C_walkable, np.multiply(F_DH, mat_y_hpi)), axis =1) 
     CA_TRACT['Assigned_HPI'] = assigned_hpi
     CA_TRACT['Assigned_Population_HPI'] = CA_TRACT['Assigned_HPI'] * CA_TRACT['Population']    
@@ -467,7 +467,7 @@ def create_row_total(Model, Chain_type, M, K, Quartile, Population, mat_y_total_
     drop_proportion = np.round(drop * 100)[0]
 
     
-    ## Actual walkable
+    ## Assigned walkable
     assigned_total_hpi = np.sum(np.multiply(C_total_walkable, np.multiply(F_DH_total, mat_y_total_hpi)), axis =1)
     CA_TRACT['Assigned_Total_HPI'] = assigned_total_hpi
     CA_TRACT['Assigned_Population_Total_HPI'] = CA_TRACT['Assigned_Total_HPI'] * CA_TRACT['Population']    

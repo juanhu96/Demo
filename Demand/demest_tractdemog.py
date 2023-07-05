@@ -40,9 +40,9 @@ controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
 
 #controls that we want to move to tract level (in addition to HPI quartile dummies)
 # controls_tract = ['race_asian', 'health_other', 'collegegrad', 'popdensity'] 
-demog_in_agent = False
-controls_tract = controls.copy() if demog_in_agent else []
-hpi_quartile_in_agent = False #TODO: switch
+demog_in_tract = False  #TODO: switch
+controls_tract = controls.copy() if demog_in_tract else []
+hpi_quartile_in_tract = False #TODO: switch
 
 # controls_zip is the list of controls that we want to keep at the zip level
 controls_zip = [c for c in controls if c not in controls_tract]
@@ -73,7 +73,7 @@ for vv in tablevars:
 
     varlabels.append(vv_fmt)
     if vv.startswith('hpi_quartile'):
-        if hpi_quartile_in_agent:
+        if hpi_quartile_in_tract:
             coefrows.append(f"{vv_fmt}" + "$^{\\dag}$ ")
         else:
             coefrows.append(f"{vv_fmt} ")
@@ -121,7 +121,7 @@ for config in [
         agent_formulation_str = '0 + logdist'
 
     if include_hpiquartile:
-        if hpi_quartile_in_agent:
+        if hpi_quartile_in_tract:
             agent_formulation_str += ' + hpi_quartile1 + hpi_quartile2 + hpi_quartile3'
         else:
             formulation1_str += ' + hpi_quartile1 + hpi_quartile2 + hpi_quartile3'
@@ -246,7 +246,9 @@ for config in [
     if config == [False, False, False]: #save constant and logdist coefficients
         m1coefs = np.array([betas[0], pis[0]])
         np.save(f'{datadir}/Analysis/m1coefs.npy', m1coefs)
-        print(f"m1coefs saved to {datadir}/Analysis/m1coefs.npy", m1coefs)
+        np.save(f'{datadir}/Analysis/m1coefs_{int(bool(demog_in_tract))}_{int(bool(hpi_quartile_in_tract))}.npy', m1coefs)
+
+
     elif config == [True, True, False]: #save constant, log(dist), HPI quartile 1, HPI quartile 2, HPI quartile 3, HPI quartile 1 * log(dist), HPI quartile 2 * log(dist), HPI quartile 3 * log(dist)]
         m2coefs = [betas[0]]
         for vv in ['logdist', 'hpi_quartile1', 'hpi_quartile2', 'hpi_quartile3', 'logdistXhpi_quartile1', 'logdistXhpi_quartile2', 'logdistXhpi_quartile3']:
@@ -259,7 +261,7 @@ for config in [
                 m2coefs.append(0)
         m2coefs = np.array(m2coefs)
         np.save(f'{datadir}/Analysis/m2coefs.npy', m2coefs)
-        print(f"m2coefs saved to {datadir}/Analysis/m2coefs.npy", m2coefs)
+        np.save(f'{datadir}/Analysis/m2coefs_{int(bool(demog_in_tract))}_{int(bool(hpi_quartile_in_tract))}.npy', m1coefs)
 
 
 
