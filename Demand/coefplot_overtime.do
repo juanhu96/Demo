@@ -1,5 +1,6 @@
 gl outdir "/export/storage_covidvaccine/Result"
-import delimited "${outdir}/Demand/overtime/demest_coefs_control.csv", clear
+// import delimited "${outdir}/Demand/overtime/demest_coefs_control.csv", clear
+import delimited "${outdir}/Demand/overtime/demest_coefs_control_hpiintract.csv", clear
 
 rename date date_str
 gen date = date(date_str, "YMD")

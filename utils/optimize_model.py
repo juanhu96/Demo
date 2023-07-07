@@ -131,7 +131,7 @@ def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
     elif scenario == "total":
         store_used = sum(z_soln)
         vaccine_rate = (pf @ y_soln / total_demand)
-        avg_dist = (pc @ y_soln / total_demand) * scale_factor    
+        avg_dist = (pc @ y_soln / total_demand) * scale_factor
         allocation_rate = ncp @ y_soln / total_demand
                          
         num_current_store_used = sum(z_soln[0 : num_current_stores])

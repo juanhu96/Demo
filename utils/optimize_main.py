@@ -65,18 +65,18 @@ def optimize_main(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV', 
                 optimize_chain(Chain_type, Model, M = M, K = K, Demand_estimation = Demand_estimation, Demand_parameter = Demand_parameter, expdirpath = chain_path)
                             
             
-            if Model != 'MinDist':
+            # if Model != 'MinDist':
                 
-                M = 10
-                parameter_path = model_path + 'M' + str(M) + '_K' + str(K) + '/'
-                if not os.path.exists(parameter_path): os.mkdir(parameter_path)
+            #     M = 10
+            #     parameter_path = model_path + 'M' + str(M) + '_K' + str(K) + '/'
+            #     if not os.path.exists(parameter_path): os.mkdir(parameter_path)
                 
-                for Chain_type in Chain_list:
+            #     for Chain_type in Chain_list:
                     
-                    chain_path = parameter_path + Chain_type + '/'
-                    if not os.path.exists(chain_path): os.mkdir(chain_path)
+            #         chain_path = parameter_path + Chain_type + '/'
+            #         if not os.path.exists(chain_path): os.mkdir(chain_path)
 
-                    optimize_chain(Chain_type, Model, M = M, K = K, Demand_estimation = Demand_estimation, Demand_parameter = Demand_parameter, expdirpath = chain_path)
+            #         optimize_chain(Chain_type, Model, M = M, K = K, Demand_estimation = Demand_estimation, Demand_parameter = Demand_parameter, expdirpath = chain_path)
     
     
     print('All problems solved!')

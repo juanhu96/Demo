@@ -17,9 +17,14 @@ def main():
 
     print('Start creating summary table...')
 
-    create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist'], Chain_list = ['Dollar'], M_list = [5], K_list = [10000], Demand_estimation = 'linear', export_tract_table = True) # optimize w/ linear, compute w/ blp
-    # create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV'], Chain_list = ['Dollar'], Demand_estimation = 'BLP') # optimize w/ blp, compute w/ blp
-    # create_summary(Model_list = ['MinDistNew'], Chain_list = ['Dollar'],  K_list = [10000, 12000], filename = 'MinDist')
+    # create_summary(Model_list = ['MaxRateHPIDist', 'MaxRateDist'], Chain_list = ['Dollar'], M_list = [5], K_list = [10000], Demand_estimation = 'linear', Vaccination_estimation = 'linear') # optimize w/ linear, compute w/ blp
+    # create_summary(Model_list = ['MaxRateHPIDist'], Chain_list = ['Dollar'], M_list = [5], K_list = [10000], Demand_estimation = 'linear', Vaccination_estimation = 'BLP', export_tract_table = False, filename='closesttotal') # optimize w/ blp, compute w/ blp
+    
+    # create_summary(Model_list = ['MaxRateHPIDist'], Chain_list = ['Dollar'], M_list = [5], K_list = [10000], Demand_estimation = 'BLP', Vaccination_estimation = 'BLP')
+    # create_summary(Model_list = ['MaxRateHPIDist'], Chain_list = ['Dollar'], M_list = [5], K_list = [10000], Demand_estimation = 'linear', Vaccination_estimation = 'BLP')
+    # create_summary(Model_list = ['MinDistNew'], Chain_list = ['Dollar'], M_list = [5],  K_list = [10000], filename='MinDistNew')
+
+    create_summary(Model_list = ['MaxRateDist'], Chain_list = ['Dollar'], M_list = [5], K_list = [10000], Demand_estimation = 'BLP', Vaccination_estimation = 'BLP', filename='MaxRateDist')
 
     # create_summary(Model_list = ['MinDist'], Chain_list = ['Dollar'],  K_list = [10000, 12000], filename = 'MinDistOLD')
 
@@ -35,7 +40,7 @@ def main():
 def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
                    Model_list = ['MaxRateHPIDist', 'MaxRateDist', 'MaxRateFixV', 'MinDist', 'MinDistNew'],
                    Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
-                   Demand_estimation = 'BLP', export_tract_table = False, filename = ''):
+                   Demand_estimation = 'BLP', Vaccination_estimation = 'BLP', export_tract_table = False, filename = ''):
     
 
     '''
@@ -71,11 +76,18 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
 
     ## Demand coefficients
     datadir = "/export/storage_covidvaccine/Data"
-    m1coefs = np.load(f'{datadir}/Analysis/m1coefs.npy')
-    m2coefs = np.load(f'{datadir}/Analysis/m2coefs.npy')
+    # m1coefs = np.load(f'{datadir}/Analysis/m1coefs.npy')
+    # m2coefs = np.load(f'{datadir}/Analysis/m2coefs.npy')
     # Demand_parameter = [np.round(m1coefs, 3).tolist(), np.round(m2coefs, 3).tolist()]
     # Demand_parameter = [[1.144, -0.567], [1.676, -0.243, -1.101, -0.796, -0.699, -0.331, -0.343, -0.226]]
-    Demand_parameter = [[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]]
+
+    if Vaccination_estimation == 'BLP':
+        Demand_parameter = [[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]]
+    elif Vaccination_estimation == 'linear':
+        Demand_parameter = [[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, 0.053, 0.047, 0.039]]
+    else:
+        print("Undefined \n")
+
     print(Demand_parameter)
     
 
@@ -118,27 +130,55 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
             ## Demand matrix for chain
 
             F_DH_total = []
-            for i in range(num_tracts):
+
+            if Vaccination_estimation == 'BLP': 
+
+                for i in range(num_tracts):
+                
+                    tract_quartile = Quartile[i]
+                
+                    if tract_quartile == 1:
+                        deltahat = (Demand_parameter[1][0] + Demand_parameter[1][2]) + (Demand_parameter[1][1] + Demand_parameter[1][5]) * np.log(C_total[i,:]/1000)
+                        tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
+                    elif tract_quartile == 2:
+                        deltahat = (Demand_parameter[1][0] + Demand_parameter[1][3]) + (Demand_parameter[1][1] + Demand_parameter[1][6]) * np.log(C_total[i,:]/1000)
+                        tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
+                    elif tract_quartile == 3:
+                        deltahat = (Demand_parameter[1][0] + Demand_parameter[1][4]) + (Demand_parameter[1][1] + Demand_parameter[1][7]) * np.log(C_total[i,:]/1000)
+                        tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
+                    elif tract_quartile == 4:
+                        deltahat = Demand_parameter[1][0] + Demand_parameter[1][1] * np.log(C_total[i,:]/1000)
+                        tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
+                    else:
+                        deltahat = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total[i,:]/1000)
+                        tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
+                
+                    F_DH_total.append(tract_willingness)
             
-                tract_quartile = Quartile[i]
-            
-                if tract_quartile == 1:
-                    deltahat = (Demand_parameter[1][0] + Demand_parameter[1][2]) + (Demand_parameter[1][1] + Demand_parameter[1][5]) * np.log(C_total[i,:]/1000)
-                    tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-                elif tract_quartile == 2:
-                    deltahat = (Demand_parameter[1][0] + Demand_parameter[1][3]) + (Demand_parameter[1][1] + Demand_parameter[1][6]) * np.log(C_total[i,:]/1000)
-                    tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-                elif tract_quartile == 3:
-                    deltahat = (Demand_parameter[1][0] + Demand_parameter[1][4]) + (Demand_parameter[1][1] + Demand_parameter[1][7]) * np.log(C_total[i,:]/1000)
-                    tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-                elif tract_quartile == 4:
-                    deltahat = Demand_parameter[1][0] + Demand_parameter[1][1] * np.log(C_total[i,:]/1000)
-                    tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-                else:
-                    deltahat = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total[i,:]/1000)
-                    tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-            
-                F_DH_total.append(tract_willingness)
+
+            elif Vaccination_estimation == 'linear':
+
+                for i in range(num_tracts):
+                
+                    tract_quartile = Quartile[i]
+                
+                    if tract_quartile == 1:
+                        tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][2]) + (Demand_parameter[1][1] + Demand_parameter[1][5]) * np.log(C_total[i,:]/1000)
+                    elif tract_quartile == 2:
+                        tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][3]) + (Demand_parameter[1][1] + Demand_parameter[1][6]) * np.log(C_total[i,:]/1000)
+                    elif tract_quartile == 3:
+                        tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][4]) + (Demand_parameter[1][1] + Demand_parameter[1][7]) * np.log(C_total[i,:]/1000)
+                    elif tract_quartile == 4:
+                        tract_willingness = Demand_parameter[1][0] + Demand_parameter[1][1] * np.log(C_total[i,:]/1000)
+                    else:
+                        tract_willingness = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total[i,:]/1000)
+                
+                    F_DH_total.append(tract_willingness)
+
+
+            else:
+                print("Undefined \n")
+
             
             F_DH_total = np.asarray(F_DH_total)
             F_DH_current = F_DH_total[:,0:num_current_stores]
@@ -162,10 +202,12 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
                                             
                 # Complement of above matrix                                            
                 Farthest_current = np.ones((num_tracts, num_current_stores)) - Closest_current
-                Farthest_total_chains = np.ones((num_tracts, num_total_stores)) - Closest_total_chains
+                # Farthest_total_chains = np.ones((num_tracts, num_total_stores)) - Closest_total_chains
+                Farthest_total_chains = np.ones((num_tracts, num_total_stores)) - Closest_total
 
                 Closest_current = Closest_current.flatten()
-                Closest_total_chains = Closest_total_chains.flatten()
+                # Closest_total_chains = Closest_total_chains.flatten()
+                Closest_total_chains = Closest_total.flatten()
 
                 Farthest_current = Farthest_current.flatten()
                 Farthest_total_chains = Farthest_total_chains.flatten()
@@ -240,7 +282,7 @@ def create_summary(M_list = [5, 10], K_list = [8000, 10000, 12000],
                         
         
         chain_summary = pd.DataFrame(chain_summary_table)
-        chain_summary.to_csv('../Result/summary_table_' + Demand_estimation + "_" + filename + '.csv', encoding='utf-8', index=False, header=True)
+        chain_summary.to_csv('../Result/summary_table_demand_' + Demand_estimation + "_compute_" + Vaccination_estimation + "_" + filename + '.csv', encoding='utf-8', index=False, header=True)
                 
                 
 

@@ -8,6 +8,7 @@ Created on Jul 21, 2022
 import os
 os.chdir('/export/storage_covidvaccine/Code')
 from utils.optimize_main import optimize_main
+from utils.evaluate_main import evaluate_main
 
 
 def main():
@@ -19,9 +20,11 @@ def main():
     Demand_estimation = 'BLP'
     '''
     
-    optimize_main(Model_list = ['MaxRateHPIDist', 'MaxRateDist'], Chain_list = ['Dollar'], Demand_estimation = 'BLP')
+    # optimize_main(Model_list = ['MaxRateHPIDist', 'MaxRateDist'], Chain_list = ['Dollar'], Demand_estimation = 'BLP')
+    # optimize_main(Model_list = ['MaxRateHPIDist'], Chain_list = ['Dollar'], K_list = [10000], Demand_estimation = 'linear')
+    # optimize_main(Model_list = ['MaxRateDist'], Chain_list = ['Dollar'], K_list = [10000], Demand_estimation = 'BLP')
 
-    
+    evaluate_main(Model_list = ['MaxRateDist'], Chain_list = ['Dollar'], K_list = [10000])
 
 
 if __name__ == "__main__":

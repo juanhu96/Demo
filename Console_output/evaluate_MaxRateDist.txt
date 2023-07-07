@@ -1,0 +1,69 @@
+Start evaluating the optimization solution for Dollar under Model MaxRateDist with M = 5 and K = 10000...
+
+../Result/MaxRateDist/M5_K10000/Dollar/
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter IntegralityFocus to value 1
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 32522087 rows, 32509995 columns and 97396830 nonzeros
+Model fingerprint: 0x92356614
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+04]
+  Objective range  [1e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 32510095 rows and 32469875 columns (presolve time = 10s) ...
+Presolve removed 32510148 rows and 32470141 columns (presolve time = 16s) ...
+Presolve removed 32510171 rows and 32470210 columns (presolve time = 21s) ...
+Presolve removed 32510191 rows and 32470252 columns (presolve time = 25s) ...
+Presolve removed 32510191 rows and 32470252 columns
+Presolve time: 27.40s
+Presolved: 11896 rows, 39743 columns, 79390 nonzeros
+
+Concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Ordering time: 0.01s
+
+Barrier statistics:
+ AA' NZ     : 3.965e+04
+ Factor NZ  : 1.900e+05 (roughly 22 MB of memory)
+ Factor Ops : 3.523e+06 (less than 1 second per iteration)
+ Threads    : 30
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   7.55491781e+08  2.07190190e+07  2.57e+02 2.40e+03  2.12e+04    28s
+   1   1.85749586e+08  7.84709960e+07  5.63e+01 3.18e-12  5.11e+03    28s
+   2   3.37582573e+07  6.17656217e+07  4.03e+00 2.27e-12  6.96e+02    28s
+   3   2.34994208e+07  3.19378675e+07  2.64e-01 1.82e-12  1.09e+02    28s
+   4   2.37632310e+07  2.66580554e+07  2.62e-02 1.36e-12  3.34e+01    28s
+   5   2.40995217e+07  2.55601527e+07  1.06e-02 9.09e-13  1.67e+01    28s
+   6   2.43292354e+07  2.50780154e+07  4.77e-03 1.82e-12  8.52e+00    28s
+   7   2.44355180e+07  2.48805420e+07  2.93e-03 9.09e-13  5.07e+00    28s
+   8   2.45407763e+07  2.47868868e+07  1.41e-03 1.82e-12  2.79e+00    28s
+   9   2.45893003e+07  2.47192943e+07  8.14e-04 9.09e-13  1.48e+00    28s
+
+Barrier performed 9 iterations in 27.70 seconds (31.67 work units)
+Barrier solve interrupted - model solved by another algorithm
+
+
+Solved with primal simplex
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   25474    2.4673020e+07   0.000000e+00   2.818485e+03     49s
+Extra simplex iterations after uncrush: 77027
+  102501    2.4673020e+07   0.000000e+00   0.000000e+00     58s
+
+Solved in 102501 iterations and 57.54 seconds (73.05 work units)
+Optimal objective  2.467302039e+07
+Set parameter IntegralityFocus to value 1
+Set parameter MIPGap to value 0.001

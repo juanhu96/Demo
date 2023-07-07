@@ -24,12 +24,6 @@ gen market_ids = zip
 gen firm_ids = 1
 gen prices = 0
 
-foreach ii of numlist 1/4{
-	gen distXhpi`ii' = 0
-	replace distXhpi`ii' = dist if hpiquartile == `ii'
-	gen logdistXhpi`ii' = 0
-	replace logdistXhpi`ii' = log(dist) if hpiquartile == `ii'
-}
 
 // merge in vote shares
 tempfile df

@@ -165,24 +165,35 @@ def optimize_chain(Chain_type, Model, Demand_parameter, expdirpath, M=5, K=8000,
 
     if Model == 'MaxRateHPIDist':
 
-        if Chain_type == 'Dollar':
-            optimize_rate(scenario = 'current', Demand_estimation = Demand_estimation,
-                          pc = pc_current, pf = pfdh_current, ncp = p_current, p = Population,
-                          closest = Closest_current, K=K, 
-                          num_current_stores=num_current_stores,
-                          num_total_stores=num_total_stores, 
-                          num_tracts=num_tracts,
-                          scale_factor=scale_factor,
-                          path = expdirpath)
+        # if Chain_type == 'Dollar':
+        #     optimize_rate(scenario = 'current', Demand_estimation = Demand_estimation,
+        #                   pc = pc_current, pf = pfdh_current, ncp = p_current, p = Population,
+        #                   closest = Closest_current, K=K, 
+        #                   num_current_stores=num_current_stores,
+        #                   num_total_stores=num_total_stores, 
+        #                   num_tracts=num_tracts,
+        #                   scale_factor=scale_factor,
+        #                   path = expdirpath)
              
+        # optimize_rate(scenario = 'total', Demand_estimation = Demand_estimation,
+        #            pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
+        #            closest = Closest_total_chains, K=K,
+        #            num_current_stores=num_current_stores,
+        #            num_total_stores=num_total_stores,
+        #            num_tracts=num_tracts,
+        #            scale_factor=scale_factor,
+        #            path = expdirpath)
+
         optimize_rate(scenario = 'total', Demand_estimation = Demand_estimation,
-                   pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
-                   closest = Closest_total_chains, K=K,
-                   num_current_stores=num_current_stores,
-                   num_total_stores=num_total_stores,
-                   num_tracts=num_tracts,
-                   scale_factor=scale_factor,
-                   path = expdirpath)
+                      pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
+                      closest = Closest_total, K=K,
+                      num_current_stores=num_current_stores,
+                      num_total_stores=num_total_stores,
+                      num_tracts=num_tracts,
+                      scale_factor=scale_factor,
+                      path = expdirpath)
+
+
 
     ###########################################################################
     
@@ -200,7 +211,7 @@ def optimize_chain(Chain_type, Model, Demand_parameter, expdirpath, M=5, K=8000,
             
         optimize_rate(scenario = 'total', Demand_estimation = Demand_estimation,
                       pc = pc_total, pf = pfd_total, ncp = p_total, p = Population,
-                      closest = Closest_total_chains, K=K,
+                      closest = Closest_total, K=K,
                       num_current_stores=num_current_stores, 
                       num_total_stores=num_total_stores,
                       num_tracts=num_tracts,

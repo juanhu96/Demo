@@ -1,0 +1,77 @@
+Coefficients are imported
+
+[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, 0.053, 0.047, 0.039]]
+Start importing the problem for Dollar under Model MaxRateHPIDist with linear demand function, M = 5 and K = 10000...
+
+../Result/MaxRateHPIDist/M5_K10000/Dollar/
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter IntegralityFocus to value 1
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709016 rows, 40700958 columns and 121931140 nonzeros
+Model fingerprint: 0x9877f388
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+04]
+  Objective range  [3e-01, 3e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.326526e+07
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 0 rows and 166683 columns (presolve time = 11s) ...
+Presolve removed 206836 rows and 166683 columns (presolve time = 18s) ...
+Presolve removed 40695943 rows and 166683 columns (presolve time = 21s) ...
+Presolve removed 40695943 rows and 40655787 columns (presolve time = 26s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 30s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 37s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 40s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 45s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 50s) ...
+Presolve removed 40695943 rows and 40655789 columns
+Presolve time: 54.42s
+Presolved: 13073 rows, 45169 columns, 90337 nonzeros
+Variable types: 40120 continuous, 5049 integer (5048 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.6585207e+07   2.781946e+05   0.000000e+00     66s
+    8557    2.6313321e+07   0.000000e+00   0.000000e+00     66s
+
+Root relaxation: objective 2.631332e+07, 8557 iterations, 0.81 seconds (1.00 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.6313e+07    0  613 2.3265e+07 2.6313e+07  13.1%     -   66s
+H    0     0                    2.627752e+07 2.6313e+07  0.14%     -   67s
+H    0     0                    2.628455e+07 2.6313e+07  0.11%     -   68s
+H    0     0                    2.628528e+07 2.6313e+07  0.11%     -   68s
+H    0     0                    2.629066e+07 2.6313e+07  0.09%     -   69s
+H    0     0                    2.629560e+07 2.6313e+07  0.07%     -   70s
+     0     0 2.6313e+07    0  682 2.6296e+07 2.6313e+07  0.07%     -   70s
+
+Cutting planes:
+  Gomory: 24
+  Implied bound: 649
+  Flow cover: 70
+  Relax-and-lift: 62
+
+Cleanup yields a better solution
+
+Explored 1 nodes (13830 simplex iterations) in 554.72 seconds (757.84 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 7: 2.62962e+07 2.62956e+07 2.62907e+07 ... 2.32653e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 2.629618424528e+07, best bound 2.631332113791e+07, gap 0.0652%
+All problems solved!
