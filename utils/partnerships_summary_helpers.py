@@ -1,9 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Jul, 2022
+@author: Jingyuan Hu
+"""
+
 import pandas as pd
 import numpy as np
 
 
-
-def create_row(Scenario, Model, Chain_type, M, K, Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, result_hpi, F_DH, C, C_walkable):
+def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH, C, C_walkable):
 
     
     total_population = sum(Population)
@@ -177,17 +183,9 @@ def create_row(Scenario, Model, Chain_type, M, K, Quartile, Population, mat_y_hp
     
 
     ###########################################################################
-    
-    if Scenario == 'Current': 
-        Chain = 'Pharmacies'
-        R = 0
-    else:
-        Chain = Chain_type,
-        R = int(result_hpi['Value'][5])
-    
 
-
-    chain_summary = {'Model': Model, 'Chain': Chain,
+    chain_summary = {'Model': Model, 'Chain': Scenario,
+                     'Opt Constr': opt_constr, 'Eval Constr': eval_constr,
                      'M': M, 'K': K,
                      'R': R,
                      'Vaccination': total_vaccination[0], 
@@ -298,8 +296,8 @@ expdirpath = "/export/storage_covidvaccine/Result"):
     CA_TRACT['Dist_Assigned_WithinM_Current'] = np.round(np.nan_to_num(np.sum(np.multiply(C_current, mat_y_current_hpi_closest), axis = 1) / np.sum(mat_y_current_hpi_closest, axis = 1), posinf=0))
     CA_TRACT['Dist_Assigned_AwayM_Current'] = np.round(np.nan_to_num(np.sum(np.multiply(C_current, mat_y_current_hpi_farthest), axis = 1) / np.sum(mat_y_current_hpi_farthest, axis = 1), posinf=0))
 
-    CA_TRACT['Vaccination_Walkable_Rate_Current'] = np.round(np.sum(np.multiply(C_current_walkable, np.multiply(F_DH_current, mat_y_current_hpi)), axis =1),3)
-    CA_TRACT['Vaccination_Walkable_Current'] = np.round(CA_TRACT['Vaccination_Walkable_Rate_Current'] * CA_TRACT['Population'])
+    CA_TRACT['Rate_Walkable_Current'] = np.round(np.sum(np.multiply(C_current_walkable, np.multiply(F_DH_current, mat_y_current_hpi)), axis =1),3)
+    CA_TRACT['Vaccination_Walkable_Current'] = np.round(CA_TRACT['Rate_Walkable_Current'] * CA_TRACT['Population'])
 
 
     ## Total
