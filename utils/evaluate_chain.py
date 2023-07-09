@@ -1,89 +1,106 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Jul, 2023
+@Author: Jingyuan Hu 
+"""
+
 import os
 import pandas as pd
 import numpy as np
-os.chdir('/export/storage_covidvaccine/Code')
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
 from utils.evaluate_model import evaluate_rate
+from utils.construct_F import construct_F_BLP, construct_F_LogLin
+from utils.import_dist import import_dist
+
 scale_factor = 10000
-MAXDIST = 10000000
 
 
-def evaluate_chain(Chain_type, Model, Demand_parameter, expdirpath, M=5, K=8000):
+def evaluate_chain(Chain_type, Model, M, K, Demand_parameter, expdirpath, constraint_list = ['assigned', 'vaccinated']):
     
-    print('Start evaluating the optimization solution for ' + Chain_type + ' under Model ' + Model + ' with M = '  + str(M) + ' and K = ' + str(K) + '...\n')
-    print(expdirpath)
+    print(f'Evaluating Chain type: {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
     
-    ###########################################################################
+    Population, Quartile, C_current, C_chains, C_total, Closest_current, Closest_total, C_currentMinDist, C_totalMinDist, num_tracts, num_current_stores, num_chains_stores, num_total_stores = import_dist(Chain_type, M)
     
-    ### Census Tract 
-    Population = np.genfromtxt('../Data/CA_demand_over_5.csv', delimiter = ",", dtype = int)
-    Quartile = np.genfromtxt('../Data/HPIQuartile_TRACT.csv', delimiter = ",", dtype = int)
-    
-    ### Current ###
-    C_current = np.genfromtxt('../Data/CA_dist_matrix_current.csv', delimiter = ",", dtype = float)
-    C_current = C_current.astype(int)
-    C_current = C_current.T
-    num_tracts, num_current_stores = np.shape(C_current)
+    F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
 
-    ### Chains ###
-    C_chains = np.genfromtxt('../Data/CA_dist_matrix_' + Chain_type + '.csv', delimiter = ",", dtype = float)
-    C_chains = C_chains.astype(int)
-    C_chains = C_chains.T
-    num_tracts, num_chains_stores = np.shape(C_chains)
-    ## Avoid negative numbers for high schools
-    C_chains = np.where(C_chains < 0, 1317574, C_chains)
-    
-    ### Total ###
-    C_total = np.concatenate((C_current, C_chains), axis = 1)
-    num_total_stores = num_current_stores + num_chains_stores
-    
-    ###########################################################################
-    
-    ### Travel to the closest M stores only
-    Closest_current = np.ones((num_tracts, num_current_stores))
-    Closest_total = np.ones((num_tracts, num_total_stores))
-    np.put_along_axis(Closest_current, np.argpartition(C_current,M,axis=1)[:,M:],0,axis=1)
-    np.put_along_axis(Closest_total, np.argpartition(C_total,M,axis=1)[:,M:],0,axis=1)
-    
-    
-    Closest_current = Closest_current.flatten()
-    Closest_total = Closest_total.flatten()
+    p_total, p_current, c_current, c_total, f_dh_current, f_dh_total, pc_current, pc_total, pfdh_current, pfdh_total = evaluate_vectorize(Population, num_tracts, num_current_stores, num_total_stores, C_current, C_total, F_DH_current, F_DH_total)
 
-    ###########################################################################
 
-    # TODO: do matching between tract & zip, and also include demographics
+    # Import optimal z from optimziation
+    if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
 
-    Deltahat = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
-    F_D_total = np.exp(Deltahat) / (1+np.exp(Deltahat))
-    F_D_current = F_D_total[:,0:num_current_stores]
+        for opt_constr in constraint_list:
 
-    F_DH_total = []
-    for i in range(num_tracts):
-                
-        tract_quartile = Quartile[i]
-                
-        if tract_quartile == 1:
-            deltahat = (Demand_parameter[1][0] + Demand_parameter[1][2]) + (Demand_parameter[1][1] + Demand_parameter[1][5]) * np.log(C_total[i,:]/1000)
-            tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-        elif tract_quartile == 2:
-            deltahat = (Demand_parameter[1][0] + Demand_parameter[1][3]) + (Demand_parameter[1][1] + Demand_parameter[1][6]) * np.log(C_total[i,:]/1000)
-            tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-        elif tract_quartile == 3:
-            deltahat = (Demand_parameter[1][0] + Demand_parameter[1][4]) + (Demand_parameter[1][1] + Demand_parameter[1][7]) * np.log(C_total[i,:]/1000)
-            tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-        elif tract_quartile == 4:
-            deltahat = Demand_parameter[1][0] + Demand_parameter[1][1] * np.log(C_total[i,:]/1000)
-            tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-        else:
-            deltahat = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total[i,:]/1000)
-            tract_willingness = np.exp(deltahat) / (1+np.exp(deltahat))
-                
-        F_DH_total.append(tract_willingness)
-                
-    F_DH_total = np.asarray(F_DH_total)
-    F_DH_current = F_DH_total[:,0:num_current_stores]
+            print(f'{expdirpath}{opt_constr}/z...')
+            z_total = np.genfromtxt(f'{expdirpath}{opt_constr}/z_total.csv', delimiter = ",", dtype = float)
+            z_current = np.genfromtxt(f'{expdirpath}{opt_constr}/z_current.csv', delimiter = ",", dtype = float)
 
-    ###########################################################################
-    
+            for eval_constr in constraint_list:
+
+                if Chain_type == 'Dollar':
+                    evaluate_rate(scenario = 'current', constraint = eval_constr, z = z_current,
+                                pc = pc_current, pf = pfdh_current, ncp = p_current, p = Population,
+                                closest = Closest_current, K=K, 
+                                num_current_stores=num_current_stores,
+                                num_total_stores=num_total_stores, 
+                                num_tracts=num_tracts,
+                                scale_factor=scale_factor,
+                                path = expdirpath + opt_constr + '/')
+
+                evaluate_rate(scenario = 'total', constraint = eval_constr, z = z_total,
+                            pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
+                            closest = Closest_total, K=K,
+                            num_current_stores=num_current_stores,
+                            num_total_stores=num_total_stores,
+                            num_tracts=num_tracts,
+                            scale_factor=scale_factor,
+                            path = expdirpath + opt_constr + '/')
+
+
+    else: # MinDist
+
+        print(f'{expdirpath}/z...')
+        z_total = np.genfromtxt(f'{expdirpath}/z_total.csv', delimiter = ",", dtype = float)
+        z_current = np.genfromtxt(f'{expdirpath}/z_current.csv', delimiter = ",", dtype = float)
+
+        for eval_constr in constraint_list:
+
+            if Chain_type == 'Dollar':
+                evaluate_rate(scenario = 'current', constraint = eval_constr, z = z_current,
+                            pc = pc_current, pf = pfdh_current, ncp = p_current, p = Population,
+                            closest = Closest_current, K=K, 
+                            num_current_stores=num_current_stores,
+                            num_total_stores=num_total_stores, 
+                            num_tracts=num_tracts,
+                            scale_factor=scale_factor,
+                            path = expdirpath)
+
+            evaluate_rate(scenario = 'total', constraint = eval_constr, z = z_total,
+                        pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
+                        closest = Closest_total, K=K,
+                        num_current_stores=num_current_stores,
+                        num_total_stores=num_total_stores,
+                        num_tracts=num_tracts,
+                        scale_factor=scale_factor,
+                        path = expdirpath)  
+
+
+
+    pass
+
+
+
+
+
+
+
+def evaluate_vectorize(Population, num_tracts, num_current_stores, num_total_stores, C_current, C_total, F_DH_current, F_DH_total):
+
     # n copies of demand
     p_total = np.tile(Population, num_total_stores)
     p_total = np.reshape(p_total, (num_total_stores, num_tracts))
@@ -107,45 +124,7 @@ def evaluate_chain(Chain_type, Model, Demand_parameter, expdirpath, M=5, K=8000)
     # population * willingness
     pfdh_current = p_current * f_dh_current
     pfdh_total = p_total * f_dh_total
-    
-    
-    del C_current, C_total, C_chains, F_D_total, F_D_current, F_DH_total, F_DH_current
-    
-    ###########################################################################
-
-    # Import optimal z from optimziation
-
-    if Model == 'MinDist': path = '../Result/' + Model + '/' + 'M5_K' + str(K) + '/'  + Chain_type + '/'
-    else: path = '../Result/' + Model + '/' + 'M' + str(M) + '_K' + str(K) + '/'  + Chain_type + '/'
-
-    if Model == 'MaxRateHPIDist' or Model == 'MaxRateDist':
-        z_total = np.genfromtxt(path + 'z_BLP_total.csv', delimiter = ",", dtype = float)
-        z_current = np.genfromtxt(path + 'z_BLP_current.csv', delimiter = ",", dtype = float)
-
-    else:
-        z_total = np.genfromtxt(path + 'z_BLP_total.csv', delimiter = ",", dtype = float)
-        z_current = np.genfromtxt(path + 'z_BLP_current.csv', delimiter = ",", dtype = float)
-
-    ###########################################################################
 
 
-    if Chain_type == 'Dollar':
-        evaluate_rate(scenario = 'current', z = z_current,
-                      pc = pc_current, pf = pfdh_current, ncp = p_current, p = Population,
-                      closest = Closest_current, K=K, 
-                      num_current_stores=num_current_stores,
-                      num_total_stores=num_total_stores, 
-                      num_tracts=num_tracts,
-                      scale_factor=scale_factor,
-                      path = expdirpath)
+    return p_total, p_current, c_current, c_total, f_dh_current, f_dh_total, pc_current, pc_total, pfdh_current, pfdh_total
 
-    evaluate_rate(scenario = 'total', z = z_total,
-                  pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
-                  closest = Closest_total, K=K,
-                  num_current_stores=num_current_stores,
-                  num_total_stores=num_total_stores,
-                  num_tracts=num_tracts,
-                  scale_factor=scale_factor,
-                  path = expdirpath)
-
-    # expdirpath already has the Model info so we don't need Model

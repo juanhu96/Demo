@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul 21, 2022
+Created on Jul, 2023
 @Author: Jingyuan Hu 
 """
 
@@ -19,7 +19,7 @@ from gurobipy import GRB, quicksum
 
 
 
-def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
+def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
                   num_current_stores, num_total_stores, num_tracts, 
                   scale_factor, path, MIPGap = 1e-3):
     
@@ -29,7 +29,11 @@ def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
     scenario : string
         "current": current stores only
         "total": current and dollar stores
-        
+    
+    constraint : string
+        'assigned', 'vaccinated'
+        whether the capacity constraint is based on assignments or vaccinations
+
     Demand_estimation : string
         "BLP":
         "Logit":
@@ -65,11 +69,12 @@ def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
     env = gp.Env(empty=True)
     env.setParam("OutputFlag",0)
     env.start()
+
     m = gp.Model("Vaccination")
     m.Params.IntegralityFocus = 1
     m.Params.MIPGap = MIPGap
     
-    total_demand = sum(p)
+
     if scenario == "current": num_stores = num_current_stores
     if scenario == "total": num_stores = num_total_stores
 
@@ -84,18 +89,20 @@ def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
     
     
     ### Constraints ###
-    for j in range(num_stores):
-        # m.addConstr(quicksum(ncp[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
-        m.addConstr(quicksum(p[i] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
-
+    if constraint == 'assigned':
+        for j in range(num_stores):
+            m.addConstr(quicksum(p[i] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+    elif constraint == 'vaccinated':
+        for j in range(num_stores):
+            m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j]) # TODO: double check the formula
 
     for i in range(num_tracts):
         m.addConstr(quicksum(y[i * num_stores + j] for j in range(num_stores)) <= 1)
-    
-    m.addConstr(z.sum() == num_current_stores, name = 'N')    
         
     for k in range(num_tracts * num_stores):
         m.addConstr(y[k] <= closest[k])
+
+    m.addConstr(z.sum() == num_current_stores, name = 'N')    
 
 
     ## Solve ###
@@ -115,39 +122,10 @@ def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
     
     
     ### Summary ###
-    if scenario == "current":
-        store_used = sum(z_soln)
-        vaccine_rate = pf @ y_soln / total_demand
-        avg_dist = (pc @ y_soln / total_demand) * scale_factor    
-        allocation_rate = ncp @ y_soln / total_demand
-
-        result = [store_used, vaccine_rate, avg_dist, allocation_rate, round(end - start,1)]        
-        result_df = pd.DataFrame(result, index =['Stores used', 'Vaccination rate', 'Avg distance', 'Allocation rate', 'Time'], columns =['Value'])
-            
-        np.savetxt(path + 'z_' + Demand_estimation + '_current''.csv', z_soln, delimiter=",")
-        np.savetxt(path + 'y_' + Demand_estimation + '_current.csv', y_soln, delimiter=",")
-        result_df.to_csv(path + 'result_' + Demand_estimation + '_current.csv')
-        
-    elif scenario == "total":
-        store_used = sum(z_soln)
-        vaccine_rate = (pf @ y_soln / total_demand)
-        avg_dist = (pc @ y_soln / total_demand) * scale_factor
-        allocation_rate = ncp @ y_soln / total_demand
-                         
-        num_current_store_used = sum(z_soln[0 : num_current_stores])
-        num_dollar_store_used = store_used - num_current_store_used
-            
-        dollar_store_demand = ncp[num_current_stores * num_tracts : num_total_stores * num_tracts] @ y_soln[num_current_stores * num_tracts : num_total_stores * num_tracts]
-        dollar_store_allocation_rate = dollar_store_demand / total_demand
-            
-        result = [store_used, vaccine_rate, avg_dist, allocation_rate, num_current_store_used, num_dollar_store_used, dollar_store_allocation_rate, round(end - start,1)]
-        result_df = pd.DataFrame(result, index =['Stores used', 'Vaccination rate', 'Avg distance', 'Allocation rate',\
-                                                 'Current store used', 'Dollar store used', 'Dollar store allocation rate', 'Time'], columns =['Value'])
-                
-            
-        np.savetxt(path + 'z_' + Demand_estimation + '_total.csv', z_soln, delimiter=",")
-        np.savetxt(path + 'y_' + Demand_estimation + '_total.csv', y_soln, delimiter=",")
-        result_df.to_csv(path + 'result_' + Demand_estimation + '_total.csv')    
+    result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
+    np.savetxt(path + 'z_' + scenario + '.csv', z_soln, delimiter=",")
+    np.savetxt(path + 'y_' + scenario + '.csv', y_soln, delimiter=",")
+    result_df.to_csv(path + 'result_' + scenario + '.csv') 
 
  
     ### Finished all ###
@@ -161,7 +139,7 @@ def optimize_rate(scenario, Demand_estimation, pc, pf, ncp, p, K, closest,
     
 
 
-def optimize_dist(scenario, pc, pf, ncp, p, K,
+def optimize_dist(scenario, pc, ncp, p, K,
                   num_current_stores, num_total_stores, num_tracts,
                   scale_factor, path, MIPGap = 1e-2):
     
@@ -173,11 +151,12 @@ def optimize_dist(scenario, pc, pf, ncp, p, K,
     env = gp.Env(empty=True)
     env.setParam("OutputFlag",0)
     env.start()
+
     m = gp.Model("Vaccination")
     m.Params.IntegralityFocus = 1
     m.Params.MIPGap = MIPGap
     
-    total_demand = sum(p)
+
     if scenario == "current": num_stores = num_current_stores
     if scenario == "total": num_stores = num_total_stores
     
@@ -217,40 +196,10 @@ def optimize_dist(scenario, pc, pf, ncp, p, K,
     
     
     ### Summary ###
-    if scenario == "current":
-        store_used = sum(z_soln)
-        vaccine_rate = pf @ y_soln / total_demand
-        avg_dist = (pc @ y_soln / total_demand) * scale_factor    
-        allocation_rate = ncp @ y_soln / total_demand
-
-        result = [store_used, vaccine_rate, avg_dist, allocation_rate, round(end - start,1)]        
-        result_df = pd.DataFrame(result, index =['Stores used', 'Vaccination rate', 'Avg distance', 'Allocation rate', 'Time'],\
-                                 columns =['Value'])
-        
-        np.savetxt(path + 'z_current.csv', z_soln, delimiter=",")
-        np.savetxt(path + 'y_current.csv', y_soln, delimiter=",")
-        result_df.to_csv(path + 'result_current.csv')
-    
-    elif scenario == "total":
-        store_used = sum(z_soln)
-        vaccine_rate = (pf @ y_soln / total_demand)
-        avg_dist = (pc @ y_soln / total_demand) * scale_factor    
-        allocation_rate = ncp @ y_soln / total_demand
-                     
-        num_current_store_used = sum(z_soln[0 : num_current_stores])
-        num_dollar_store_used = store_used - num_current_store_used
-        
-        dollar_store_demand = ncp[num_current_stores * num_tracts : num_total_stores * num_tracts] @ y_soln[num_current_stores * num_tracts : num_total_stores * num_tracts]
-        dollar_store_allocation_rate = dollar_store_demand / total_demand
-        
-        result = [store_used, vaccine_rate, avg_dist, allocation_rate, num_current_store_used, num_dollar_store_used, dollar_store_allocation_rate, round(end - start,1)]
-        result_df = pd.DataFrame(result, index =['Stores used', 'Vaccination rate', 'Avg distance', 'Allocation rate',\
-                                                 'Current store used', 'Dollar store used', 'Dollar store allocation rate',\
-                                                     'Time'], columns =['Value'])
-            
-        np.savetxt(path + 'z_total.csv', z_soln, delimiter=",")
-        np.savetxt(path + 'y_total.csv', y_soln, delimiter=",")
-        result_df.to_csv(path + 'result_total.csv')  
+    result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
+    np.savetxt(path + 'z_' + scenario + '.csv', z_soln, delimiter=",")
+    np.savetxt(path + 'y_' + scenario + '.csv', y_soln, delimiter=",")
+    result_df.to_csv(path + 'result_' + scenario + '.csv')
             
      
     ### Finished all ###
@@ -264,7 +213,7 @@ def optimize_dist(scenario, pc, pf, ncp, p, K,
 
 
 
-def optimize_rate_fix(scenario, pc, pf, ncp, pv, p, K, closest,
+def optimize_rate_fix(scenario, constraint, ncp, pv, p, closest, K,
                        num_current_stores, num_total_stores, num_tracts, 
                        scale_factor, path, MIPGap = 5e-3):
     '''
@@ -288,10 +237,12 @@ def optimize_rate_fix(scenario, pc, pf, ncp, pv, p, K, closest,
     env = gp.Env(empty=True)
     env.setParam("OutputFlag",0)
     env.start()
+
     m = gp.Model("Vaccination")
+    m.Params.IntegralityFocus = 1
     m.Params.MIPGap = MIPGap
     
-    total_demand = sum(p)
+
     if scenario == "current": num_stores = num_current_stores
     if scenario == "total": num_stores = num_total_stores
     
@@ -306,8 +257,13 @@ def optimize_rate_fix(scenario, pc, pf, ncp, pv, p, K, closest,
     
     
     ### Constraints ###
-    for j in range(num_stores):
-           m.addConstr(quicksum(ncp[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+
+    if constraint == 'assigned':
+        for j in range(num_stores):
+            m.addConstr(quicksum(p[i] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+    elif constraint == 'vaccinated':
+        for j in range(num_stores):
+            m.addConstr(quicksum(pv[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j]) # TODO: double check the formula
         
     for i in range(num_tracts):
         m.addConstr(quicksum(y[i * num_stores + j] for j in range(num_stores)) <= 1)
@@ -336,42 +292,12 @@ def optimize_rate_fix(scenario, pc, pf, ncp, pv, p, K, closest,
     
     
     ### Summary ###
-    if scenario == "current":
-        store_used = sum(z_soln)
-        vaccine_rate = pf @ y_soln / total_demand
-        avg_dist = (pc @ y_soln / total_demand) * scale_factor    
-        allocation_rate = ncp @ y_soln / total_demand
-
-        result = [store_used, vaccine_rate, avg_dist, allocation_rate, round(end - start,1)]        
-        result_df = pd.DataFrame(result, index =['Stores used', 'Vaccination rate', 'Avg distance', 'Allocation rate', 'Time'],\
-                                 columns =['Value'])
-        
-        np.savetxt(path + 'z_current.csv', z_soln, delimiter=",")
-        np.savetxt(path + 'y_current.csv', y_soln, delimiter=",")
-        result_df.to_csv(path + 'result_current.csv')
-    
-    elif scenario == "total":
-        store_used = sum(z_soln)
-        vaccine_rate = (pf @ y_soln / total_demand)
-        avg_dist = (pc @ y_soln / total_demand) * scale_factor    
-        allocation_rate = ncp @ y_soln / total_demand
-                     
-        num_current_store_used = sum(z_soln[0 : num_current_stores])
-        num_dollar_store_used = store_used - num_current_store_used
-        
-        dollar_store_demand = ncp[num_current_stores * num_tracts : num_total_stores * num_tracts] @ y_soln[num_current_stores * num_tracts : num_total_stores * num_tracts]
-        dollar_store_allocation_rate = dollar_store_demand / total_demand
-        
-        result = [store_used, vaccine_rate, avg_dist, allocation_rate, num_current_store_used, num_dollar_store_used, dollar_store_allocation_rate, round(end - start,1)]
-        result_df = pd.DataFrame(result, index =['Stores used', 'Vaccination rate', 'Avg distance', 'Allocation rate',\
-                                                 'Current store used', 'Dollar store used', 'Dollar store allocation rate',\
-                                                     'Time'], columns =['Value'])
-            
-
-        np.savetxt(path + 'z_total.csv', z_soln, delimiter=",")
-        np.savetxt(path + 'y_total.csv', y_soln, delimiter=",")
-        result_df.to_csv(path + 'result_total.csv')    
+    result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
+    np.savetxt(path + 'z_' + scenario + '.csv', z_soln, delimiter=",")
+    np.savetxt(path + 'y_' + scenario + '.csv', y_soln, delimiter=",")
+    result_df.to_csv(path + 'result_' + scenario + '.csv') 
  
+
     ### Finished all ###
     m.dispose()    
     
