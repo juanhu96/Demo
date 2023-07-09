@@ -12,41 +12,37 @@ outdir = "/export/storage_covidvaccine/Result"
 
 #TODO: switches
 hpi_quantile_in_tract = True #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
-tighter_tols = False
-save_to_pipeline = False 
-ref_lastq = False
-nsplits = 2 #number of HPI quantiles to split the data into : 4 or 2
-if not ref_lastq or not tighter_tols:
-    save_to_pipeline = False
-setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{int(bool(tighter_tols))}{nsplits}"
+save_to_pipeline = False
+ref_lastq = False #make the last quantile the reference for dist*hpi interaction terms
+nsplits = 4 #number of HPI quantiles to split the data into : 4 or 2
+setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{nsplits}"
 ###
-
 
 # data
 df_read = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv")
-df_read.columns
-agent_data_read.columns
 
 df_read['hpi_quantile'] = pd.qcut(df_read['hpi'], nsplits, labels=False) + 1
-df_read['hpi_quantile'].value_counts()
 
-agent_data_read['hpi_quantile'] = pd.qcut(agent_data_read['hpi'], nsplits, labels=False) + 1
-agent_data_read['hpi_quantile'].value_counts()
+# add HPI quantile to agent_data_read (depending on whether it's in tract or zip)
+if hpi_quantile_in_tract:
+    tract_hpi = agent_data_read[['tract', 'hpi']].drop_duplicates()
+    tract_hpi['hpi_quantile'] = pd.qcut(tract_hpi['hpi'], nsplits, labels=False) + 1
+    tract_hpi = tract_hpi.drop(columns=['hpi'])
+    agent_data_read = agent_data_read.merge(tract_hpi, on='tract')
+else:
+    ziphpiquantile = df_read[['market_ids', 'hpi_quantile']]
+    agent_data_read = agent_data_read.merge(ziphpiquantile, on='market_ids')
 
-# add ZIP-level HPI quantile to agent_data_read
-ziphpiquantile = df_read[['market_ids', 'hpi_quantile']].drop_duplicates().rename(columns={'hpi_quantile': 'zip_hpi_quantile'})
-agent_data_read = agent_data_read.merge(ziphpiquantile, on='market_ids')
 
-
+# assign hpi quantile dummies and interaction terms
 for qq in range(1, nsplits+1):
     df_read[f'hpi_quantile{qq}'] = (df_read['hpi_quantile'] == qq).astype(int)
-    if hpi_quantile_in_tract:
-        agent_data_read[f'hpi_quantile{qq}'] = (agent_data_read['hpi_quantile'] == qq).astype(int)
-    else:
-        agent_data_read[f'hpi_quantile{qq}'] = (agent_data_read['zip_hpi_quantile'] == qq).astype(int)
+    agent_data_read[f'hpi_quantile{qq}'] = (agent_data_read['hpi_quantile'] == qq).astype(int)
     agent_data_read[f'logdistXhpi_quantile{qq}'] = agent_data_read[f'logdist'] * agent_data_read[f'hpi_quantile{qq}']
 
+pd.options.display.max_columns = None
+agent_data_read.describe()
 
 # full list of controls
 controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
@@ -57,13 +53,13 @@ controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
 
 # variables in the table (in order)
 tablevars = ['logdist']
-for qq in range(1, nsplits):
+for qq in range(1, nsplits): #e.g. quantiles 1,2,3
     tablevars += [f'logdistXhpi_quantile{qq}']
 
-if not ref_lastq:
+if not ref_lastq: #add last quantile only if it's not the reference for dist*hpi
     tablevars += [f'logdistXhpi_quantile{nsplits}']
 
-for qq in range(1, nsplits):
+for qq in range(1, nsplits): #e.g. quantiles 1,2,3
     tablevars += [f'hpi_quantile{qq}']
 
 tablevars = tablevars + controls + ['1']
@@ -104,14 +100,13 @@ for vv in tablevars:
 
 
 # Iteration and Optimization Configurations for PyBLP
-gtol = 1e-12 if tighter_tols else 1e-8
 iteration_config = pyblp.Iteration(method='lm')
-optimization_config = pyblp.Optimization('trust-constr', {'gtol':gtol})
+optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-11})
 
 
 # config = [False, False, False]
 # config = [True, False, False]
-# config = [True, True, False]
+config = [True, True, False]
 # config = [True, True, True]
 
 
@@ -165,7 +160,7 @@ for config in [
     print("Agent formulation: ", agent_formulation_str)
     agent_vars = agent_formulation_str.split(' + ')
     agent_vars.remove('0')
-    pi_init = 0.001*np.ones((1,len(agent_vars)))
+    pi_init = 0.01*np.ones((1,len(agent_vars)))
 
     # Instruments - weighted averages of tract-level variables
     for (ii,vv) in enumerate(agent_vars):
@@ -257,7 +252,7 @@ for (ii,vv) in enumerate(varlabels):
     latex += serows[ii]
 
 latex += "\\bottomrule\n\\end{tabular}\n\n\nNote: $^{\\dag}$ indicates a variable at the tract level."
-table_path = f"{outdir}/Demand/coeftable_{config_tag}_{setting_tag}.tex"
+table_path = f"{outdir}/Demand/coeftable_{setting_tag}.tex"
 with open(table_path, "w") as f:
     print(f"Saved table at: {table_path}")
     f.write(latex)
