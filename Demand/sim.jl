@@ -1,4 +1,4 @@
-using DataFrames, DataFramesMeta, Distributions, Revise, DebuggingUtilities, CSV, Parameters
+using DataFrames, DataFramesMeta, Distributions, Revise, DebuggingUtilities, CSV, Parameters, Random
 string(@__DIR__) in LOAD_PATH || push!(LOAD_PATH, @__DIR__);
 using SimModule; const m = SimModule
 
@@ -24,7 +24,6 @@ tract_ind = [findfirst(tractid_dist .== tractid) for tractid in tractids]
 tract_data.abd .= 0.; #TODO: temporary, fill in
 
 tracts, locations = m.initialize(distmatrix = distmatrix, distcoef = [-0.5], abd = tract_data.abd, tract_ind = tract_ind);
-
 m.compute_ranking!(tracts)
 
 
@@ -41,10 +40,15 @@ tracts[1].individuals[2].u_ij
 tracts[1].individuals[2].location_ranking
 
 
-
-
-
-
+# implement Random-FCFS Mechanism
+m.random_fcfs!(tracts, locations)
 
 tracts[1].individuals[1].location
+tracts[100].individuals[1].location
+
+occupancies = [loc.occupancy for loc in locations]
+# summary stats for occupancy
+mean(occupancies)
+mean(occupancies .> 0) 
+[quantile(occupancies, range(0, 1, length=11))...]
 

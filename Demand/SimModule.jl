@@ -24,7 +24,7 @@ struct Tract #can be a tract-HPI pair
     location_ids::Vector{Int64}
 end
 
-struct Location
+mutable struct Location
     id::Int64
     capacity::Int64
     occupancy::Int64
@@ -105,10 +105,14 @@ end
 "Random-FCFS": First-come, first-served with a random order over all individuals in all tracts.
 """
 function random_fcfs!(tracts::Vector{Tract}, locations::Vector{Location})
-    individuals = [tract.individuals for tract in tracts]
-    individuals = shuffle(vcat(individuals...))
-    for ii in individuals
-        for ll in ii.location_ranking
+
+    # Assume tracts is your Vector{Tract}
+    individuals_nested = [tract.individuals for tract in tracts]
+    individuals_shuffled = shuffle(vcat(individuals_nested...))
+
+    # Iterate over individuals in random order
+    for ii in individuals_shuffled
+        for ll in ii.locations_ranked
             if locations[ll].capacity > locations[ll].occupancy
                 locations[ll].occupancy += 1
                 ii.location = ll
