@@ -47,7 +47,6 @@ tract_nearest_df['tract'].apply(len).value_counts()
 
 # tract hpi
 tract_hpi_df = pd.read_csv(f"{datadir}/Raw/hpi2score.csv", dtype={'geoid': str}, usecols=['geoid', 'value', 'percentile'])
-tract_hpi_df.drop(columns=['percentile'], inplace=True)
 tract_hpi_df.sort_values(by='value', inplace=True)
 tract_hpi_df['hpi_quartile'] = pd.qcut(tract_hpi_df['value'], 4, labels=False) + 1
 tract_hpi_df.rename(columns={'geoid': 'tract', 'value': 'hpi'}, inplace=True)

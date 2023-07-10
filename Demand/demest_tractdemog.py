@@ -11,9 +11,9 @@ datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result"
 
 #TODO: switches
-hpi_quantile_in_tract = True #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
+hpi_quantile_in_tract = False #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
 save_to_pipeline = False
-ref_lastq = False #make the last quantile the reference for dist*hpi interaction terms
+ref_lastq = True #make the last quantile the reference for dist*hpi interaction terms
 nsplits = 4 #number of HPI quantiles to split the data into : 4 or 2
 setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{nsplits}"
 ###
@@ -25,14 +25,16 @@ agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv")
 df_read['hpi_quantile'] = pd.qcut(df_read['hpi'], nsplits, labels=False) + 1
 
 # add HPI quantile to agent_data_read (depending on whether it's in tract or zip)
+tract_hpi = agent_data_read[['tract', 'hpi']].drop_duplicates()
+tract_hpi['hpi_quantile'] = pd.qcut(tract_hpi['percentile'], nsplits, labels=False) + 1
+tract_hpi = tract_hpi.drop(columns=['hpi'])
+ziphpiquantile = df_read[['market_ids', 'hpi_quantile']]
+
 if hpi_quantile_in_tract:
-    tract_hpi = agent_data_read[['tract', 'hpi']].drop_duplicates()
-    tract_hpi['hpi_quantile'] = pd.qcut(tract_hpi['hpi'], nsplits, labels=False) + 1
-    tract_hpi = tract_hpi.drop(columns=['hpi'])
     agent_data_read = agent_data_read.merge(tract_hpi, on='tract')
 else:
-    ziphpiquantile = df_read[['market_ids', 'hpi_quantile']]
-    agent_data_read = agent_data_read.merge(ziphpiquantile, on='market_ids')
+    # agent_data_read = agent_data_read.merge(ziphpiquantile, on='market_ids') 
+    agent_data_read = agent_data_read.merge(tract_hpi, on='tract') #TODO: this is just a temporary thing get HPI quantile not as a RC, but HPI*dist using tract-level HPI quantile
 
 
 # assign hpi quantile dummies and interaction terms
@@ -101,7 +103,7 @@ for vv in tablevars:
 
 # Iteration and Optimization Configurations for PyBLP
 iteration_config = pyblp.Iteration(method='lm')
-optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-11})
+optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10})
 
 
 # config = [False, False, False]
