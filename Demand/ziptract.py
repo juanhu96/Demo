@@ -18,20 +18,17 @@ tracts = tracts[['GEOID10', 'geometry']]
 tracts = tracts.rename(columns={'GEOID10': 'tract'})
 tracts['tract'] = tracts['tract'].astype(str)
 
-tracts
-zips
-
-
-
-
-
 # intersect
 tractzip = gpd.overlay(tracts, zips, how='intersection')
-tractzip_out = tractzip[['zip', 'tract']].sort_values(by=['zip', 'tract'])
+
 
 # compute the tract population in the particular ZIP, based on the proportion of the tract area that is in the ZIP
-# TODO: see voteshares.py
+tractzip['area'] = tractzip.geometry.area
+for col in ['tract', 'zip']:
+    col_area = tractzip.groupby(col)['area'].sum()
+    tractzip[f"frac_of_{col}_area"] = tractzip['area'] / tractzip[col].map(col_area)
 
 
+tractzip_out = tractzip.drop(columns=['geometry']).sort_values(by=['zip', 'tract'])
 
 tractzip_out.to_csv(f"{datadir}/Intermediate/tract_zip_crosswalk.csv", index=False)

@@ -12,10 +12,8 @@ datadir = "/export/storage_covidvaccine/Data"
 
 useold = False #replicate demandest_0622
 if useold:
-    useoldcw = True
     useolddemog = True
 else:
-    useoldcw = False
     useolddemog = False
 
 
@@ -36,14 +34,6 @@ tracts = tract_nearest_df.merge(tract_hpi_df, on='tract', how='outer', indicator
 print("Distance to HPI merge:\n", tracts._merge.value_counts())
 tracts = tracts.loc[tracts._merge != 'right_only', :] #only one right_only
 tracts.drop(columns=['_merge'], inplace=True)
-
-# impute HPI for tracts that don't have it TODO: check if this is the right thing to do
-drop_no_hpi = True
-if drop_no_hpi:
-    tracts = tracts.loc[tracts['hpi'].notnull(), :]
-else:
-    tracts.loc[tracts['hpi'].isnull(), 'hpi_quartile'] = 5 # make missings their own "quartile"
-    tracts.hpi_quartile.value_counts()
 
 # tract demographics
 if useolddemog:
@@ -80,7 +70,23 @@ tracts.drop(columns=['_merge'], inplace=True)
 # drop tracts with zero population
 tracts = tracts.loc[tracts['tr_pop'] > 0, :]
 
-# impute health variables
+# TODO: impute health variables
+
+
+
+# impute HPI for tracts with no HPI
+impute_hpi_method = 'drop' # 'drop' or 'q1' or 'nearest'
+if impute_hpi_method == 'drop':
+    tracts = tracts.loc[tracts['hpi'].notnull(), :]
+elif impute_hpi_method == 'q1':
+    tracts.loc[tracts['hpi'].isnull(), 'hpi_quartile'] = 1 
+    tracts.hpi_quartile.value_counts()
+elif impute_hpi_method == 'nearest':
+    #  TODO: get lat/lon of tracts to find
+    tracts_tofind = tracts.loc[tracts['hpi'].isnull(), ['tract']]
+    # make it the same as drop for now
+    tracts = tracts.loc[tracts['hpi'].notnull(), :]
+
 
 
 # merge with tract-level vote shares
@@ -98,24 +104,10 @@ tracts['dshare'] = tracts['dshare'].fillna(tracts['dshare'].mean())
 
 
 # merge with tract-ZIP crosswalk
-if useoldcw:
-    tractzip_cw = pd.read_csv(f"{datadir}/Raw/notreallyraw/tract_zip_032022.csv", usecols=['TRACT', 'ZIP'], dtype={'TRACT': str, 'ZIP': str})
-    tractzip_cw.rename(columns={'ZIP': 'zip'}, inplace=True)
-    # verify that TRACT is 11 digits
-    tractzip_cw['TRACT'].apply(len).value_counts() # all 11
-    tractzip_cw = tractzip_cw.assign(statefips = tractzip_cw['TRACT'].str[:2])
-    # keep CA only
-    tractzip_cw = tractzip_cw[tractzip_cw['statefips'] == '06']
-    tractzip_cw = tractzip_cw.assign(countyfips = tractzip_cw['TRACT'].str[2:5])
-    tractzip_cw = tractzip_cw.assign(tractid = tractzip_cw['TRACT'].str[5:])
-    # Make the Tract column the same as the one in tract_nearest_df (10 digits, start with 6)
-    tractzip_cw = tractzip_cw.assign(tract = '6' + tractzip_cw['countyfips'] + tractzip_cw['tractid'])
-    tractzip_cw.sort_values(by='tract', inplace=True)
 
-else:
-    tractzip_cw = pd.read_csv(f"{datadir}/Intermediate/tract_zip_crosswalk.csv", dtype={'zip': str, 'tract': str})
-    tractzip_cw['tract'] = tractzip_cw['tract'].str[1:] # drop the first digit
-    tractzip_cw['tract'].apply(len).value_counts() # all 10-digits that start with 6
+tractzip_cw = pd.read_csv(f"{datadir}/Intermediate/tract_zip_crosswalk.csv", dtype={'zip': str, 'tract': str})
+tractzip_cw['tract'] = tractzip_cw['tract'].str[1:] # drop the first digit
+tractzip_cw['tract'].apply(len).value_counts() # all 10-digits that start with 6
 
 
 agent_data = tracts.merge(tractzip_cw, on='tract', how='outer', indicator=True)
@@ -139,10 +131,20 @@ df = df.assign(race = 1-df.race_black-df.race_asian-df.race_hispanic-df.race_oth
 df = df.assign(income = df.medianhhincome)
 
 
-# weights to be the population of the tract over the sum of the population of all tracts in the ZIP
-zip_pop = agent_data.groupby('zip')['tr_pop'].transform('sum')
-agent_data = agent_data.assign(market_ids = agent_data['zip'],
-                               weights = agent_data['tr_pop']/zip_pop)
+# weights to be the population of the tract over the population in the ZIP
+agent_data = agent_data.merge(df[['zip', 'population']].rename(columns={'population':'zip_pop'}), on='zip', how='left')
+
+pop_method = 'tract' # 'tract' or 'zip'
+if pop_method == 'tract': # compute weights based on tract population and fraction of the tract's area that is in the ZIP-tract cell
+    agent_data['cell_pop'] = agent_data['tr_pop'] * agent_data['frac_of_tract_area']
+    agent_data['market_pop'] = agent_data.groupby('zip')['cell_pop'].transform('sum')
+    agent_data['weights'] = agent_data['cell_pop'] / agent_data['market_pop']
+elif pop_method == 'zip': # compute weights based on ZIP population and fraction of the ZIP's area that is in the ZIP-tract cell
+    agent_data['cell_pop'] = agent_data['zip_pop'] * agent_data['frac_of_zip_area']
+    agent_data['market_pop'] = agent_data['zip_pop']
+    agent_data['weights'] = agent_data['cell_pop'] / agent_data['market_pop']
+    # there are NAs because some ZIPs have zero population 
+
 
 pd.set_option('display.max_columns', None)
 agent_data.describe()
@@ -155,7 +157,7 @@ zips_wotracts = df.loc[~df['zip'].isin(agent_data['zip'])]
 aux_tracts = zips_wotracts[['zip', 'dshare', 'dist',
        'race_black', 'race_asian', 'race_hispanic', 
        'race_other', 'health_employer', 'health_medicare', 
-       'health_medicaid', 'health_other', 'collegegrad', 
+       'health_medicaid', 'health_other', 'collegegrad',
        'medianhhincome', 'poverty', 'unemployment',
        'medianhomevalue', 'hpi', 'popdensity', 'market_ids', 'hpi_quartile'
        ]].assign(tract = zips_wotracts['zip'],
@@ -164,6 +166,7 @@ aux_tracts = zips_wotracts[['zip', 'dshare', 'dist',
 
 agent_data = pd.concat([agent_data, aux_tracts], ignore_index=True)
 
+agent_data['market_ids'] = agent_data['zip']
 agent_data['nodes'] = 0 # for pyblp (no random coefficients)
 agent_data['logdist'] = np.log(agent_data['dist']) 
 
