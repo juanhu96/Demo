@@ -21,10 +21,10 @@ vax_df.to_csv(f"{datadir}/Intermediate/vax_panel.csv", index=False)
 
 
 #### HPI
-hpi22 = pd.read_csv(f"{datadir}/Raw/hpi_zip_2022.csv", dtype={'geoid': str}, usecols=['geoid', 'percentile']).rename(columns={"geoid": "zip"})
+hpi22 = pd.read_csv(f"{datadir}/Raw/HPI/hpi_zip_2022.csv", dtype={'geoid': str}, usecols=['geoid', 'percentile']).rename(columns={"geoid": "zip"})
 hpi22 = hpi22.rename(columns={"percentile": "hpi_22"})
 
-hpi11 = pd.read_csv(f"{datadir}/Raw/hpi_zip_2011.csv", dtype={'geoid': str}, usecols=['geoid', 'percentile']).rename(columns={"geoid": "zip"})
+hpi11 = pd.read_csv(f"{datadir}/Raw/HPI/hpi_zip_2011.csv", dtype={'geoid': str}, usecols=['geoid', 'percentile']).rename(columns={"geoid": "zip"})
 hpi11 = hpi11.rename(columns={"percentile": "hpi_11"})
 # drop NAs 
 hpi11 = hpi11.loc[~hpi11.hpi_11.isna(), :]

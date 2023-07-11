@@ -24,9 +24,9 @@ setwd("/export/storage_covidvaccine/")
 
 
 ## Import ##
-TRACT_VOTES <- read.csv("Data/Tract_votes.csv", stringsAsFactors = FALSE) # downloaded
-TRACT_HPI <- read.csv("Data/HPItract2022.csv", stringsAsFactors = FALSE) # downloaded
-POPULATION_CENTROIDS <- read.csv("Data/Tract_centroids.csv", stringsAsFactors = FALSE) # from process_raw_data.R
+TRACT_VOTES <- read.csv("Data/Intermediate/tract_votes.csv", stringsAsFactors = FALSE) # from voteshares.py
+TRACT_HPI <- read.csv("Data/Raw/HPI/hpi_tract_2022.csv", stringsAsFactors = FALSE) # downloaded
+POPULATION_CENTROIDS <- read.csv("Data/Intermediate/tract_centroids.csv", stringsAsFactors = FALSE) # from process_raw_data.R
 
 DEMOGRAPHICS <- read.csv("Data/Raw/Census/pdb2020trv2_us.csv")
 DEMOGRAPHICS <- DEMOGRAPHICS %>% filter(State == 6)
@@ -85,7 +85,7 @@ write.csv(TRACT, "Data/TRACT_merged.csv", row.names = F)
 
 ### Update: insurance type merged
 TRACT <- read.csv("Data/TRACT_merged.csv")
-TRACT_INSURANCE = read.csv("Data/ACSDT5Y2019.B27010.csv")
+TRACT_INSURANCE = read.csv("Data/Raw/ACS/ACSDT5Y2019.B27010.csv")
 
 
 HEALTH = TRACT_INSURANCE %>%
@@ -108,7 +108,7 @@ HEALTH_CA = HEALTH %>%
 TRACT_MERGED = left_join(TRACT, HEALTH_CA, by = "tract")
 
 
-write.csv(TRACT_merged, "Data/TRACT_merged.csv")
+write.csv(TRACT_MERGED, "Data/TRACT_merged.csv")
 
 
 ################################################################################

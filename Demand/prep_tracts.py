@@ -23,7 +23,7 @@ tract_nearest_df['tract'].apply(len).value_counts()
 
 
 # tract hpi
-tract_hpi_df = pd.read_csv(f"{datadir}/Raw/hpi_tract_2022.csv", dtype={'geoid': str}, usecols=['geoid', 'value', 'percentile'])
+tract_hpi_df = pd.read_csv(f"{datadir}/Raw/HPI/hpi_tract_2022.csv", dtype={'geoid': str}, usecols=['geoid', 'value', 'percentile'])
 tract_hpi_df['hpi_quartile'] = pd.qcut(tract_hpi_df['value'], 4, labels=False) + 1
 tract_hpi_df.rename(columns={'geoid': 'tract', 'value': 'hpi'}, inplace=True)
 tract_hpi_df.tract.apply(len).value_counts() # all 11 digits
@@ -42,7 +42,7 @@ elif impute_hpi_method == 'q1':
     tracts.loc[tracts['hpi'].isnull(), 'hpi_quartile'] = 1 
     tracts.hpi_quartile.value_counts()
 elif impute_hpi_method == '2011':
-    hpi11 = pd.read_csv(f"{datadir}/Raw/hpi_tract_2011.csv", dtype={'geoid': str}, usecols=['geoid', 'percentile']).rename(columns={"geoid": "tract"})
+    hpi11 = pd.read_csv(f"{datadir}/Raw/HPI/hpi_tract_2011.csv", dtype={'geoid': str}, usecols=['geoid', 'percentile']).rename(columns={"geoid": "tract"})
     hpi11 = hpi11.rename(columns={"percentile": "hpi_percentile_11"})
     # remove first digit
     hpi11['tract'] = hpi11['tract'].str[1:]
