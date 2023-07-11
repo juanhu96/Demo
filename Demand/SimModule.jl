@@ -41,13 +41,17 @@ function initialize(;
     abd::Vector{Float64},  # abd[tt] is the utility except distance term for tract tt
     tract_ind::Vector{Int64}, # tract_ind[tt] is the index of tract tt in distmatrix
     hpi::Vector{<:Real} = ones(Int64, length(abd)), # hpi[tt] is the hpi of tract tt. if omitted, all tracts are in the same hpi group
-    capacity=500, # capacity of each location
+    capacity=10000, # capacity of each location
     max_locations=5, # maximum number of locations for each tract
-    n_individuals=100, # number of individuals in each tract TODO: make this a vector
+    n_individuals=[100], # number of individuals in each tract TODO: make this a vector
     seed=1234)
 
     if length(distcoef) != length(unique(hpi))
         error("length(distcoef) != length(unique(hpi))")
+    end
+
+    if length(n_individuals) < length(abd)
+        n_individuals = n_individuals[1] .* ones(Int64, length(abd))
     end
 
     # make HPI groups Int64 if they are not already
@@ -63,7 +67,7 @@ function initialize(;
 
     
     # Draw ϵ_ij for each individual
-    ϵ_ij = [rand(Gumbel(), max_locations) for _ in 1:n_individuals, _ in 1:n_tracts]
+    ϵ_ij = [[rand(Gumbel(), max_locations) for ii in 1:n_individuals[tt]] for tt in 1:n_tracts]
 
 
     # Create Tract objects
@@ -75,7 +79,7 @@ function initialize(;
             distcoef[hpi[tt]], 
             abd[tt], 
             abd[tt] .+ distcoef[hpi[tt]] .* distances[tt],
-            [Individual(tract_id = tt, ϵ_ij = ϵ_ij[ii,tt], u_ij = zeros(max_locations), location_ranking = ones(Int64, max_locations)) for ii in 1:n_individuals],
+            [Individual(tract_id = tt, ϵ_ij = ϵ_ij[tt][ii], u_ij = zeros(max_locations), location_ranking = ones(Int64, max_locations)) for ii in 1:n_individuals[tt]],
             location_ids[tt]) 
         for tt in 1:n_tracts]
 
@@ -183,8 +187,8 @@ end
 
 
 function assignment_stats(tracts::Vector{Tract})
-    println("********\nReporting stats for $(length(tracts)) tracts")
     n_individuals = sum(length(tract.individuals) for tract in tracts)
+    println("********\nReporting stats for $(n_individuals) individuals in $(length(tracts)) tracts")
 
     max_locations = length(tracts[1].location_ids)
     for cc in 1:max_locations
@@ -199,7 +203,7 @@ function assignment_stats(tracts::Vector{Tract})
 end
     
 function assignment_stats(locations::Vector{Location})
-    println("********\nReporting stats for $(length(locations)) locations")
+    println("********\nReporting stats for $(length(locations)) locations with capacity $(locations[1].capacity)")
     occupancies = [loc.occupancy for loc in locations]
     println("\nMean occupancy: ", round(mean(occupancies), digits=3))
     println("\nFraction of locations with occupancy > 0: ", round(mean(occupancies .> 0), digits=3))

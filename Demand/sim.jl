@@ -14,9 +14,13 @@ distmatrix = log.(Matrix(distdf) ./ 1000.)
 
 
 tract_data = CSV.read("$datadir/Analysis/Demand/agent_data.csv", DataFrame)
-# remove the "tracts" that are actually ZIPs
-@subset!(tract_data, :tract .> 100000)
+# remove the "tracts" that are actually ZIPs TODO:
 
+n_individuals = tract_data.weights .* tract_data.tr_pop
+tract_data[!, [:weights, :tr_pop]] 
+names(tract_data)
+
+@subset!(tract_data, :tract .> 100000)
 
 tractids = tract_data.tract
 tractid_dist = CSV.read("$datadir/Intermediate/tract_nearest_dist.csv", DataFrame).tract #
@@ -26,8 +30,7 @@ tract_ind = [findfirst(tractid_dist .== tractid) for tractid in tractids]
 # abd = 
 tract_data.abd .= 0.; #TODO: temporary, fill in
 
-tracts, locations = m.initialize(distmatrix = distmatrix, distcoef = [-0.5], abd = tract_data.abd, tract_ind = tract_ind);
-
+tracts, locations = m.initialize(distmatrix = distmatrix, distcoef = [-0.5], abd = tract_data.abd, tract_ind = tract_ind, capacity = 10000, max_locations = 5);
 
 # inspect
 inspect = false
@@ -44,7 +47,14 @@ end
 
 ###############
 # implement Random-FCFS Mechanism
-m.random_fcfs!(tracts, locations)
+tracts1, locations1 = m.initialize(distmatrix = distmatrix, distcoef = [-0.5], abd = tract_data.abd, tract_ind = tract_ind, capacity = 10000, max_locations = 5, n_individuals = tract_data.n_individuals);
+m.random_fcfs!(tracts1, locations1)
+
+tracts2, locations2 = m.initialize(distmatrix = distmatrix, distcoef = [-0.5], abd = tract_data.abd, tract_ind = tract_ind, capacity = 500, max_locations = 5);
+m.random_fcfs!(tracts2, locations2)
+
+tracts3, locations3 = m.initialize(distmatrix = distmatrix, distcoef = [-0.5], abd = tract_data.abd, tract_ind = tract_ind, capacity = 500, max_locations = 10);
+m.random_fcfs!(tracts3, locations3)
 
 
 
