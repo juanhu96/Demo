@@ -12,41 +12,20 @@ datadir = "/export/storage_covidvaccine/Data"
 
 useold = False #replicate demandest_0622
 if useold:
-    usepairs = True
     useoldcw = True
     useolddemog = True
 else:
-    usepairs = False
     useoldcw = False
     useolddemog = False
 
 
 # tract-pharmacy distance pairs
-if usepairs:
-    # pre-processed to the 10 nearest pharmacies for each tract.
-    pairs_df = pd.read_csv(f"{datadir}/Raw/pairs_filtered.csv", usecols=['Tract', 'Distance'],dtype={'Tract': str, 'Distance': float})
-    pairs_df['Distance'].describe()
-    pairs_df
-    pairs_df.rename(columns={'Tract': 'tract', 'Distance': 'dist'}, inplace=True)
-    # just the nearest pharmacy for each tract
-    tract_nearest_df = pairs_df.groupby('tract').head(1)
-    tract_nearest_df = tract_nearest_df.assign(countyfips = tract_nearest_df['tract'].str[1:5])
-    tract_nearest_df['countyfips']
-    tract_nearest_df['tractid'] = tract_nearest_df['tract'].str[5:]
-    tract_nearest_df['tractid']
-    # pad the tractid with 0s
-    tract_nearest_df['tractid'] = tract_nearest_df['tractid'].apply(lambda x: x.zfill(6))
-    # combine the countyfips and tractid
-    tract_nearest_df['tract'] = tract_nearest_df['countyfips'] + tract_nearest_df['tractid']
-
-else:
-    tract_nearest_df = pd.read_csv(f"{datadir}/Intermediate/tract_nearest_dist.csv", dtype={'tract': str}) #from read_tract_dist.py
-
+tract_nearest_df = pd.read_csv(f"{datadir}/Intermediate/tract_nearest_dist.csv", dtype={'tract': str}) #from read_tract_dist.py
 tract_nearest_df['tract'].apply(len).value_counts() 
 
 
 # tract hpi
-tract_hpi_df = pd.read_csv(f"{datadir}/Raw/hpi2score.csv", dtype={'geoid': str}, usecols=['geoid', 'value', 'percentile'])
+tract_hpi_df = pd.read_csv(f"{datadir}/Raw/hpi_tract_2022.csv", dtype={'geoid': str}, usecols=['geoid', 'value', 'percentile'])
 tract_hpi_df.sort_values(by='value', inplace=True)
 tract_hpi_df['hpi_quartile'] = pd.qcut(tract_hpi_df['value'], 4, labels=False) + 1
 tract_hpi_df.rename(columns={'geoid': 'tract', 'value': 'hpi'}, inplace=True)
