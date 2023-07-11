@@ -24,16 +24,40 @@ tract_nearest_df['tract'].apply(len).value_counts()
 
 # tract hpi
 tract_hpi_df = pd.read_csv(f"{datadir}/Raw/hpi_tract_2022.csv", dtype={'geoid': str}, usecols=['geoid', 'value', 'percentile'])
-tract_hpi_df.sort_values(by='value', inplace=True)
 tract_hpi_df['hpi_quartile'] = pd.qcut(tract_hpi_df['value'], 4, labels=False) + 1
 tract_hpi_df.rename(columns={'geoid': 'tract', 'value': 'hpi'}, inplace=True)
 tract_hpi_df.tract.apply(len).value_counts() # all 11 digits
 tract_hpi_df['tract'] = tract_hpi_df['tract'].str[1:] # drop the first digit
 # merge hpi and nearest pharmacy
 tracts = tract_nearest_df.merge(tract_hpi_df, on='tract', how='outer', indicator=True)
-print("Distance to HPI merge:\n", tracts._merge.value_counts())
+print("Distance to HPI merge:\n", tracts._merge.value_counts()) # 7789 both, 268 left_only
 tracts = tracts.loc[tracts._merge != 'right_only', :] #only one right_only
 tracts.drop(columns=['_merge'], inplace=True)
+
+# impute HPI for tracts with no HPI
+impute_hpi_method = 'drop' # 'drop' or 'q1' or 'nearest' or '2011
+if impute_hpi_method == 'drop':
+    tracts = tracts.loc[tracts['hpi'].notnull(), :]
+elif impute_hpi_method == 'q1':
+    tracts.loc[tracts['hpi'].isnull(), 'hpi_quartile'] = 1 
+    tracts.hpi_quartile.value_counts()
+elif impute_hpi_method == '2011':
+    hpi11 = pd.read_csv(f"{datadir}/Raw/hpi_tract_2011.csv", dtype={'geoid': str}, usecols=['geoid', 'percentile']).rename(columns={"geoid": "tract"})
+    hpi11 = hpi11.rename(columns={"percentile": "hpi_percentile_11"})
+    # remove first digit
+    hpi11['tract'] = hpi11['tract'].str[1:]
+    tracts = tracts.merge(hpi11, on='tract', how='outer', indicator=True)
+    print("Merge to 2011 HPI:\n", tracts._merge.value_counts()) # 7793 both, 264 left_only
+    # fill NAs from 2022 with 2011
+    tracts['hpi'] = tracts['hpi'].fillna(tracts['hpi_percentile_11'])
+    # reduced from 268 to 242, so still need to impute
+elif impute_hpi_method == 'nearest':
+    #  TODO: get lat/lon of tracts to find
+    tracts_tofind = tracts.loc[tracts['hpi'].isnull(), ['tract']]
+    # make it the same as drop for now
+    tracts = tracts.loc[tracts['hpi'].notnull(), :]
+
+
 
 # tract demographics
 if useolddemog:
@@ -73,19 +97,6 @@ tracts = tracts.loc[tracts['tr_pop'] > 0, :]
 # TODO: impute health variables
 
 
-
-# impute HPI for tracts with no HPI
-impute_hpi_method = 'drop' # 'drop' or 'q1' or 'nearest'
-if impute_hpi_method == 'drop':
-    tracts = tracts.loc[tracts['hpi'].notnull(), :]
-elif impute_hpi_method == 'q1':
-    tracts.loc[tracts['hpi'].isnull(), 'hpi_quartile'] = 1 
-    tracts.hpi_quartile.value_counts()
-elif impute_hpi_method == 'nearest':
-    #  TODO: get lat/lon of tracts to find
-    tracts_tofind = tracts.loc[tracts['hpi'].isnull(), ['tract']]
-    # make it the same as drop for now
-    tracts = tracts.loc[tracts['hpi'].notnull(), :]
 
 
 
