@@ -49,32 +49,16 @@ def optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPID
         for K in K_list:
             for M in M_list:
 
-                if M == 5:
+                parameter_path = f'{model_path}M{str(M)}_K{str(K)}/'
+                if not os.path.exists(parameter_path): os.mkdir(parameter_path)
 
-                    parameter_path = f'{model_path}M{str(M)}_K{str(K)}/'
-                    if not os.path.exists(parameter_path): os.mkdir(parameter_path)
-
-                    for Chain_type in Chain_list:
+                for Chain_type in Chain_list:
                         
-                        chain_path = f'{parameter_path}{Chain_type}/'
-                        if not os.path.exists(chain_path): os.mkdir(chain_path)
+                    chain_path = f'{parameter_path}{Chain_type}/'
+                    if not os.path.exists(chain_path): os.mkdir(chain_path)
 
-                        optimize_chain(Chain_type, Model, M = M, K = K, expdirpath = chain_path)
-
-
-                elif M == 10 and Model != 'MinDist':
+                    optimize_chain(Chain_type, Model, M = M, K = K, expdirpath = chain_path)
                     
-                    parameter_path = f'{model_path}M{str(M)}_K{str(K)}/'
-                    if not os.path.exists(parameter_path): os.mkdir(parameter_path)
-                        
-                    for Chain_type in Chain_list:
-                        
-                        chain_path = f'{parameter_path}{Chain_type}/'
-                        if not os.path.exists(chain_path): os.mkdir(chain_path)
-                        
-                        optimize_chain(Chain_type, Model, M = M, K = K, expdirpath = chain_path)
-    
-
     
     print('All problems solved!')
 

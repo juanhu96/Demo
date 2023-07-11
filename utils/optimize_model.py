@@ -141,7 +141,7 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
 
 def optimize_dist(scenario, pc, ncp, p, K,
                   num_current_stores, num_total_stores, num_tracts,
-                  scale_factor, path, MIPGap = 1e-2):
+                  scale_factor, path, MIPGap = 3e-2):
     
     '''
     See optimize_rate()

@@ -1,0 +1,311 @@
+Evaluating Chain type: Dollar; Model: MinDist; M = 5, K = 10000. Results stored at /export/storage_covidvaccine/Result/MinDist/M5_K10000/Dollar/
+/export/storage_covidvaccine/Result/MinDist/M5_K10000/Dollar//z...
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter IntegralityFocus to value 1
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 32522087 rows, 32509995 columns and 97396830 nonzeros
+Model fingerprint: 0x92356614
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+04]
+  Objective range  [1e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 32510095 rows and 32469875 columns (presolve time = 11s) ...
+Presolve removed 32510128 rows and 32470121 columns (presolve time = 16s) ...
+Presolve removed 32510148 rows and 32470141 columns (presolve time = 20s) ...
+Presolve removed 32510186 rows and 32470241 columns (presolve time = 25s) ...
+Presolve removed 32510191 rows and 32470252 columns
+Presolve time: 28.40s
+Presolved: 11896 rows, 39743 columns, 79390 nonzeros
+
+Concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Ordering time: 0.01s
+
+Barrier statistics:
+ AA' NZ     : 3.965e+04
+ Factor NZ  : 1.900e+05 (roughly 22 MB of memory)
+ Factor Ops : 3.523e+06 (less than 1 second per iteration)
+ Threads    : 30
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   7.55491781e+08  2.07190190e+07  2.57e+02 2.40e+03  2.12e+04    28s
+   1   1.85749586e+08  7.84709960e+07  5.63e+01 3.18e-12  5.11e+03    28s
+   2   3.37582573e+07  6.17656217e+07  4.03e+00 2.27e-12  6.96e+02    28s
+   3   2.34994208e+07  3.19378675e+07  2.64e-01 1.82e-12  1.09e+02    29s
+   4   2.37632310e+07  2.66580554e+07  2.62e-02 1.36e-12  3.34e+01    29s
+   5   2.40995217e+07  2.55601527e+07  1.06e-02 9.09e-13  1.67e+01    29s
+   6   2.43292354e+07  2.50780154e+07  4.77e-03 1.82e-12  8.52e+00    29s
+   7   2.44355180e+07  2.48805420e+07  2.93e-03 9.09e-13  5.07e+00    29s
+   8   2.45407763e+07  2.47868868e+07  1.41e-03 1.82e-12  2.79e+00    29s
+   9   2.45893003e+07  2.47192943e+07  8.14e-04 9.09e-13  1.48e+00    29s
+  10   2.46364547e+07  2.46979030e+07  3.11e-04 1.36e-12  6.95e-01    29s
+  11   2.46636376e+07  2.46822577e+07  5.66e-05 9.09e-13  2.08e-01    29s
+
+Barrier performed 11 iterations in 28.60 seconds (31.69 work units)
+Barrier solve interrupted - model solved by another algorithm
+
+
+Solved with primal simplex
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   25474    2.4673020e+07   0.000000e+00   2.818485e+03     50s
+Extra simplex iterations after uncrush: 77027
+  102501    2.4673020e+07   0.000000e+00   0.000000e+00     60s
+
+Solved in 102501 iterations and 59.70 seconds (73.05 work units)
+Optimal objective  2.467302039e+07
+Set parameter IntegralityFocus to value 1
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709015 rows, 40695907 columns and 121921038 nonzeros
+Model fingerprint: 0x043a804a
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+04]
+  Objective range  [1e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 0 rows and 0 columns (presolve time = 7s) ...
+Presolve removed 40697036 rows and 40661380 columns (presolve time = 13s) ...
+Presolve removed 40697193 rows and 40661658 columns (presolve time = 16s) ...
+Presolve removed 40697212 rows and 40661678 columns (presolve time = 20s) ...
+Presolve removed 40697243 rows and 40661835 columns (presolve time = 25s) ...
+Presolve removed 40697248 rows and 40661841 columns
+Presolve time: 30.21s
+Presolved: 11767 rows, 34066 columns, 68041 nonzeros
+
+Concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Ordering time: 0.01s
+
+Barrier statistics:
+ AA' NZ     : 3.398e+04
+ Factor NZ  : 1.651e+05 (roughly 20 MB of memory)
+ Factor Ops : 2.737e+06 (less than 1 second per iteration)
+ Threads    : 30
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   9.34068039e+08  2.09398051e+07  2.79e+02 2.31e+03  2.99e+04    30s
+   1   2.33457922e+08  7.83401749e+07  6.26e+01 5.00e-12  7.35e+03    30s
+   2   4.02633075e+07  6.42800619e+07  5.14e+00 2.50e-12  9.79e+02    30s
+   3   2.54984323e+07  3.62090821e+07  5.49e-01 2.05e-12  1.84e+02    30s
+   4   2.50449777e+07  2.78105392e+07  1.01e-01 1.82e-12  4.25e+01    30s
+   5   2.52711330e+07  2.66288171e+07  4.25e-02 9.09e-13  2.02e+01    30s
+   6   2.54309226e+07  2.61421243e+07  2.29e-02 9.09e-13  1.06e+01    30s
+   7   2.55216152e+07  2.59448944e+07  1.40e-02 9.09e-13  6.35e+00    30s
+   8   2.56047694e+07  2.58576506e+07  7.89e-03 9.09e-13  3.76e+00    30s
+   9   2.56609163e+07  2.58088347e+07  4.17e-03 9.09e-13  2.17e+00    30s
+
+Barrier performed 9 iterations in 30.34 seconds (36.16 work units)
+Barrier solve interrupted - model solved by another algorithm
+
+
+Solved with primal simplex
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   21749    2.5740143e+07   0.000000e+00   4.621928e+03     53s
+  233968    2.5740143e+07   0.000000e+00   9.910457e+06     64s
+  446187    2.5740143e+07   0.000000e+00   2.773389e+06     70s
+  621955    2.5740597e+07   0.000000e+00   3.559875e+06     81s
+  724365    2.5740766e+07   0.000000e+00   1.283619e+06    138s
+  734845    2.5740768e+07   0.000000e+00   6.189820e+04    180s
+  738445    2.5740769e+07   0.000000e+00   6.980973e+04    219s
+  743575    2.5740773e+07   0.000000e+00   3.104580e+04    259s
+  746025    2.5740773e+07   0.000000e+00   2.222512e+04    299s
+  747905    2.5740773e+07   0.000000e+00   2.294702e+04    339s
+  749465    2.5740774e+07   0.000000e+00   2.268402e+04    379s
+  750415    2.5740774e+07   0.000000e+00   1.513922e+04    418s
+  751385    2.5740774e+07   0.000000e+00   1.878142e+04    457s
+  752655    2.5740774e+07   0.000000e+00   1.418195e+04    497s
+  753945    2.5740775e+07   0.000000e+00   1.207567e+04    537s
+  754905    2.5740775e+07   0.000000e+00   1.153045e+04    576s
+  755525    2.5740775e+07   0.000000e+00   8.196849e+03    614s
+  756065    2.5740775e+07   0.000000e+00   7.589422e+03    652s
+  756655    2.5740775e+07   0.000000e+00   5.537552e+03    689s
+  757175    2.5740775e+07   0.000000e+00   8.101907e+03    728s
+  757715    2.5740775e+07   0.000000e+00   3.524888e+03    768s
+  758165    2.5740775e+07   0.000000e+00   6.597704e+03    807s
+  758825    2.5740775e+07   0.000000e+00   3.127706e+03    847s
+  759355    2.5740776e+07   0.000000e+00   3.245988e+03    886s
+  759745    2.5740776e+07   0.000000e+00   2.468032e+03    926s
+  760105    2.5740776e+07   0.000000e+00   2.569862e+04    966s
+  760535    2.5740776e+07   0.000000e+00   2.138519e+03   1005s
+  760895    2.5740776e+07   0.000000e+00   1.269519e+03   1043s
+  761325    2.5740776e+07   0.000000e+00   8.495386e+02   1081s
+  761675    2.5740776e+07   0.000000e+00   1.288496e+03   1120s
+  761855    2.5740776e+07   0.000000e+00   7.861495e+02   1161s
+  761995    2.5740776e+07   0.000000e+00   6.950072e+02   1201s
+  762095    2.5740776e+07   0.000000e+00   6.008220e+02   1239s
+  762335    2.5740776e+07   0.000000e+00   6.780925e+02   1319s
+  762515    2.5740776e+07   0.000000e+00   4.553567e+02   1393s
+  762655    2.5740776e+07   0.000000e+00   2.224174e+02   1515s
+  762865    2.5740776e+07   0.000000e+00   2.647095e+02   1553s
+  762985    2.5740776e+07   0.000000e+00   1.360710e+02   1635s
+  763095    2.5740776e+07   0.000000e+00   1.253242e+02   1722s
+  763195    2.5740776e+07   0.000000e+00   3.879604e+01   1809s
+  763335    2.5740776e+07   0.000000e+00   2.454145e+00   1936s
+  765176    2.5740143e+07   0.000000e+00   0.000000e+00   2023s
+Extra simplex iterations after uncrush: 1
+  765177    2.5740143e+07   0.000000e+00   0.000000e+00   2050s
+
+Solved in 765177 iterations and 2050.10 seconds (8116.38 work units)
+Optimal objective  2.574014251e+07
+Set parameter IntegralityFocus to value 1
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 32522087 rows, 32509995 columns and 97396830 nonzeros
+Model fingerprint: 0x69f893ea
+Coefficient statistics:
+  Matrix range     [1e-01, 2e+04]
+  Objective range  [1e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 0 rows and 0 columns (presolve time = 5s) ...
+Presolve removed 32510287 rows and 32470577 columns (presolve time = 12s) ...
+Presolve removed 32510333 rows and 32470649 columns (presolve time = 16s) ...
+Presolve removed 32510493 rows and 32471104 columns (presolve time = 20s) ...
+Presolve removed 32510497 rows and 32471108 columns
+Presolve time: 22.60s
+Presolved: 11590 rows, 38887 columns, 77574 nonzeros
+
+Concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Ordering time: 0.01s
+
+Barrier statistics:
+ AA' NZ     : 3.869e+04
+ Factor NZ  : 1.813e+05 (roughly 20 MB of memory)
+ Factor Ops : 3.310e+06 (less than 1 second per iteration)
+ Threads    : 30
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   1.72106021e+09  2.64249322e+07  5.35e+02 2.35e+03  4.43e+04    23s
+   1   4.10833243e+08  9.13883112e+07  1.22e+02 2.73e-12  1.10e+04    23s
+   2   6.60271776e+07  7.72331054e+07  1.23e+01 2.27e-12  1.52e+03    23s
+   3   2.77081729e+07  4.63813369e+07  9.09e-01 1.36e-12  3.01e+02    23s
+   4   2.51173979e+07  2.90977829e+07  9.72e-02 3.98e-13  5.49e+01    23s
+   5   2.51266859e+07  2.70085611e+07  4.31e-02 4.55e-13  2.55e+01    23s
+   6   2.53246982e+07  2.63070599e+07  1.83e-02 9.24e-14  1.30e+01    23s
+   7   2.54518333e+07  2.59833583e+07  9.49e-03 4.26e-14  6.97e+00    23s
+   8   2.55550153e+07  2.58299281e+07  4.81e-03 4.55e-13  3.62e+00    23s
+   9   2.56112649e+07  2.57669685e+07  2.77e-03 5.68e-14  2.06e+00    23s
+  10   2.56733434e+07  2.57303095e+07  9.49e-04 1.42e-14  7.47e-01    23s
+
+Barrier performed 10 iterations in 22.74 seconds (31.65 work units)
+Barrier solve interrupted - model solved by another algorithm
+
+
+Solved with primal simplex
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   25207    2.5713671e+07   0.000000e+00   1.613074e+04     39s
+  206561    2.5713671e+07   0.000000e+00   7.766147e+06     43s
+  387915    2.5713671e+07   0.000000e+00   7.849527e+05     46s
+  482272    2.5713671e+07   0.000000e+00   0.000000e+00     52s
+Extra simplex iterations after uncrush: 457065
+
+Solved in 482272 iterations and 54.11 seconds (86.62 work units)
+Optimal objective  2.571367078e+07
+Set parameter IntegralityFocus to value 1
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709015 rows, 40695907 columns and 121921038 nonzeros
+Model fingerprint: 0xbc741ee1
+Coefficient statistics:
+  Matrix range     [1e-01, 2e+04]
+  Objective range  [1e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 0 rows and 0 columns (presolve time = 7s) ...
+Presolve removed 40697205 rows and 40661380 columns (presolve time = 12s) ...
+Presolve removed 40697628 rows and 40662347 columns (presolve time = 15s) ...
+Presolve removed 40697711 rows and 40662440 columns (presolve time = 22s) ...
+Presolve removed 40697952 rows and 40663294 columns (presolve time = 26s) ...
+Presolve removed 40697969 rows and 40663319 columns
+Presolve time: 30.08s
+Presolved: 11046 rows, 32588 columns, 64989 nonzeros
+
+Concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Ordering time: 0.01s
+
+Barrier statistics:
+ AA' NZ     : 3.240e+04
+ Factor NZ  : 1.550e+05 (roughly 20 MB of memory)
+ Factor Ops : 2.589e+06 (less than 1 second per iteration)
+ Threads    : 30
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   1.12873656e+09  2.64799700e+07  3.27e+02 2.67e+03  3.95e+04    30s
+   1   2.82135499e+08  9.33911043e+07  7.33e+01 4.55e-12  9.53e+03    30s
+   2   4.90942256e+07  7.53931463e+07  6.26e+00 3.64e-12  1.30e+03    30s
+   3   2.67690970e+07  3.86415735e+07  4.85e-01 2.27e-12  2.18e+02    30s
+   4   2.52448211e+07  2.82651659e+07  1.19e-02 1.82e-12  4.40e+01    30s
+
+Barrier performed 4 iterations in 30.17 seconds (39.57 work units)
+Barrier solve interrupted - model solved by another algorithm
+
+
+Solved with primal simplex
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   14110    2.6082098e+07   0.000000e+00   2.814082e+04     51s
+  226329    2.6082098e+07   0.000000e+00   4.632035e+07     55s
+  650767    2.6084848e+07   0.000000e+00   2.573776e+08     63s
+  862986    2.6087258e+07   0.000000e+00   2.069709e+07     66s
+ 1075205    2.6088915e+07   0.000000e+00   1.552171e+08     70s
+ 1499643    2.6091353e+07   0.000000e+00   1.243163e+08     77s
+ 1707311    2.6092283e+07   0.000000e+00   1.001578e+08     85s
+ 1798681    2.6092796e+07   0.000000e+00   2.268192e+03    124s
+ 1799231    2.6092796e+07   0.000000e+00   1.717458e+03    157s
+ 1799671    2.6092796e+07   0.000000e+00   3.782057e+02    191s
+ 1800311    2.6092796e+07   0.000000e+00   2.523048e+02    224s
+ 1800721    2.6092796e+07   0.000000e+00   7.892238e+02    258s
+ 1801161    2.6092796e+07   0.000000e+00   1.328546e+02    290s
+ 1801791    2.6092796e+07   0.000000e+00   1.959460e+02    324s
+ 1802111    2.6092796e+07   0.000000e+00   1.015642e+02    357s
+ 1802401    2.6092796e+07   0.000000e+00   2.141224e+01    390s
+ 1802731    2.6092796e+07   0.000000e+00   6.235259e+01    424s
+ 1803001    2.6092796e+07   0.000000e+00   3.091005e+01    458s
+ 1803181    2.6092796e+07   0.000000e+00   2.286102e+00    491s
+ 1803331    2.6092796e+07   0.000000e+00   1.321225e+01    527s
+ 1803431    2.6092796e+07   0.000000e+00   1.439904e-02    562s
+Extra simplex iterations after uncrush: 1
+ 1803492    2.6082098e+07   0.000000e+00   0.000000e+00    604s
+
+Solved in 1803492 iterations and 604.47 seconds (2530.73 work units)
+Optimal objective  2.608209791e+07
+Traceback (most recent call last):
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 45, in <module>
+    main()
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 41, in main
+    partnerships_summary(Model_list = ['MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='MinDist')
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/partnership_summary.py", line 187, in partnerships_summary
+    chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, eval_constr,\
+UnboundLocalError: local variable 'opt_constr' referenced before assignment

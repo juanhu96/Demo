@@ -15,8 +15,8 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 maindir = '/export/storage_covidvaccine/'
 
-from utils.partnerships_summary_helpers import create_row, tract_summary
-
+from utils.partnerships_summary_helpers import import_solution, create_row, tract_summary
+from utils.construct_F import construct_F_BLP, construct_F_LogLin
 
 def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
                         Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
@@ -106,23 +106,17 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
                 Closest_total = np.ones((num_tracts, num_total_stores))
                 np.put_along_axis(Closest_current, np.argpartition(C_current,M,axis=1)[:,M:],0,axis=1)
                 np.put_along_axis(Closest_total, np.argpartition(C_total,M,axis=1)[:,M:],0,axis=1)
-                                            
-                Closest_total_chains = np.ones((num_tracts, num_chain_stores))
-                np.put_along_axis(Closest_total_chains, np.argpartition(C_chains,M,axis=1)[:,M:],0,axis=1)
-                Closest_total_chains = np.concatenate((Closest_current, Closest_total_chains), axis = 1)
 
                 Farthest_current = np.ones((num_tracts, num_current_stores)) - Closest_current
-                Farthest_total_chains = np.ones((num_tracts, num_total_stores)) - Closest_total
+                Farthest_total= np.ones((num_tracts, num_total_stores)) - Closest_total
 
                 Closest_current = Closest_current.flatten()
-                Closest_total_chains = Closest_total.flatten()
+                Closest_total = Closest_total.flatten()
 
                 Farthest_current = Farthest_current.flatten()
-                Farthest_total_chains = Farthest_total_chains.flatten()
-
+                Farthest_total = Farthest_total.flatten()
 
                 ###########################################################################
-
 
                 for K in K_list:  
 
@@ -134,17 +128,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
 
                             for eval_constr in constraint_list:
 
-                                y_hpi = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
-                                z_hpi = np.genfromtxt(f'{expdirpath}{opt_constr}/z_total.csv', delimiter = ",", dtype = float) # invariant of eval_constr
-
-                                y_hpi_closest = y_hpi * Closest_chains
-                                y_hpi_farthest = y_hpi * Farthest_chains
-
-                                mat_y_hpi = np.reshape(y_hpi, (num_tracts, num_stores))
-                                mat_y_hpi_closest = np.reshape(y_hpi_closest, (num_tracts, num_stores))
-                                mat_y_hpi_farthest = np.reshape(y_hpi_farthest, (num_tracts, num_total_stores))
-
-                                R = store_used - sum(z_hpi[0 : num_current_stores])
+                                mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("total", path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest_total, Farthest_total)
 
                                 chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, eval_constr,\
                                 Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_total, C_total, C_total_walkable)
@@ -154,16 +138,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
 
                                 if Chain_type == 'Dollar':
 
-                                    y_hpi = np.genfromtxt(f'{path}y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
-
-                                    y_hpi_closest = y_hpi * Closest_chains
-                                    y_hpi_farthest = y_hpi * Farthest_chains
-
-                                    mat_y_hpi = np.reshape(y_hpi, (num_tracts, num_stores))
-                                    mat_y_hpi_closest = np.reshape(y_hpi_closest, (num_tracts, num_stores))
-                                    mat_y_hpi_farthest = np.reshape(y_hpi_farthest, (num_tracts, num_total_stores))
-
-                                    R = 0
+                                    mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("current", path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest_current, Farthest_current)
 
                                     chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, opt_constr, eval_constr,\
                                     Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_current, C_current, C_current_walkable)
@@ -176,63 +151,79 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
                                     #     mat_y_current_hpi, mat_y_current_hpi_closest, mat_y_current_hpi_farthest, result_current_hpi, F_DH_current, C_current, C_current_walkable,\
                                     #     mat_y_total_hpi, mat_y_total_hpi_closest, mat_y_total_hpi_farthest, result_total_hpi, F_DH_total, C_total, C_total_walkable)
 
-                    
 
-                    else: # MinDist, no opt_constr
 
-                            path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
+                            ###########################################################################
+                            # first round
 
-                            for eval_constr in constraint_list:
 
-                                y_hpi = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
-                                z_hpi = np.genfromtxt(f'{expdirpath}{opt_constr}/z_total.csv', delimiter = ",", dtype = float)
+                            mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("firstround_total", path, "none", num_tracts, num_current_stores, num_total_stores, Closest_total, Farthest_total)
 
-                                y_hpi_closest = y_hpi * Closest_chains
-                                y_hpi_farthest = y_hpi * Farthest_chains
+                            chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, "none",\
+                            Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_total, C_total, C_total_walkable)
 
-                                mat_y_hpi = np.reshape(y_hpi, (num_tracts, num_stores))
-                                mat_y_hpi_closest = np.reshape(y_hpi_closest, (num_tracts, num_stores))
-                                mat_y_hpi_farthest = np.reshape(y_hpi_farthest, (num_tracts, num_total_stores))
+                            chain_summary_table.append(chain_summary)
 
-                                R = store_used - sum(z_hpi[0 : num_current_stores])
 
-                                chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, eval_constr,\
-                                Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_total, C_total, C_total_walkable)
+                            if Chain_type == 'Dollar':
+
+                                mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("firstround_current", path, "none", num_tracts, num_current_stores, num_total_stores, Closest_current, Farthest_current)
+
+                                chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, opt_constr, "none",\
+                                Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_current, C_current, C_current_walkable)
 
                                 chain_summary_table.append(chain_summary)
 
 
-                                # Current
-                                if Chain_type == 'Dollar':
 
-                                    y_hpi = np.genfromtxt(f'{path}y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+                    else: # MinDist, no opt_constr
 
-                                    y_hpi_closest = y_hpi * Closest_chains
-                                    y_hpi_farthest = y_hpi * Farthest_chains
+                        path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
 
-                                    mat_y_hpi = np.reshape(y_hpi, (num_tracts, num_stores))
-                                    mat_y_hpi_closest = np.reshape(y_hpi_closest, (num_tracts, num_stores))
-                                    mat_y_hpi_farthest = np.reshape(y_hpi_farthest, (num_tracts, num_total_stores))
+                        for eval_constr in constraint_list:
 
-                                    R = 0
+                            mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("total", path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest_total, Farthest_total)
 
-                                    chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, opt_constr, eval_constr,\
-                                    Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_current, C_current, C_current_walkable)
+                            chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, "none", eval_constr,\
+                            Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_total, C_total, C_total_walkable)
 
-                                    chain_summary_table.append(chain_summary)
+                            chain_summary_table.append(chain_summary)
 
-                    
-                    
+
+                            if Chain_type == 'Dollar':
+
+                                mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("current", path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest_current, Farthest_current)
+
+                                chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", eval_constr,\
+                                Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_current, C_current, C_current_walkable)
+
+                                chain_summary_table.append(chain_summary)
+                        
+
+
+                        mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("firstround_total", path, "none", num_tracts, num_current_stores, num_total_stores, Closest_total, Farthest_total)
+
+                        chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, "none", "none",\
+                        Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_total, C_total, C_total_walkable)
+
+                        chain_summary_table.append(chain_summary)
+
+
+                        if Chain_type == 'Dollar':
+
+                            mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("firstround_current", path, "none", num_tracts, num_current_stores, num_total_stores, Closest_current, Farthest_current)
+
+                            chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", "none",\
+                            Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_current, C_current, C_current_walkable)
+
+                            chain_summary_table.append(chain_summary)
+
+
                         
     chain_summary = pd.DataFrame(chain_summary_table)
-    chain_summary.to_csv('../Result/summary_table_demand_.csv', encoding='utf-8', index=False, header=True)
+    chain_summary.to_csv(f'{maindir}Result/sensitivity_results_{filename}.csv', encoding='utf-8', index=False, header=True)
                 
                 
-
-
-
-
-
 
 
 

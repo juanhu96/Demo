@@ -88,11 +88,9 @@ def evaluate_rate(scenario, constraint, z, pc, pf, ncp, p, closest, K,
         for j in range(num_stores):
             m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j]) # TODO: double check the formula
 
-
     for i in range(num_tracts):
         m.addConstr(quicksum(y[i * num_stores + j] for j in range(num_stores)) <= 1)
-      
-        
+          
     for k in range(num_tracts * num_stores):
         m.addConstr(y[k] <= closest[k])
 
@@ -108,8 +106,7 @@ def evaluate_rate(scenario, constraint, z, pc, pf, ncp, p, closest, K,
     for k in range(num_tracts * num_stores):
         y_soln[k] = y[k].X    
     
-    np.savetxt(path + 'y_' + scenario + 'eval_' +  constraint + '.csv', y_soln, delimiter=",")
-
+    np.savetxt(path + 'y_' + scenario + '_eval_' +  constraint + '.csv', y_soln, delimiter=",")
  
     ### Finished all ###
     m.dispose()

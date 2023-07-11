@@ -13,7 +13,7 @@ os.chdir(dname)
 
 from utils.optimize_main import optimize_main
 from utils.evaluate_main import evaluate_main
-# from utils.partnership_summary import create_summary
+from utils.partnership_summary import partnerships_summary
 
 
 def main():
@@ -29,13 +29,16 @@ def main():
     
 
     # optimize_main(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # evaluate_main(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='MaxVaxHPIDistBLP')
 
-    evaluate_main(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # optimize_main(Model_list = ['MaxVaxDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # evaluate_main(Model_list = ['MaxVaxDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # partnerships_summary(Model_list = ['MaxVaxDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='MaxVaxDistBLP')
 
-    # create_summary(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='NEW')
-
-
-
+    optimize_main(Model_list = ['MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    evaluate_main(Model_list = ['MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    partnerships_summary(Model_list = ['MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='MinDist')
 
 
 if __name__ == "__main__":

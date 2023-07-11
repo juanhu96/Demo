@@ -48,21 +48,11 @@ def evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPID
         for K in K_list:
             for M in M_list:
 
-                if M == 5:
-
-                    for Chain_type in Chain_list:
+                for Chain_type in Chain_list:
                         
-                        chain_path = f'/export/storage_covidvaccine/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
+                    chain_path = f'/export/storage_covidvaccine/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
 
-                        evaluate_chain(Chain_type, Model, M = M, K = K, Demand_parameter = Demand_parameter, expdirpath = chain_path)
-                
-                elif M == 10 and Model != 'MinDist':
-
-                    for Chain_type in Chain_list:
-                        
-                        chain_path = f'/export/storage_covidvaccine/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
-
-                        evaluate_chain(Chain_type, Model, M = M, K = K, Demand_parameter = Demand_parameter, expdirpath = chain_path)
+                    evaluate_chain(Chain_type, Model, M = M, K = K, Demand_parameter = Demand_parameter, expdirpath = chain_path)
 
 
     pass

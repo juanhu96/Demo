@@ -9,6 +9,46 @@ import pandas as pd
 import numpy as np
 
 
+def import_solution(scenario, path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest, Farthest):
+
+
+    if scenario == "total":
+        y_hpi = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+        z_hpi = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
+        num_stores = num_total_stores
+        R = num_current_stores - sum(z_hpi[0 : num_current_stores])
+    
+    elif scenario == "firstround_total":
+        y_hpi = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
+        z_hpi = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
+        num_stores = num_total_stores
+        R = num_current_stores - sum(z_hpi[0 : num_current_stores])
+    
+    elif scenario == "current":
+        y_hpi = np.genfromtxt(f'{path}y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+        num_stores = num_current_stores
+        R = 0
+
+    elif scenario == "firstround_current":
+        y_hpi = np.genfromtxt(f'{path}y_current.csv', delimiter = ",", dtype = float)
+        num_stores = num_current_stores
+        R = 0
+    
+    else:
+        print("Warning: scenario undefined in import_solution().")
+
+    y_hpi_closest = y_hpi * Closest
+    y_hpi_farthest = y_hpi * Farthest
+
+    mat_y_hpi = np.reshape(y_hpi, (num_tracts, num_stores))
+    mat_y_hpi_closest = np.reshape(y_hpi_closest, (num_tracts, num_stores))
+    mat_y_hpi_farthest = np.reshape(y_hpi_farthest, (num_tracts, num_stores))
+
+    return mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R
+
+
+
+
 def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH, C, C_walkable):
 
     
@@ -200,24 +240,24 @@ def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quart
                      'Rate Within M': proportion[0],
                      'Rate Within M HPI1': proportion[1], 'Rate Within M HPI2': proportion[2], 
                      'Rate Within M HPI3': proportion[3], 'Rate Within M HPI4': proportion[4],
-                     'Vaccination Away M': drop_vaccination[0], 
-                     'Vaccination Away M HPI1': drop_vaccination[1], 'Vaccination Away M HPI2': drop_vaccination[2], 
-                     'Vaccination Away M HPI3': drop_vaccination[3], 'Vaccination Away M HPI4': drop_vaccination[4],
-                     'Rate Away M': drop_proportion[0],
-                     'Rate Away M HPI1': drop_proportion[1], 'Rate Away M HPI2': drop_proportion[2], 
-                     'Rate Away M HPI3': drop_proportion[3], 'Rate Away M HPI4': drop_proportion[4],
+                    #  'Vaccination Away M': drop_vaccination[0], 
+                    #  'Vaccination Away M HPI1': drop_vaccination[1], 'Vaccination Away M HPI2': drop_vaccination[2], 
+                    #  'Vaccination Away M HPI3': drop_vaccination[3], 'Vaccination Away M HPI4': drop_vaccination[4],
+                    #  'Rate Away M': drop_proportion[0],
+                    #  'Rate Away M HPI1': drop_proportion[1], 'Rate Away M HPI2': drop_proportion[2], 
+                    #  'Rate Away M HPI3': drop_proportion[3], 'Rate Away M HPI4': drop_proportion[4],
                      'Assigned Within M': assigned_within_population[0], 
                      'Assigned Within M HPI1': assigned_within_population[1], 'Assigned Within M HPI2': assigned_within_population[2], 
                      'Assigned Within M HPI3': assigned_within_population[3], 'Assigned Within M HPI4': assigned_within_population[4],
                      'Assigned Rate Within M': assigned_within_rate[0], 
                      'Assigned Rate Within M HPI1': assigned_within_rate[1], 'Assigned Rate Within M HPI2': assigned_within_rate[2], 
                      'Assigned Rate Within M HPI3': assigned_within_rate[3], 'Assigned Rate Within M HPI4': assigned_within_rate[4],
-                     'Assigned Away M': assigned_away_population[0], 
-                     'Assigned Away M HPI1': assigned_away_population[1], 'Assigned Away M HPI2': assigned_away_population[2], 
-                     'Assigned Away M HPI3': assigned_away_population[3], 'Assigned Away M HPI4': assigned_away_population[4],
-                     'Assigned Rate Away M': assigned_away_rate[0], 
-                     'Assigned Rate Away M HPI1': assigned_away_rate[1], 'Assigned Rate Away M HPI2': assigned_away_rate[2], 
-                     'Assigned Rate Away M HPI3': assigned_away_rate[3], 'Assigned Rate Away M HPI4': assigned_away_rate[4],
+                    #  'Assigned Away M': assigned_away_population[0], 
+                    #  'Assigned Away M HPI1': assigned_away_population[1], 'Assigned Away M HPI2': assigned_away_population[2], 
+                    #  'Assigned Away M HPI3': assigned_away_population[3], 'Assigned Away M HPI4': assigned_away_population[4],
+                    #  'Assigned Rate Away M': assigned_away_rate[0], 
+                    #  'Assigned Rate Away M HPI1': assigned_away_rate[1], 'Assigned Rate Away M HPI2': assigned_away_rate[2], 
+                    #  'Assigned Rate Away M HPI3': assigned_away_rate[3], 'Assigned Rate Away M HPI4': assigned_away_rate[4],
                      'Assigned Walkable': assigned_walkable[0], 
                      'Assigned Walkable HPI1': assigned_walkable[1], 'Assigned Walkable HPI2': assigned_walkable[2], 
                      'Assigned Walkable HPI3': assigned_walkable[3], 'Assigned Walkable HPI4': assigned_walkable[4],
@@ -232,13 +272,14 @@ def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quart
                      'Vaccination Walkable rate HPI3': rate_walkable[3], 'Vaccination Walkable rate HPI4': rate_walkable[4],
                      'Average distance': assigned_dist_actual[0],
                      'Average distance HPI1': assigned_dist_actual[1], 'Average distance HPI2': assigned_dist_actual[2],
-                     'Average distance HPI3': assigned_dist_actual[3], 'Average distance HPI4': assigned_dist_actual[4],
-                     'Closest distance': closest_dist_actual[0],
-                     'Closest distance HPI1': closest_dist_actual[1], 'Closest distance HPI2': closest_dist_actual[2],
-                     'Closest distance HPI3': closest_dist_actual[3], 'Closest distance HPI4': closest_dist_actual[4],
-                     'Farthest distance': farthest_dist_actual[0],
-                     'Farthest distance HPI1': farthest_dist_actual[1], 'Farthest distance HPI2': farthest_dist_actual[2],
-                     'Farthest distance HPI3': farthest_dist_actual[3], 'Farthest distance HPI4': farthest_dist_actual[4]}                   
+                     'Average distance HPI3': assigned_dist_actual[3], 'Average distance HPI4': assigned_dist_actual[4]
+                    #  'Closest distance': closest_dist_actual[0],
+                    #  'Closest distance HPI1': closest_dist_actual[1], 'Closest distance HPI2': closest_dist_actual[2],
+                    #  'Closest distance HPI3': closest_dist_actual[3], 'Closest distance HPI4': closest_dist_actual[4],
+                    #  'Farthest distance': farthest_dist_actual[0],
+                    #  'Farthest distance HPI1': farthest_dist_actual[1], 'Farthest distance HPI2': farthest_dist_actual[2],
+                    #  'Farthest distance HPI3': farthest_dist_actual[3], 'Farthest distance HPI4': farthest_dist_actual[4]
+                    }                   
 
 
 
