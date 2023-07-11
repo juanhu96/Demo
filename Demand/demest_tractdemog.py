@@ -11,42 +11,40 @@ datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result"
 
 #TODO: switches
-hpi_quantile_in_tract = True #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
-tighter_tols = False
-save_to_pipeline = False 
-ref_lastq = False
-nsplits = 2 #number of HPI quantiles to split the data into : 4 or 2
-if not ref_lastq or not tighter_tols:
-    save_to_pipeline = False
-setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{int(bool(tighter_tols))}{nsplits}"
+hpi_quantile_in_tract = False #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
+save_to_pipeline = True
+ref_lastq = False #make the last quantile the reference for dist*hpi interaction terms
+nsplits = 4 #number of HPI quantiles to split the data into : 4 or 2
+setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{nsplits}"
 ###
-
 
 # data
 df_read = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv")
-df_read.columns
-agent_data_read.columns
 
 df_read['hpi_quantile'] = pd.qcut(df_read['hpi'], nsplits, labels=False) + 1
-df_read['hpi_quantile'].value_counts()
 
-agent_data_read['hpi_quantile'] = pd.qcut(agent_data_read['hpi'], nsplits, labels=False) + 1
-agent_data_read['hpi_quantile'].value_counts()
+# add HPI quantile to agent_data_read (depending on whether it's in tract or zip)
+tract_hpi = agent_data_read[['tract', 'hpi']].drop_duplicates()
+tract_hpi['hpi_quantile'] = pd.qcut(tract_hpi['percentile'], nsplits, labels=False) + 1
+tract_hpi = tract_hpi.drop(columns=['hpi'])
+ziphpiquantile = df_read[['market_ids', 'hpi_quantile']]
 
-# add ZIP-level HPI quantile to agent_data_read
-ziphpiquantile = df_read[['market_ids', 'hpi_quantile']].drop_duplicates().rename(columns={'hpi_quantile': 'zip_hpi_quantile'})
-agent_data_read = agent_data_read.merge(ziphpiquantile, on='market_ids')
+if hpi_quantile_in_tract:
+    agent_data_read = agent_data_read.merge(tract_hpi, on='tract')
+else:
+    agent_data_read = agent_data_read.merge(ziphpiquantile, on='market_ids') 
+    # agent_data_read = agent_data_read.merge(tract_hpi, on='tract') #TODO: this is just a temporary thing get HPI quantile not as a RC, but HPI*dist using tract-level HPI quantile
 
 
+# assign hpi quantile dummies and interaction terms
 for qq in range(1, nsplits+1):
     df_read[f'hpi_quantile{qq}'] = (df_read['hpi_quantile'] == qq).astype(int)
-    if hpi_quantile_in_tract:
-        agent_data_read[f'hpi_quantile{qq}'] = (agent_data_read['hpi_quantile'] == qq).astype(int)
-    else:
-        agent_data_read[f'hpi_quantile{qq}'] = (agent_data_read['zip_hpi_quantile'] == qq).astype(int)
+    agent_data_read[f'hpi_quantile{qq}'] = (agent_data_read['hpi_quantile'] == qq).astype(int)
     agent_data_read[f'logdistXhpi_quantile{qq}'] = agent_data_read[f'logdist'] * agent_data_read[f'hpi_quantile{qq}']
 
+pd.options.display.max_columns = None
+agent_data_read.describe()
 
 # full list of controls
 controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
@@ -57,13 +55,13 @@ controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
 
 # variables in the table (in order)
 tablevars = ['logdist']
-for qq in range(1, nsplits):
+for qq in range(1, nsplits): #e.g. quantiles 1,2,3
     tablevars += [f'logdistXhpi_quantile{qq}']
 
-if not ref_lastq:
+if not ref_lastq: #add last quantile only if it's not the reference for dist*hpi
     tablevars += [f'logdistXhpi_quantile{nsplits}']
 
-for qq in range(1, nsplits):
+for qq in range(1, nsplits): #e.g. quantiles 1,2,3
     tablevars += [f'hpi_quantile{qq}']
 
 tablevars = tablevars + controls + ['1']
@@ -104,15 +102,14 @@ for vv in tablevars:
 
 
 # Iteration and Optimization Configurations for PyBLP
-gtol = 1e-12 if tighter_tols else 1e-8
 iteration_config = pyblp.Iteration(method='lm')
-optimization_config = pyblp.Optimization('trust-constr', {'gtol':gtol})
+optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10})
 
 
 # config = [False, False, False]
 # config = [True, False, False]
 # config = [True, True, False]
-# config = [True, True, True]
+config = [True, True, True]
 
 
 for config in [
@@ -165,7 +162,7 @@ for config in [
     print("Agent formulation: ", agent_formulation_str)
     agent_vars = agent_formulation_str.split(' + ')
     agent_vars.remove('0')
-    pi_init = 0.001*np.ones((1,len(agent_vars)))
+    pi_init = 0.01*np.ones((1,len(agent_vars)))
 
     # Instruments - weighted averages of tract-level variables
     for (ii,vv) in enumerate(agent_vars):
@@ -222,28 +219,41 @@ for config in [
         serows[ii] += f"& {se_fmt}"
 
 
-    # # Save coefficients for optimization step
-    # if config == [False, False, False]: #save constant and logdist coefficients
-    #     m1coefs = np.array([betas[0], pis[0]])
-    #     if save_to_pipeline:
-    #         np.save(f'{datadir}/Analysis/m1coefs.npy', m1coefs)
-    #     np.save(f'{datadir}/Analysis/m1coefs_{config_tag}_{setting_tag}.npy', m1coefs)
+    # Save utilities
+    if config == [True, True, True]:
 
+        deltas = results.compute_delta(market_id = df['market_ids'])
+        deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
+        # compute tract-level utilities: dot product of agent_vars and pis
+        pilabs == agent_vars
 
-    # elif config == [True, True, False]: #save constant, log(dist), HPI quantile 1, HPI quantile 2, HPI quantile 3, HPI quantile 1 * log(dist), HPI quantile 2 * log(dist), HPI quantile 3 * log(dist)]
-    #     m2coefs = [betas[0]]
-    #     for vv in ['logdist', 'hpi_quantile1', 'hpi_quantile2', 'hpi_quantile3', 'logdistXhpi_quantile1', 'logdistXhpi_quantile2', 'logdistXhpi_quantile3']:
-    #         if vv in betalabs:
-    #             m2coefs.append(betas[betalabs.index(vv)])
-    #         elif vv in pilabs:
-    #             m2coefs.append(pis[pilabs.index(vv)])
-    #         else:
-    #             print(f"ERROR: {vv} not found in results")
-    #             m2coefs.append(0)
-    #     m2coefs = np.array(m2coefs)
-    #     if save_to_pipeline:
-    #         np.save(f'{datadir}/Analysis/m2coefs.npy', m2coefs)
-    #     np.save(f'{datadir}/Analysis/m2coefs_{config_tag}_{setting_tag}.npy', m2coefs)
+        tract_utils = agent_data[['tract', 'market_ids', 'hpi_quantile', 'logdist']].assign(
+            tract_utility = 0,
+            distcoef = 0
+        )
+
+        for (ii,vv) in enumerate(pilabs):
+            coef = pis[ii]
+            if 'dist' in vv:
+                print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
+                if vv=='logdist':
+                    deltas_df = deltas_df.assign(distcoef = agent_data[vv])
+                elif vv.startswith('logdistXhpi_quantile'):
+                    qq = int(vv[-1])
+                    tract_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef
+
+            else:
+                print(f"Adding {vv} to tract-level utility")
+                tract_utils.loc[:, 'tract_utility'] += agent_data[vv] * coef
+
+        tract_utils = tract_utils.merge(deltas_df, on='market_ids')
+        tract_utils = tract_utils.assign(abd = tract_utils['tract_utility'] + tract_utils['delta'])
+
+        # save abd and coefficients
+        if save_to_pipeline:
+            abd_path = f"{datadir}/Analysis/Demand/tract_utils_{config_tag}_{setting_tag}.csv"
+            tract_utils.to_csv(abd_path, index=False)
+            print(f"Saved tract-level ABD and coefficients at: {abd_path}")
 
 
 
@@ -257,7 +267,7 @@ for (ii,vv) in enumerate(varlabels):
     latex += serows[ii]
 
 latex += "\\bottomrule\n\\end{tabular}\n\n\nNote: $^{\\dag}$ indicates a variable at the tract level."
-table_path = f"{outdir}/Demand/coeftable_{config_tag}_{setting_tag}.tex"
+table_path = f"{outdir}/Demand/coeftable_{setting_tag}.tex"
 with open(table_path, "w") as f:
     print(f"Saved table at: {table_path}")
     f.write(latex)
