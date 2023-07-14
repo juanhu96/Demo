@@ -47,7 +47,7 @@ POPULATION_CENTROIDS$ID = seq.int(nrow(POPULATION_CENTROIDS))
 
 write.table(POPULATION_CENTROIDS$POPULATION, file=paste("Data/CA_demand.csv", sep = ""), row.names = F, col.names = F) # model input: vector of demand
 write.table(POPULATION_CENTROIDS$GEOID, file="Data/CA_tractID.csv", row.names = F, col.names = F)
-write.csv(POPULATION_CENTROIDS, file=paste("Data/Intermediate/tract_centroids.csv", sep = ""), row.names = F)
+write.csv(POPULATION_CENTROIDS, file=paste("Data/tract_centroids.csv", sep = ""), row.names = F)
 
 
 ################################################################################
@@ -70,7 +70,7 @@ DUP <- DUP %>% mutate(GIDTR = 6037800204, State = 6, State_name = 'California', 
 DEMOGRAPHIC <- DEMOGRAPHIC %>% filter(GIDTR != 6037800204) # 8057
 DEMOGRAPHIC <- rbind(DEMOGRAPHIC, DUP) #8058
 
-POPULATION_CENTROIDS <- read.csv("Data/Intermediate/tract_centroids.csv")
+POPULATION_CENTROIDS <- read.csv("Data/tract_centroids.csv")
 POPULATION_CENTROIDS <- left_join(POPULATION_CENTROIDS, DEMOGRAPHIC, by = c('GEOID' = 'GIDTR'))
 
 write.table(POPULATION_CENTROIDS$Pop_over_5_CEN_2010, file=paste("Data/CA_demand_over_5.csv", sep = ""), row.names = F, col.names = F) # model input: vector of demand

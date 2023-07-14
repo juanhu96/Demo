@@ -37,6 +37,7 @@ $(datadir)/CA_demand.csv \
 $(datadir)/CA_tractID.csv \
 $(datadir)/CA_demand_over_5.csv \
 $(datadir)/HPIQuartile_TRACT.csv \
+$(datadir)/Intermediate/tract_centroids.csv \
 $(datadir)/CA_dist_matrix_current.csv \
 $(datadir)/CA_dist_matrix_CarDealers.csv \
 $(datadir)/CA_dist_matrix_Coffee.csv \
