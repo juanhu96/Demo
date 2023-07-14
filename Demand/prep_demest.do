@@ -35,17 +35,17 @@ summ dshare, d
 replace dshare = r(mean) if dshare == .
 drop _merge
 
-// merge in HPI percentile rank
-tempfile df
-save `df'
-import delim $datadir/Raw/hpi2score_zip_2011.csv, clear
-keep geoid value percentile
-rename (geoid value percentile) (zip hpi_val hpi_percentile)
-merge 1:1 zip using `df', keep(2 3)
-compare hpi_val hpidrop _merge
-// TODO: figure out right HPI to construct quantiles
+// // merge in HPI percentile rank
+// tempfile df
+// save `df'
+// import delim $datadir/Raw/hpi2score_zip_2011.csv, clear
+// keep geoid value percentile
+// rename (geoid value percentile) (zip hpi_val hpi_percentile)
+// merge 1:1 zip using `df', keep(2 3)
+// compare hpi_val hpidrop _merge
+// // TODO: figure out right HPI to construct quantiles
 
-export delim $datadir/Analysis/Demand/demest_data.csv, replace
+export delim $datadir/Analysis/Demand/demest_data_deprecated.csv, replace
 
 
 
