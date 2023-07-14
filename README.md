@@ -8,8 +8,7 @@
    - Tract and ZIP datasets intersected in `ziptract.py`.
  - 2016 vote shares (`ca_vest_16/`): [redistrictingdatahub.org](https://redistrictingdatahub.org/dataset/vest-2016-california-precinct-and-election-results/)
    - Vote shares are not currently used in the demand model
- - `TRACT_merged.csv`: ACS 2019 5-year data
-   - Add to this repo the script that made this.
+ - Tract demographics: [ACS 2019 5-year data](https://www.census.gov/topics/research/guidance/planning-databases.2020.html), saved in `Data/Raw/Census/`.
  - `Location/01_DollarStores - 10_Libraries`: locations of the various public/private partnerships, purchased from data company
 
 Main scripts:
