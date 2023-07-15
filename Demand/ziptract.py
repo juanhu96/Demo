@@ -15,12 +15,12 @@ zips['zip'] = zips['zip'].astype(str)
 # read in tract shapefile (CA, 2010)
 tracts = gpd.read_file(f"{datadir}/Raw/AdminShapefiles/tl_2010_06_tract10/tl_2010_06_tract10.shp")
 tracts = tracts[['GEOID10', 'geometry']]
-tracts = tracts.rename(columns={'GEOID10': 'tract'})
-tracts['tract'] = tracts['tract'].astype(str)
+tracts['tract'] = tracts['GEOID10'].astype(str).str.slice(start=1) # drop the first digit (0)
+tracts.drop(columns=['GEOID10'], inplace=True)
+
 
 # intersect
 tractzip = gpd.overlay(tracts, zips, how='intersection')
-
 
 # compute the tract population in the particular ZIP, based on the proportion of the tract area that is in the ZIP
 tractzip['area'] = tractzip.geometry.area

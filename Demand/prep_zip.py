@@ -11,8 +11,7 @@ datadir = "/export/storage_covidvaccine/Data"
 
 vax_raw_path = f"{datadir}/Raw/Vaccination/covid19vaccinesbyzipcode_071222.csv" #legacy table with population age 5+
 vax_raw = pd.read_csv(vax_raw_path)
-
-# vax_raw.columns.tolist()
+vax_raw.columns.tolist()
 
 vax_rename = {
     "as_of_date": "date",
@@ -211,7 +210,7 @@ if prep_logit:
 
 # Subset data
 cols_to_keep = ['zip', 'vaxfull', 'hpi', 'shares', 'race_black', 'race_asian', 
-                'race_hispanic', 'race_other', 'health_employer', 'health_medicare', 'health_medicaid', 
+                'race_hispanic', 'race_other', 'health_employer', 'health_medicare', 'health_medicaid', 'dshare',
                 'health_other', 'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
                 'medianhomevalue', 'popdensity', 'population']
 df = df[cols_to_keep]
