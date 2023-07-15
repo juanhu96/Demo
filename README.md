@@ -16,8 +16,8 @@
  - Tract and ZIP health insurance data: Census table B27010.
  - `Location/01_DollarStores - 10_Libraries`: locations of the various public/private partnerships, purchased from data company
  - Centroids:
- - Tract: 2010 tract-level population centroids obtained from https://www.baruch.cuny.edu/confluence/display/geoportal/US+Census+Population+Centroids
- - ZIP: [US HUD GIS portal](https://hudgis-hud.opendata.arcgis.com/datasets/d032efff520b4bf0aa620a54a477c70e/explore?location=36.456761%2C-120.006125%2C3.87) saved as `Raw/ZIP_Code_Population_Weighted_Centroids.csv`
+   - Tract: 2010 tract-level population centroids obtained from https://www.baruch.cuny.edu/confluence/display/geoportal/US+Census+Population+Centroids
+   - ZIP: `zipcodeR` package (imported in `aux_zip.R`)
 
 Scripts:
  - `process_raw_data.R`: processes raw distance data and builds distance matrices

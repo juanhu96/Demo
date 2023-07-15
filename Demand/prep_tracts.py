@@ -34,7 +34,7 @@ for vv in ['health_employer','health_medicare','health_medicaid','health_other']
 
 # impute HPI
 # 
-impute_hpi_method = 'drop' # 'drop' or 'bottom' or 'nearest' or  TODO: switch
+impute_hpi_method = 'bottom' # 'drop' or 'bottom' or 'nearest' or  TODO: switch
 # not using 2011 since it doesn't add that many observations
 if impute_hpi_method == 'drop':
     tracts = tracts.loc[tracts['hpi'].notnull(), :]
@@ -98,7 +98,45 @@ elif pop_method == 'zip': # compute weights based on ZIP population and fraction
 pd.set_option('display.max_columns', None)
 agent_data.describe()
 
-# TODO: there are 8 ZIPs in df but not in agent_data
+# TODO: there are 8 ZIPs in df but not in agent_data - make tracts for these ZIPs that are the ZIPs themselves
+# identify these ZIPs
+df['zip'].isin(agent_data['zip']).value_counts() #8 ZIPs in df but not in agent_data
+df.loc[~df['zip'].isin(agent_data['zip']),'zip'].tolist()
+
+
+
+aux_tracts = df.loc[~df['zip'].isin(agent_data['zip']), :].copy()
+
+# make the variables that are needed in the agent_data
+aux_tracts = aux_tracts.assign(
+    tract = aux_tracts['zip'],
+    frac_of_tract_area = 1,
+    frac_of_zip_area = 1,
+    zip_pop = aux_tracts['population'],
+    tr_pop = aux_tracts['population'],
+    market_pop = aux_tracts['population'],
+    weights = 1,
+    nodes = 1
+)
+aux_tracts['cell_pop'] = [aa if aa > 0 else 1  for aa in aux_tracts['population']]
+# get latitude and longitude from zip_coords
+zip_coords = pd.read_csv(f"{datadir}/Intermediate/zip_coords.csv", dtype={'zip': str})
+aux_tracts= aux_tracts.merge(zip_coords, on='zip', how='left')
+
+aux_tracts = aux_tracts.drop(columns=['vaxfull', 'shares', 'population', 'firm_ids', 'prices'])
+set(aux_tracts.columns.tolist()) - set(agent_data.columns.tolist())
+set(agent_data.columns.tolist()) - set(aux_tracts.columns.tolist())
+# distance - compute euclidean distance between lat/long of ZIP and pharmacy locations
+pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID'])
+# subset to CA
+pharmacy_locations = pharmacy_locations.loc[pharmacy_locations['StateID'] == 6, :]
+pharmacy_locations.drop(columns=['StateID'], inplace=True)
+# compute distance #TODO: check
+from scipy.spatial import distance
+aux_tracts['dist'] = [distance.euclidean(aa, bb) for aa, bb in zip(aux_tracts[['latitude', 'longitude']].values, pharmacy_locations[['latitude', 'longitude']].values)]
+
+# append to agent_data
+agent_data = pd.concat([agent_data, aux_tracts], axis=0)
 
 agent_data['market_ids'] = agent_data['zip']
 agent_data['nodes'] = 0 # for pyblp (no random coefficients)
@@ -106,6 +144,7 @@ agent_data['logdist'] = np.log(agent_data['dist'])
 
 print("agent_data.describe() \n", agent_data.describe())
 print("product data describe() \n", df.describe())
+
 
 # save to csv
 agent_data.to_csv(f"{datadir}/Analysis/Demand/agent_data.csv", index=False)

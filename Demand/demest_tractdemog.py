@@ -10,25 +10,31 @@ pyblp.options.digits = 3
 datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result"
 
-#TODO: switches
-hpi_quantile_in_tract = True #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
-save_to_pipeline = True
-ref_lastq = False #make the last quantile the reference for dist*hpi interaction terms
-nsplits = 4 #number of HPI quantiles to split the data into : 4 or 2
 
 poolnum = 16 #number of cores to use
-impute_hpi_method = 'nearest' # 'drop' or 'bottom' or 'nearest' or  TODO: switch
+impute_hpi_method = 'bottom' # 'drop' or 'bottom' or 'nearest'  TODO: switch
+
+
+# settings = [True, False, False, 4]
+# settings = [True, False, False, 2]
+# settings = [False, False, False, 4]
+# settings = [False, False, False, 2]
 
 for settings in [
-    [True, False, False, 4]
+    # [True, False, False, 4]
     # ,
     # [True, False, False, 2],
-    # [False, False, False, 4],
+    [False, False, False, 4]
+    # ,
     # [False, False, False, 2]
 ]:
     
-    hpi_quantile_in_tract, save_to_pipeline, ref_lastq, nsplits = settings
+    hpi_quantile_in_tract = settings[0] #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
+    save_to_pipeline = settings[1] #If True, save tract-level ABD and coefficients to pipeline. If False, don't save.
+    ref_lastq = settings[2] #If True, make the last quantile the reference for dist*hpi interaction terms. If False, each quantile is its own variable.
+    nsplits = settings[3] #Number of quantiles to split HPI into
 
+    print(f"***********\nRunning settings: hpi_quantile_in_tract={hpi_quantile_in_tract}, save_to_pipeline={save_to_pipeline}, ref_lastq={ref_lastq}, nsplits={nsplits}")
 
     setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{nsplits}"
 
@@ -43,6 +49,7 @@ for settings in [
     tract_hpi['hpi_quantile'] = pd.qcut(tract_hpi['hpi'], nsplits, labels=False) + 1
     tract_hpi = tract_hpi.drop(columns=['hpi'])
     ziphpiquantile = df_read[['market_ids', 'hpi_quantile']]
+
 
     if hpi_quantile_in_tract:
         agent_data_read = agent_data_read.merge(tract_hpi, on='tract')
