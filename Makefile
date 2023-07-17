@@ -136,7 +136,7 @@ $(datadir)/Analysis/Demand/agent_data.csv: \
 	python3 $(codedir)/Demand/datawork/prep_tracts.py
 
 
-${datadir}/Analysis/Demand/tract_utils.csv: \
+$(datadir)/Analysis/Demand/tract_utils.csv: \
 		$(datadir)/Analysis/Demand/agent_data.csv \
 		$(datadir)/Analysis/Demand/demest_data.csv \
 		$(codedir)/Demand/datawork/demest_tractdemog.py
@@ -161,8 +161,7 @@ $(datadir)/Result/summary_table_BLP: \
 		$(datadir)/CA_dist_matrix_Libraries.csv \
 		$(datadir)/CA_dist_matrix_Mcdonald.csv \
 		$(datadir)/CA_dist_matrix_PostOffices.csv \
-		$(datadir)/Analysis/m1coefs.npy \
-		$(datadir)/Analysis/m2coefs.npy \
+		$(datadir)/Analysis/Demand/tract_utils.csv \
 		$(codedir)/utils/create_row.py \
 		$(codedir)/utils/optimize_chain.py \
 		$(codedir)/utils/optimize_model.py \
