@@ -271,10 +271,12 @@ for settings in [
             tract_utils = tract_utils.assign(abd = tract_utils['tract_utility'] + tract_utils['delta'])
 
             # save abd and coefficients
+            abd_path = f"{datadir}/Analysis/Demand/tract_utils_{config_tag}_{setting_tag}.csv"
+            tract_utils.to_csv(abd_path, index=False)
+            print(f"Saved tract-level ABD and coefficients at: {abd_path}")
             if save_to_pipeline:
-                abd_path = f"{datadir}/Analysis/Demand/tract_utils_{config_tag}_{setting_tag}.csv"
-                tract_utils.to_csv(abd_path, index=False)
-                print(f"Saved tract-level ABD and coefficients at: {abd_path}")
+                tract_utils.to_csv(f"{datadir}/Analysis/Demand/tract_utils.csv", index=False)
+
 
 
 
