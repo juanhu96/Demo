@@ -37,7 +37,7 @@ $(datadir)/CA_demand.csv \
 $(datadir)/CA_tractID.csv \
 $(datadir)/CA_demand_over_5.csv \
 $(datadir)/HPIQuartile_TRACT.csv \
-$(datadir)/Intermediate/tract_centroids.csv \
+$(datadir)/tract_centroids.csv \
 $(datadir)/CA_dist_matrix_current.csv \
 $(datadir)/CA_dist_matrix_CarDealers.csv \
 $(datadir)/CA_dist_matrix_Coffee.csv \
@@ -64,22 +64,38 @@ $(datadir)/CA_dist_matrix_PostOffices.csv: \
 		$(datadir)/Raw/Location/09_PublicSchools.xlsx \
 		$(datadir)/Raw/Location/10_Libraries.csv \
 		$(datadir)/Raw/Census/pdb2020trv2_us.csv \
+		$(datadir)/Raw/HPItract2022.csv \
 		$(codedir)/process_raw_data.R
 	$(R_CMD) $(codedir)/process_raw_data.R
+
+
+$(datadir)/Intermediate/TRACT_merged.csv: \
+		$(datadir)/Intermediate/tract_votes.csv \
+		$(datadir)/Raw/HPI/hpi_tract_2022.csv \
+		$(datadir)/tract_centroids.csv \
+		$(datadir)/Raw/ACS/ACSDT5Y2019.B27010.csv \
+		$(datadir)/Raw/Census/pdb2020trv2_us.csv \
+		$(codedir)/export_tract.R
+	$(R_CMD) $(codedir)/export_tract.R
+
+
+$(datadir)/Intermediate/zip_coords.csv: \
+		$(codedir)/aux_zip.R
+	$(R_CMD) $(codedir)/aux_zip.R
 
 
 $(datadir)/Intermediate/tract_nearest_dist.csv: \
 		$(datadir)/CA_dist_matrix_current.csv \
 		$(datadir)/CA_tractID.csv \
-		$(codedir)/Demand/read_tract_dist.py
-	python3 $(codedir)/Demand/read_tract_dist.py
+		$(codedir)/Demand/datawork/read_tract_dist.py
+	python3 $(codedir)/Demand/datawork/read_tract_dist.py
 
 
 $(datadir)/Intermediate/tract_zip_crosswalk.csv: \
 		$(datadir)/Raw/AdminShapefiles/tl_2020_us_zcta520/ \
 		$(datadir)/Raw/AdminShapefiles/tl_2010_06_tract10/ \
-		$(codedir)/Demand/ziptract.py
-	python3 $(codedir)/Demand/ziptract.py
+		$(codedir)/Demand/datawork/ziptract.py
+	python3 $(codedir)/Demand/datawork/ziptract.py
 
 
 $(datadir)/Intermediate/zip_votes.csv \
@@ -87,44 +103,44 @@ $(datadir)/Intermediate/tract_votes.csv: \
 		$(datadir)/Raw/AdminShapefiles/tl_2020_us_zcta520/ \
 		$(datadir)/Raw/AdminShapefiles/tl_2010_06_tract10/ \
 		$(datadir)/Raw/ca_vest_16/ \
-		$(codedir)/Demand/voteshares.py
-	python3 $(codedir)/Demand/voteshares.py
+		$(codedir)/Demand/datawork/voteshares.py
+	python3 $(codedir)/Demand/datawork/voteshares.py
 
 
-$(datadir)/Analysis/Demand/MAR01_vars.dta \
-$(datadir)/Analysis/Demand/demest_data.csv &: \
+$(datadir)/Intermediate/zip_health.csv: \
+		$(codedir)/Demand/datawork/zip_health.R
+	$(R_CMD) $(codedir)/Demand/datawork/zip_health.R
+
+
+$(datadir)/Intermediate/zip_demo.csv \
+$(datadir)/Intermediate/hpi_zip.csv \
+$(datadir)/Intermediate/vax_panel.csv \
+$(datadir)/Analysis/Demand/demest_data.csv : \
+		$(datadir)/Intermediate/zip_health.csv \
 		$(datadir)/Intermediate/zip_votes.csv \
-		$(datadir)/Raw/notreallyraw/MAR01.csv \
-		$(codedir)/Demand/prep_demest.do
-	$(STATA_CMD) $(codedir)/Demand/prep_demest.do
+		$(datadir)/Raw/California_DemographicsByZip2020.xlsx \
+		$(datadir)/Raw/Vaccination/covid19vaccinesbyzipcode_071222.csv \
+		$(datadir)/Raw/HPI/hpi_zip_2022.csv \
+		$(datadir)/Raw/HPI/hpi_zip_2011.csv \
+		$(codedir)/Demand/datawork/prep_zip.py
+	python3 $(codedir)/Demand/datawork/prep_zip.py
 
 
 $(datadir)/Analysis/Demand/agent_data.csv: \
+		$(datadir)/Intermediate/zip_coords.csv \
 		$(datadir)/Intermediate/tract_nearest_dist.csv \
 		$(datadir)/Analysis/Demand/demest_data.csv \
-		$(datadir)/Intermediate/tract_votes.csv \
 		$(datadir)/Intermediate/tract_zip_crosswalk.csv \
-		$(datadir)/Raw/notreallyraw/TRACT_merged.csv \
-		$(datadir)/Raw/hpi2score.csv \
-		$(codedir)/Demand/prep_tracts.py
-	python3 $(codedir)/Demand/prep_tracts.py
+		$(datadir)/Intermediate/TRACT_merged.csv \
+		$(codedir)/Demand/datawork/prep_tracts.py
+	python3 $(codedir)/Demand/datawork/prep_tracts.py
 
 
-$(datadir)/Analysis/Demand/demest_results_111.pkl: \
+${datadir}/Analysis/Demand/tract_utils.csv: \
 		$(datadir)/Analysis/Demand/agent_data.csv \
 		$(datadir)/Analysis/Demand/demest_data.csv \
-		$(codedir)/Demand/demest_tracts.py
-	python3 $(codedir)/Demand/demest_tracts.py
-
-
-$(datadir)/Analysis/m1coefs.npy \
-$(datadir)/Analysis/m2coefs.npy \
-${resultdir}/Demand/coeftable_tractctrl1.tex: \
-		$(datadir)/Analysis/Demand/agent_data.csv \
-		$(datadir)/Analysis/Demand/demest_data.csv \
-		$(datadir)/Analysis/Demand/demest_results_111.pkl \
-		$(codedir)/Demand/demest_tractdemog.py
-	python3 $(codedir)/Demand/demest_tractdemog.py
+		$(codedir)/Demand/datawork/demest_tractdemog.py
+	python3 $(codedir)/Demand/datawork/demest_tractdemog.py
 
 
 # OPTIMIZATION:

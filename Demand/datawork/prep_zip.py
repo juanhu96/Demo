@@ -70,8 +70,7 @@ hpi_df.to_csv(f"{datadir}/Intermediate/hpi_zip.csv", index=False)
 ###############
 ### demographics
 ###############
-demog_path = "California_DemographicsByZip2020.xlsx" #from Cubit
-zip_demo_raw = pd.read_excel(f"{datadir}/Raw/{demog_path}", header=4)
+zip_demo_raw = pd.read_excel(f"{datadir}/Raw/California_DemographicsByZip2020.xlsx", header=4) #from Cubit
 zip_demo_raw.columns.tolist()
 # Create a dictionary for mapping the column names in the California Demographics dataset to the equivalent column names in the MAR01.csv file
 zip_demo = zip_demo_raw.assign(
@@ -107,9 +106,7 @@ for var in percap_vars:
 zip_demo['medianhhincome'] = zip_demo['medianhhincome'] / 1000
 zip_demo['medianhomevalue'] = zip_demo['medianhomevalue'] / 1000
 
-
 zip_demo['zip'] = zip_demo['zip'].str.split('US').str[1]
-
 
 zip_demo.to_csv(f"{datadir}/Intermediate/zip_demo.csv", index=False)
 
