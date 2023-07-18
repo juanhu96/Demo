@@ -11,32 +11,38 @@ datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result"
 
 
-poolnum = 16 #number of cores to use
-impute_hpi_method = 'bottom' # 'drop' or 'bottom' or 'nearest'  TODO: switch
+poolnum = 32 #number of cores to use
 
 
-# settings = [True, False, False, 4]
-# settings = [True, False, False, 2]
-# settings = [False, False, False, 4]
-# settings = [False, False, False, 2]
+# settings = [True, False, False, 4, 'drop']
+# settings = [True, False, False, 2, 'drop']
+# settings = [False, False, False, 4, 'drop']
+# settings = [False, False, False, 2, 'drop']
 
 for settings in [
-    # [True, False, False, 4]
+    [True, False, False, 4, 'drop']
+    ,
+    [True, False, False, 4, 'bottom']
+    ,
+    [True, False, False, 4, 'nearest']
+    ,
+    [False, False, False, 4, 'drop']
+    ,
+    [False, False, False, 4, 'bottom']
+    ,
+    [False, False, False, 4, 'nearest']
     # ,
-    # [True, False, False, 2],
-    [False, False, False, 4]
-    # ,
-    # [False, False, False, 2]
 ]:
     
     hpi_quantile_in_tract = settings[0] #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
-    save_to_pipeline = settings[1] #If True, save tract-level ABD and coefficients to pipeline. If False, don't save.
+    save_to_pipeline = settings[1] #If True, save tract-level ABD and coefficients to pipeline. 
     ref_lastq = settings[2] #If True, make the last quantile the reference for dist*hpi interaction terms. If False, each quantile is its own variable.
     nsplits = settings[3] #Number of quantiles to split HPI into
+    impute_hpi_method = settings[4] # 'drop' or 'bottom' or 'nearest'
 
-    print(f"***********\nRunning settings: hpi_quantile_in_tract={hpi_quantile_in_tract}, save_to_pipeline={save_to_pipeline}, ref_lastq={ref_lastq}, nsplits={nsplits}")
+    print(f"***********\nRunning settings: hpi_quantile_in_tract={hpi_quantile_in_tract}, save_to_pipeline={save_to_pipeline}, ref_lastq={ref_lastq}, nsplits={nsplits}, impute_hpi_method={impute_hpi_method}")
 
-    setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{nsplits}"
+    setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{nsplits}{impute_hpi_method}"
 
     # data
     df_read = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
@@ -290,7 +296,7 @@ for settings in [
         latex += serows[ii]
 
     latex += "\\bottomrule\n\\end{tabular}\n\n\nNote: $^{\\dag}$ indicates a variable at the tract level."
-    table_path = f"{outdir}/Demand/coeftable_{setting_tag}_{impute_hpi_method}.tex" #TODO: remove_impute_hpi_method
+    table_path = f"{outdir}/Demand/coeftable_{setting_tag}.tex" #TODO: remove_impute_hpi_method
     with open(table_path, "w") as f:
         print(f"Saved table at: {table_path}")
         f.write(latex)
