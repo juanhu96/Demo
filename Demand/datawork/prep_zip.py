@@ -162,29 +162,10 @@ panel = panel.merge(zip_votes, on="zip", how="left", indicator=True)
 print(panel._merge.value_counts()) #some missing votes, can leave for now
 panel.drop(columns=["_merge"], inplace=True)
 
-# TODO: decide on ZIP population - using 5+ population from vaccination data for now
-panel['population'] = panel['pop5up']
+#  using 5+ population from vaccination data for now - actually doesn't matter
+# panel['population'] = panel['pop5up']
 
 
-###############
-
-# old datasets to compare to
-
-# demest_data = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv").reset_index(drop=True)
-
-# mar01 = pd.read_csv(f"{datadir}/Raw/notreallyraw/MAR01.csv").reset_index(drop=True)
-
-# oldpanel = pd.read_csv(f"{datadir}/Raw/notreallyraw/CaliforniaVaccinationZip.csv").reset_index(drop=True)
-
-
-# for cc in set(df.columns) & set(demest_data.columns):
-#     print(round(np.mean(df[cc]), 3), round(np.mean(demest_data[cc]), 3), cc)
-
-
-
-###############
-# continue pipeline
-###############
 
 # subset to March 2022
 df = panel.loc[panel.date == "2022-03-01", :]
@@ -209,7 +190,7 @@ if prep_logit:
 cols_to_keep = ['zip', 'vaxfull', 'hpi', 'shares', 'race_black', 'race_asian', 
                 'race_hispanic', 'race_other', 'health_employer', 'health_medicare', 'health_medicaid', 'dshare',
                 'health_other', 'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
-                'medianhomevalue', 'popdensity', 'population']
+                'medianhomevalue', 'popdensity']
 df = df[cols_to_keep]
 
 
@@ -220,14 +201,51 @@ df['prices'] = 0
 # Will compute distances (for ZIPs that need it) later
 # Will compute HPI quantiles later
 
-# inspect 
-pd.options.display.max_columns = None
-print(df.describe())
-print(df.isna().sum())
-
 
 # Save final data
 df.to_csv(f'{datadir}/Analysis/Demand/demest_data.csv', index=False)
 
+
+# inspect 
+pd.options.display.max_columns = None
+pd.options.display.max_rows = 30
+print(df.describe())
+print(df.isna().sum())
+
+###############
 # read
 df = pd.read_csv(f'{datadir}/Analysis/Demand/demest_data.csv', dtype={'zip': str})
+
+
+# old datasets to compare to
+
+mar01 = pd.read_csv(f"{datadir}/Raw/notreallyraw/MAR01.csv").reset_index(drop=True)
+old = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data_deprecated.csv", dtype={'zip':str}).reset_index(drop=True)
+
+mar01.columns
+mar01.Pop5up
+old.columns
+
+
+set(df.columns) - set(old.columns)
+set(old.columns) - set(df.columns)
+
+df.loc[~df.zip.isin(old.zip), :]
+
+m = df.merge(old, on="zip", how="outer", indicator=True)
+# sort columns
+m = m.reindex(sorted(m.columns), axis=1)
+m
+
+vaxdiff = m.vaxfull_x - m.vaxfull_y
+vaxdiff.describe(percentiles=[0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, .95, .99])
+
+
+# TODO: vaxfull, sample
+
+# oldpanel = pd.read_csv(f"{datadir}/Raw/notreallyraw/CaliforniaVaccinationZip.csv").reset_index(drop=True)
+
+
+# for cc in set(df.columns) & set(demest_data.columns):
+#     print(round(np.mean(df[cc]), 3), round(np.mean(demest_data[cc]), 3), cc)
+

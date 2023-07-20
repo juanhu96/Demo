@@ -1,0 +1,39 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /mnt/staff/zhli/VaxDemandDistance/geonear.log
+  log type:  text
+ opened on:  19 Jul 2023, 12:07:24
+
+. 
+. *Pass in parameters.
+. local baselocs "`1'"
+
+. local nborlocs "`2'"
+
+. local outpath "`3'"
+
+. 
+. use "`baselocs'", clear
+
+. 
+. ds
+id         latitude   longitude
+
+. 
+. geonear id latitude longitude using "`nborlocs'", neighbors(id latitude longi
+> tude) report(5)
+
+-------------------------------------------------------------------------------
+Unique base locations   = 25,607         Unique neighbor locations = 4,035     
+Bases * Neighbors  (M)  = 103.3          Number of regions         = 366       
+Computed distances (M)  = 2.40           Total run time (seconds)  = 4.866
+-------------------------------------------------------------------------------
+
+. 
+. export delim "`outpath'", replace
+(file /export/storage_covidvaccine/Data/Intermediate/ca_bg_pharm_dist.csv not
+    found)
+file /export/storage_covidvaccine/Data/Intermediate/ca_bg_pharm_dist.csv saved
+
+. 
+. cap log close
