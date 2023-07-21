@@ -7,6 +7,15 @@ import subprocess
 import os
 datadir = "/export/storage_covidvaccine/Data"
 
+# read pharmacy locations
+pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID'])
+# subset to CA
+pharmacy_locations = pharmacy_locations.loc[pharmacy_locations['StateID'] == 6, :]
+pharmacy_locations.drop(columns=['StateID'], inplace=True)
+pharmacy_locations['id'] = range(pharmacy_locations.shape[0])
+pharmlocpath = f"{datadir}/Intermediate/ca_pharmacy_locations.dta"
+pharmacy_locations.to_stata(pharmlocpath, write_index=False)
+
 
 # save block coordinates as stata file
 blk_coords = pd.read_csv(f"{datadir}/Intermediate/blk_coords_pop.csv", usecols=['lat', 'long', 'blkid'])
@@ -20,6 +29,12 @@ blk_coords.to_stata(baselocpath, write_index=False)
 current_directory = os.getcwd()
 print(current_directory)
 pharmlocpath = f"{datadir}/Intermediate/ca_pharmacy_locations.dta"
+
+# inspect pharmacy locations
+pharm = pd.read_stata(pharmlocpath)
+pharm.tail()
+len(set(pharm.id))
+
 
 # nearest N pharmacies
 N = 10

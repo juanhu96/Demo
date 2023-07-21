@@ -49,7 +49,7 @@ distmatrix = np.log(distmatrix)
 locmatrix = distdf[[f"nid{i+1}" for i in range(10)]].values
 
 
-# TODO: M: maximum number of locations to consider (for now, just use all 10)
+# TODO: M: maximum number of locations to consider (for now, just use all 10 we have distances for)
 M = distmatrix.shape[1]
 print("M:", M)
 
@@ -60,9 +60,6 @@ n_individuals = geog_data.population.values
 # random order of individuals
 geog_data.population.sum() # 39M
 
-indiv_ordering = [(tt,ii) for tt in range(n_geogs) for ii in range(n_individuals[tt])]
-np.random.shuffle(indiv_ordering)
-indiv_ordering[:10]
 
 # for testing
 import importlib
@@ -72,10 +69,30 @@ from vax_entities import Individual, Geog, Location
 from assignment_funcs import initialize, compute_ranking, random_fcfs, sequential, reset_assignments, assignment_stats
 
 
+geogs, locations = initialize(distmatrix=distmatrix, locmatrix=locmatrix, distcoef=distcoef, abd=abd, capacity=10000, M=M, n_individuals=n_individuals)
 
-geogs, locations = initialize(distmatrix=distmatrix, locmatrix=locmatrix, distcoef=distcoef, abd=abd, hpi=hpi, capacity=10000, M=M, n_individuals=n_individuals)
+indiv_ordering = [(tt,ii) for tt in range(len(geogs)) for ii in range(n_individuals[tt])]
+np.random.shuffle(indiv_ordering)
+
+random_fcfs(geogs, locations, indiv_ordering)
+
+#===================================================================================================
+# Make inputs for demand estimation
+#===================================================================================================
+
+# df
+# agent_data
 
 
-ab_epsilon = abd[:, np.newaxis] + distcoef.reshape(-1, 1) * distmatrix
+
+geogs[100000].individuals[0]
+
+geogs[100000].individuals[0].geog_id
+geogs[100000].individuals[0].epsilon_ij
+geogs[100000].individuals[0].u_ij
+geogs[100000].individuals[0].location_ranking
+geogs[100000].individuals[0].locations_ranked
+geogs[100000].individuals[0].location
+geogs[100000].individuals[0].rank_assigned
 
 
