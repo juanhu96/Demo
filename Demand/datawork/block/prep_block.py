@@ -5,8 +5,7 @@ import numpy as np
 
 datadir = "/export/storage_covidvaccine/Data"
 
-distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", usecols=['id', 'km_to_nid'])
-distdf.rename(columns={'km_to_nid': 'dist', 'id': 'blkid'}, inplace=True)
+distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_nearest.csv")
 
 cw = pd.read_csv(f"{datadir}/Intermediate/blk_zip.csv", usecols=['zip', 'blkid'])
 

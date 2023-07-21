@@ -20,14 +20,20 @@ blk_coords.to_stata(baselocpath, write_index=False)
 current_directory = os.getcwd()
 print(current_directory)
 pharmlocpath = f"{datadir}/Intermediate/ca_pharmacy_locations.dta"
-outpath = f"{datadir}/Intermediate/ca_blk_pharm_dist.csv"
 
-output = subprocess.run(["stata-mp", "-b", "do", f"{current_directory}/Demand/datawork/geonear_pharmacies.do", baselocpath, pharmlocpath, outpath], capture_output=True, text=True)
-print(output.stdout)
-print(output.stderr)
-
+# nearest N pharmacies
+N = 10
+outpath = f"{datadir}/Intermediate/ca_blk_pharm_dist_{N}.csv"
+output = subprocess.run(["stata-mp", "-b", "do", f"{current_directory}/Demand/datawork/geonear_pharmacies.do", baselocpath, pharmlocpath, outpath, str(N)], capture_output=True, text=True)
 
 # check output
-blk_dist = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv")
-print(blk_dist.km_to_nid.describe())
+blk_dist = pd.read_csv(outpath)
+blk_dist = blk_dist.drop(columns=['latitude', 'longitude']).rename(columns={'id': 'blkid'})
+# overwrite the output
+blk_dist.to_csv(outpath, index=False)
+
+# save a version with just the nearest pharmacy for demand estimation
+blk_dist_nearest = blk_dist[['blkid', 'km_to_nid1']].rename(columns={'km_to_nid1': 'dist'})
+f"{datadir}/Intermediate/ca_blk_pharm_dist_nearest.csv"
+
 

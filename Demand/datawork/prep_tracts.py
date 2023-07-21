@@ -30,7 +30,7 @@ for vv in ['health_employer','health_medicare','health_medicaid','health_other']
 # impute HPI
 # 
 # 'drop' or 'bottom' or 'nearest' or  TODO: switch
-impute_hpi_method = 'drop' 
+impute_hpi_method = 'nearest' 
 # not using 2011 since it doesn't add that many observations
 if impute_hpi_method == 'drop':
     tracts = tracts.loc[tracts['hpi'].notnull(), :]
@@ -49,6 +49,10 @@ elif impute_hpi_method == 'nearest': #use KDTree to find nearest neighbor
     # tracts.loc[(np.isclose(tracts['hpi'],0.586650)) | (np.isclose(tracts['hpi_filled'],0.586650)), ['hpi', 'hpi_filled', 'latitude', 'longitude']]
     tracts.fillna({'hpi': tracts['hpi_filled']}, inplace=True)
     tracts.drop(columns=['hpi_filled'], inplace=True)
+    # save this imputation
+    tracts[['tract', 'hpi']].to_csv(f"{datadir}/Intermediate/tract_hpi_nnimpute.csv", index=False)
+
+
 
 
 
