@@ -6,7 +6,7 @@
 # 3. Repeat step 1 assuming the location matching from step 2. Repeat iteratively until you reach a fixed point
 
 
-# Notation: I use "geog" to denote a block/tract, and "individual" to denote a person within the block/tract
+# Notation: I use "geog" to denote a block/tract. We're using blocks now.
 
 import pandas as pd
 import numpy as np
@@ -14,8 +14,8 @@ import numpy as np
 import sys
 sys.path.append("/mnt/staff/zhli/VaxDemandDistance/Demand/assignment_sim/") #TODO: only need this when running in terminal
 
-from vax_entities import Individual, Geog, Location
-from assignment_funcs import initialize, compute_ranking, random_fcfs, sequential, reset_assignments, assignment_stats
+from vax_entities import Individual, Geog
+from assignment_funcs import initialize_geogs, compute_ranking, random_fcfs, reset_assignments, assignment_stats, shuffle_individuals
 
 # seed
 np.random.seed(1234)
@@ -42,7 +42,7 @@ print("Number of individuals:", geog_data.population.sum()) # 39M
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_10.csv")
 distdf.columns.tolist()
 # keep blkids in data
-distdf = distdf.loc[distdf.blkid.isin(geog_data.blkid.values), :]
+distdf = distdf.loc[distdf.blkid.isin(geog_utils.blkid.values), :]
 
 distmatrix = distdf[[f"km_to_nid{i+1}" for i in range(10)]].values
 distmatrix = np.log(distmatrix)
@@ -61,31 +61,35 @@ n_individuals = geog_data.population.values
 geog_data.population.sum() # 39M
 
 
-# for testing
+#=====REFRESH MODULES=====
+import time
 import importlib
 importlib.reload(sys.modules['vax_entities'])
 importlib.reload(sys.modules['assignment_funcs'])
-from vax_entities import Individual, Geog, Location
-from assignment_funcs import initialize, compute_ranking, random_fcfs, sequential, reset_assignments, assignment_stats
+from vax_entities import Individual, Geog
+from assignment_funcs import initialize_geogs, compute_ranking, random_fcfs, reset_assignments, assignment_stats, shuffle_individuals
+#=========================
 
 
-geogs, locations = initialize(distmatrix=distmatrix, locmatrix=locmatrix, distcoef=distcoef, abd=abd, capacity=10000, M=M, n_individuals=n_individuals)
+geogs = initialize_geogs(distmatrix=distmatrix, locmatrix=locmatrix, distcoef=distcoef, abd=abd, M=M, n_individuals=n_individuals)
 
-indiv_ordering = [(tt,ii) for tt in range(len(geogs)) for ii in range(n_individuals[tt])]
-np.random.shuffle(indiv_ordering)
+n_locations = len(np.unique(locmatrix))
+capacity = 10000
 
-random_fcfs(geogs, locations, indiv_ordering)
 
-#===================================================================================================
-# Make inputs for demand estimation
-#===================================================================================================
+indiv_ordering = shuffle_individuals(geogs)
 
-# df
-# agent_data
+random_fcfs(geogs, n_locations, capacity, indiv_ordering)
 
 
 
-geogs[100000].individuals[0]
+
+# debugging
+tt = 123
+ii = 0
+geogs[tt].location_ids
+geogs[tt].individuals[ii].location_ranking
+
 
 geogs[100000].individuals[0].geog_id
 geogs[100000].individuals[0].epsilon_ij
@@ -94,5 +98,127 @@ geogs[100000].individuals[0].location_ranking
 geogs[100000].individuals[0].locations_ranked
 geogs[100000].individuals[0].location
 geogs[100000].individuals[0].rank_assigned
+
+
+sum([1,2,3]==1)
+#===================================================================================================
+# Make inputs for demand estimation
+#===================================================================================================
+
+import pyblp
+# Iteration and Optimization Configurations 
+iteration_config = pyblp.Iteration(method='lm')
+optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-8}) #TODO: tighten
+poolnum = 32
+
+# df and agent_data
+
+nsplits = 4
+splits = np.linspace(0, 1, nsplits+1)
+
+df_read = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
+df_read['hpi_quantile'] = pd.cut(df_read['hpi'], splits, labels=False, include_lowest=True) + 1
+df_read.columns.tolist()
+
+geog_utils.columns.tolist()
+
+agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv")
+agent_data_read = agent_data_read.loc[agent_data_read['zip'].isin(df_read['zip']), :]
+agent_data_read.columns.tolist()
+
+# TODO: the logdist in this must now be the new assigned distance
+
+# distmatrix is part of agent_data
+# weights are a function of assignment
+
+agent_data_assigned = distdf
+# agent_data_assigned['weights'] = ???
+
+
+
+#===================================================================================================
+# I need a function that just takes in the assignment and returns the new utilities and coefficients
+
+agent_data = agent_data_read #TODO: update with new assigned distance and weights
+df = df_read #TODO: probably wrong but maybe not
+
+controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
+    'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
+    'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
+    'medianhomevalue', 'popdensity'] 
+
+
+
+formulation1_str = "1 + prices" 
+for qq in range(1, nsplits):
+    formulation1_str += f' + hpi_quantile{qq}'
+for vv in controls:
+    formulation1_str += " + " + vv
+
+agent_formulation_str =  '0 +' 
+for qq in range(nsplits):
+    agent_formulation_str += f' + hpi_quantile{qq+1}'
+
+formulation1 = pyblp.Formulation(formulation1_str)
+formulation2 = pyblp.Formulation('1')
+agent_formulation = pyblp.Formulation(agent_formulation_str)
+
+# initialize pi
+# TODO: initialize pi with the results from the previous iteration
+print("Agent formulation: ", agent_formulation_str)
+agent_vars = agent_formulation_str.split(' + ')
+agent_vars.remove('0')
+pi_init = 0.01*np.ones((1,len(agent_vars)))
+
+# Instruments - weighted averages of agent-level variables
+for (ii,vv) in enumerate(agent_vars):
+    print(f"demand_instruments{ii}: {vv}")
+    ivcol = pd.DataFrame({f'demand_instruments{ii}': agent_data.groupby('market_ids')[vv].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights']))})
+    df = df.merge(ivcol, left_on='market_ids', right_index=True)
+
+# Solve problem
+problem = pyblp.Problem(product_formulations=(formulation1, formulation2), product_data=df, agent_formulation=agent_formulation, agent_data=agent_data)
+with pyblp.parallel(poolnum): 
+    results = problem.solve(pi=pi_init, sigma = 0, iteration = iteration_config, optimization = optimization_config)
+
+
+# utilities TODO: streamline this
+pis = results.pi.flatten()
+pilabs = results.pi_labels
+
+deltas = results.compute_delta(market_id = df['market_ids'])
+deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
+# compute block-level utilities: dot product of agent_vars and pis
+
+agent_utils = agent_data[['blkid', 'market_ids', 'hpi_quantile', 'logdist']].assign(
+    agent_utility = 0,
+    distcoef = 0
+)
+
+for (ii,vv) in enumerate(pilabs):
+    coef = pis[ii]
+    if 'dist' in vv:
+        print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
+        if vv=='logdist':
+            deltas_df = deltas_df.assign(distcoef = agent_data[vv])
+        elif vv.startswith('logdistXhpi_quantile'):
+            qq = int(vv[-1])
+            agent_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef
+
+    else:
+        print(f"Adding {vv} to agent-level utility")
+        agent_utils.loc[:, 'agent_utility'] += agent_data[vv] * coef
+
+agent_utils = agent_utils.merge(deltas_df, on='market_ids')
+agent_utils = agent_utils.assign(abd = agent_utils['agent_utility'] + agent_utils['delta'])
+
+#===================================================================================================
+
+# create a n_geogs x M matrix of location assignments
+
+
+x = np.array([3, 4, 2, 1])
+x[np.argpartition(x, 3)]
+
 
 

@@ -210,7 +210,7 @@ for hpi_level in ['tract']:
             serows[ii] += f"& {se_fmt}"
 
 
-        # Save utilities TODO:
+        # Save utilities 
         if config == [True, True, True]:
 
             deltas = results.compute_delta(market_id = df['market_ids'])

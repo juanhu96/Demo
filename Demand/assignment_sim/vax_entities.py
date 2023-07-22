@@ -17,10 +17,9 @@ class Geog:
         self.individuals = individuals
         self.location_ids = location_ids
 
-class Location:
-    def __init__(self, id, capacity, occupancy=0, filled=False):
-        self.id = id
-        self.capacity = capacity
-        self.occupancy = occupancy
-        self.filled = filled
+# class Location:
+#     def __init__(self, id, capacity, occupancy=0):
+#         self.id = id
+#         self.capacity = capacity
+#         self.occupancy = occupancy
 
