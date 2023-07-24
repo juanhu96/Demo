@@ -48,8 +48,17 @@ print(output.stderr)
 blk_dist = pd.read_csv(outpath)
 print(blk_dist.shape)
 
+
+# Log distance
+blk_dist['logdist'] = np.log(blk_dist['dist'])
+
+distmatrix = blk_dist.pivot(index='blkid', columns='locid', values='logdist') #NA for >300th nearest pharmacy
+distmatrix.shape
+# save
+distmatrix.to_csv(f"{datadir}/Intermediate/ca_blk_pharm_logdist_wide.csv")
+
+
 # save a version with just the nearest pharmacy for demand estimation
 blk_dist_nearest = blk_dist[['blkid', 'dist']].groupby('blkid').min().reset_index()
 blk_dist_nearest.to_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_nearest.csv", index=False)
-
 

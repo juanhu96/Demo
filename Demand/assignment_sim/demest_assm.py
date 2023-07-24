@@ -26,14 +26,16 @@ datadir = "/export/storage_covidvaccine/Data"
 
 
 # block level data from demest_blocks.py
-auxtag = "_111_blk_4q_tract" #config_tag and setting_tag
+auxtag = "_110_blk_4q_tract" #config_tag and setting_tag
 geog_utils = pd.read_csv(f"{datadir}/Analysis/Demand/agent_utils{auxtag}.csv")
 geog_utils.columns.tolist()
+geog_utils['distcoefs'].value_counts()
+geog_utils.abd.describe()
 abd=geog_utils.abd.values
 hpi=geog_utils.hpi_quantile.values.astype(int)
-distcoef=geog_utils.distcoef.values
+distcoefs=geog_utils.distcoefs.values
 # ensure that the distance coefficient is negative TODO:
-assert np.all(distcoef < 0)
+assert np.all(distcoefs < 0)
 
 geog_data = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=["blkid", "market_ids", "population"])
 geog_data = geog_data.loc[geog_data.blkid.isin(geog_utils.blkid.values), :]
@@ -42,77 +44,127 @@ n_individuals = geog_data.population.values
 print("Number of geogs:", geog_data.shape[0]) # 377K
 print("Number of individuals:", geog_data.population.sum()) # 39M
 
-# distance matrix from block_dist.py
+# from block_dist.py. this is the long version, from which we just take the rankings of locations by distance. 
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
 
 distdf.shape
 distdf.columns.tolist()
-# Log distance
-distdf['logdist'] = np.log(distdf['dist']) 
 # keep blkids in data
 distdf = distdf.loc[distdf.blkid.isin(geog_utils.blkid.values), :]
+distdf['logdist'] = np.log(distdf['dist'])
 distdf.groupby('blkid').size().describe()
 
-# distances should be sorted ascending within each block
+# distances should be sorted ascending within each block.
 locs = distdf.groupby('blkid').locid.apply(np.array).values
 dists = distdf.groupby('blkid').logdist.apply(np.array).values
 
 
+# 
+# distmat = distdf.pivot(index='blkid', columns='locid', values='logdist').values #NA for >300th nearest pharmacy
+
+# distmat = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_logdist_wide.csv", index_col='blkid') # from block_dist.py
+# keep blkids in data
+# distmat = distmat.loc[geog_utils.blkid.values, :]
+
+
+#=========================
+#=========================
 #=====REFRESH MODULES=====
 importlib.reload(sys.modules['vax_entities'])
 importlib.reload(sys.modules['assignment_funcs'])
 from vax_entities import Individual, Geog
-from assignment_funcs import initialize_geogs, compute_ranking, random_fcfs, reset_assignments, assignment_stats, shuffle_individuals
+from assignment_funcs import initialize_economy, random_fcfs, reset_assignments, assignment_stats, shuffle_individuals, compute_economy_ranking, compute_geog_ranking
+#=========================
+#=========================
 #=========================
 
 
-# time
-time1 = time.time()
-geogs = initialize_geogs(
-    locs,
-    dists,
-    abd,
-    n_individuals,
-    )
-print("Time to initialize geogs:", time.time() - time1)
+economy = initialize_economy(
+    locs=locs,
+    dists=dists,
+    abd=abd,
+    n_individuals=n_individuals
+)
+
+#=========================
 
 
 
-n_locations = len(np.unique(distdf.locid.values))
-capacity = 10000
 
-
-
+#=========================
 
 
 # compute ranking
-time1 = time.time()
-compute_ranking(geogs, distcoef)
-print("Time to compute ranking:", time.time() - time1) 
+compute_economy_ranking(economy, distcoefs, poolnum=32)
+#129s TODO: do better
 
 
-# # shuffle individuals
-# indiv_ordering = shuffle_individuals(geogs)
+#=========================
 
-# # assignment
-# time1 = time.time()
-# random_fcfs(geogs, n_locations, capacity, indiv_ordering)
-# print("Time to assign:", time.time() - time1)
+
+# shuffle individuals
+ordering = shuffle_individuals(economy.individuals)
+
+#=========================
+n_locations = len(np.unique(distdf.locid.values))
+capacity = 10000
+
+# assignment
+random_fcfs(economy, n_locations, capacity, ordering)
+#16 minutes TODO: do better
+
+assignment_stats(economy.individuals)
+
+
+
+
+
+
+#=========================
+from scipy.stats import gumbel_r, logistic
+n_geogs = 50000
+epsilon1 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
+epsilon0 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)] # outside option
+epsilon_diff = [epsilon0[tt] - epsilon1[tt] for tt in range(n_geogs)]
+new_epsilon_diff = [logistic.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
+
+import matplotlib.pyplot as plt
+
+# Flatten the lists
+old_flat = [item for sublist in epsilon_diff for item in sublist]
+new_flat = [item for sublist in new_epsilon_diff for item in sublist]
+
+plt.clf()
+# Plot
+plt.hist(old_flat, bins=60, alpha=0.5, label='old_epsilon_diff')
+plt.hist(new_flat, bins=60, alpha=0.5, label='new_epsilon_diff')
+plt.legend(loc='upper right')
+plt.savefig("/mnt/staff/zhli/VaxDemandDistance/Demand/assignment_sim/epsilon_diff.png")
+
+
+
+
+#=========================
+
 
 
 # debugging
-tt = 23000
-ii = 0
-geogs[tt].location_ids
-geogs[tt].individuals[ii].nlocs_considered
-[geogs[tt].individuals[ii+jj].nlocs_considered for jj in range(10)  ]
+individuals = economy.individuals
+
+(tt,ii) = ordering[200000]
+print(tt,ii)
+individuals[tt][ii].nlocs_considered
+individuals[tt][ii].location_assigned
+individuals[tt][ii].rank_assigned
 
 
-geogs[tt].location_ids
-geogs[tt].distances
-geogs[tt].abd
-geogs[tt].individuals
-geogs[tt].ab_epsilon
+v_nlocs = np.array([ii.nlocs_considered for tt in individuals for ii in tt])
+v_nlocs.mean()
+
+np.mean(v_nlocs != 300)
+
+dists[0]
+np.mean(distcoefs)
 
 
 
@@ -143,7 +195,7 @@ geogs[tt].ab_epsilon
 
 # # TODO: the logdist in this must now be the new assigned distance
 
-# # distmatrix is part of agent_data
+# # distmat is part of agent_data
 # # weights are a function of assignment
 
 # agent_data_assigned = distdf
@@ -207,7 +259,7 @@ geogs[tt].ab_epsilon
 
 # agent_utils = agent_data[['blkid', 'market_ids', 'hpi_quantile', 'logdist']].assign(
 #     agent_utility = 0,
-#     distcoef = 0
+#     distcoefs = 0
 # )
 
 # for (ii,vv) in enumerate(pilabs):
@@ -215,10 +267,10 @@ geogs[tt].ab_epsilon
 #     if 'dist' in vv:
 #         print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
 #         if vv=='logdist':
-#             deltas_df = deltas_df.assign(distcoef = agent_data[vv])
+#             deltas_df = deltas_df.assign(distcoefs = agent_data[vv])
 #         elif vv.startswith('logdistXhpi_quantile'):
 #             qq = int(vv[-1])
-#             agent_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef
+#             agent_utils.loc[:, 'distcoefs'] +=  agent_data[f"hpi_quantile{qq}"] * coef
 
 #     else:
 #         print(f"Adding {vv} to agent-level utility")
