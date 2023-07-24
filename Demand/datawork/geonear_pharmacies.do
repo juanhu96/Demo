@@ -6,14 +6,31 @@ log using "geonear.log", replace
 local baselocs "`1'"
 local nborlocs "`2'"
 local outpath "`3'"
-local nearcount "`4'"
-if "`nearcount'" == "" local nearcount 1
+local within "`4'"
+local limit "`5'"
+
+if "`within'" == "" local within 200 //max distance in km to search for neighbors
+if "`limit'" == "" local limit 300 //max number of neighbors to return
+
+di "baselocs: `baselocs'"
+di "nborlocs: `nborlocs'"
+di "outpath: `outpath'"
+di "within: `within'"
+di "limit: `limit'"
 
 use "`baselocs'", clear
 
 ds
 
-geonear id latitude longitude using "`nborlocs'", neighbors(id latitude longitude) report(5) nearcount(`nearcount')
+geonear blkid latitude longitude using "`nborlocs'", neighbors(id latitude longitude) long within(`within') limit(`limit')
+
+rename id locid
+rename km_to_id dist
+
+count
+ds
+
+gsort blkid dist
 
 export delim "`outpath'", replace
 

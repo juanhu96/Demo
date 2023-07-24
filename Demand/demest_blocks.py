@@ -211,41 +211,38 @@ for hpi_level in ['tract']:
 
 
         # Save utilities 
-        if config == [True, True, True]:
+        deltas = results.compute_delta(market_id = df['market_ids'])
+        deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
+        # compute block-level utilities: dot product of agent_vars and pis
+        pilabs == agent_vars
 
-            deltas = results.compute_delta(market_id = df['market_ids'])
-            deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
-            # compute block-level utilities: dot product of agent_vars and pis
-            pilabs == agent_vars
+        agent_utils = agent_data[['blkid', 'market_ids', 'hpi_quantile', 'logdist']].assign(
+            agent_utility = 0,
+            distcoef = 0
+        )
 
-            agent_utils = agent_data[['blkid', 'market_ids', 'hpi_quantile', 'logdist']].assign(
-                agent_utility = 0,
-                distcoef = 0
-            )
+        for (ii,vv) in enumerate(pilabs):
+            coef = pis[ii]
+            if 'dist' in vv:
+                print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
+                if vv=='logdist':
+                    deltas_df = deltas_df.assign(distcoef = agent_data[vv])
+                elif vv.startswith('logdistXhpi_quantile'):
+                    qq = int(vv[-1])
+                    agent_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef
+            else:
+                print(f"Adding {vv} to agent-level utility")
+                agent_utils.loc[:, 'agent_utility'] += agent_data[vv] * coef
 
-            for (ii,vv) in enumerate(pilabs):
-                coef = pis[ii]
-                if 'dist' in vv:
-                    print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
-                    if vv=='logdist':
-                        deltas_df = deltas_df.assign(distcoef = agent_data[vv])
-                    elif vv.startswith('logdistXhpi_quantile'):
-                        qq = int(vv[-1])
-                        agent_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef
+        agent_utils = agent_utils.merge(deltas_df, on='market_ids')
+        agent_utils = agent_utils.assign(abd = agent_utils['agent_utility'] + agent_utils['delta'])
 
-                else:
-                    print(f"Adding {vv} to agent-level utility")
-                    agent_utils.loc[:, 'agent_utility'] += agent_data[vv] * coef
-
-            agent_utils = agent_utils.merge(deltas_df, on='market_ids')
-            agent_utils = agent_utils.assign(abd = agent_utils['agent_utility'] + agent_utils['delta'])
-
-            # save abd and coefficients
-            abd_path = f"{datadir}/Analysis/Demand/agent_utils_{config_tag}_{setting_tag}.csv"
-            agent_utils.to_csv(abd_path, index=False)
-            print(f"Saved agent-level ABD and coefficients at: {abd_path}")
-            if save_to_pipeline:
-                agent_utils.to_csv(f"{datadir}/Analysis/Demand/agent_utils.csv", index=False)
+        # save abd and coefficients
+        abd_path = f"{datadir}/Analysis/Demand/agent_utils_{config_tag}_{setting_tag}.csv"
+        agent_utils.to_csv(abd_path, index=False)
+        print(f"Saved agent-level ABD and coefficients at: {abd_path}")
+        if save_to_pipeline:
+            agent_utils.to_csv(f"{datadir}/Analysis/Demand/agent_utils.csv", index=False)
 
 
 

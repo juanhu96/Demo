@@ -3,62 +3,82 @@ from vax_entities import Individual, Geog
 
 import numpy as np
 from scipy.stats import gumbel_r
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import random
 import time
 from multiprocessing import Pool
 import os
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from tqdm import tqdm
 
 
 
 
-def initialize_geogs(distmatrix: np.ndarray, #n_geogs x M
-               locmatrix: np.ndarray, #n_geogs x M
-               distcoef: np.ndarray, #length = number of geogs
-               abd: np.ndarray, #length = number of geogs
-               M: int = 10, 
-               n_individuals: Optional[List[int]] = None, # number of individuals in each geog
-               seed: int = 1234):
+def initialize_geogs(
+        locs: List[np.ndarray], #pharmacies in each geog
+        dists: List[np.ndarray], #sorted within each geog
+        abd: np.ndarray, #length = number of geogs
+        n_individuals, # number of individuals in each geog
+        seed: int = 1234):
 
 
-    n_geogs = distmatrix.shape[0]
-
+    n_geogs = len(locs)
     np.random.seed(seed)
+    # Generate random epsilon_i
+    epsilon1 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
+    epsilon0 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)] # outside option
+    epsilon_diff = [epsilon0[tt] - epsilon1[tt] for tt in range(n_geogs)]
 
-    # precompute ab_epsilon
-    ab_epsilon = abd[:, np.newaxis] + distcoef.reshape(-1, 1) * distmatrix
-    print(f"Computed ab_epsilon.")
+    # sort epsilon_diff (ascending) within each geog, for computing rank.
+    # OK since we'll do assignments shuffled.
+    epsilon_diff = [np.sort(epsilon_diff[tt]) for tt in range(n_geogs)]
+    print("Finished generating epsilons.")
 
-    # Generate random epsilon_ij (first one is outside option)
-    epsilon_ij = [gumbel_r.rvs(size=(n_individuals[tt], M+1)) for tt in range(n_geogs)]
-    print(f"Generated epsilon_ij.")
-
-    # Create Geog objects
     geogs = [
         Geog(
-            tt, 
-            distmatrix[tt, :],
-            distcoef[tt],
-            ab_epsilon[tt, :],
-            [Individual(geog_id=tt, 
-                        epsilon_ij=epsilon_ij[tt][ii, :],
-                        u_ij=np.zeros(M)
-                        ) for ii in range(n_individuals[tt])],
-            locmatrix[tt, :]) 
-        for tt in range(n_geogs)]
-
-    print(f"Created geogs.")
-
-    # Compute utility and ranking for each individual
-    compute_ranking(geogs)
-    print("Done computing ranking.")
-
-    # # Create Location objects
-    # n_locations = len(np.unique(locmatrix))
-    # locations = [Location(ll, capacity) for ll in range(n_locations)]
-
+            location_ids=locs[tt],
+            distances=dists[tt],
+            abd=abd[tt],
+            individuals=[
+                Individual(epsilon_diff[tt][ii])
+                for ii in range(n_individuals[tt])
+            ]
+        )
+        for tt in range(n_geogs)
+    ]
     return geogs
+
+
+
+# condition : ii.u_ij > ii.epsilon0
+# condition : ii.epsilon1 + ab_epsilon[ll] > ii.epsilon0
+# condition : ii.epsilon0 - ii.epsilon1 < ab_epsilon[ll]
+# condition : -(ii.epsilon_diff) < ab_epsilon[ll]
+
+
+# ab_epsilon is sorted descending within each geog since distances are sorted ascending
+#individuals in geog tt are sorted by epsilon_diff (ascending)
+def compute_geog_ranking(args: Tuple[Geog, float]):
+    tt, distcoef = args
+    tt.ab_epsilon = tt.abd + (distcoef * tt.distances)
+
+    start_index = 0
+    for ii in tt.individuals:
+        start_index = np.searchsorted(tt.ab_epsilon[start_index:], -(ii.epsilon_diff)) + start_index
+        ii.nlocs_considered = start_index
+
+
+def compute_ranking(geogs: List[Geog], distcoefs, poolnum: int = 1):
+    if poolnum == 1:
+        for tt in range(len(geogs)):
+            compute_geog_ranking((geogs[tt], distcoefs[tt]))
+            if tt % 50000 == 0:
+                print(f"Finished computing rankings for {tt} geogs.")
+    else:
+        with ProcessPoolExecutor(max_workers=poolnum) as executor:
+            list(executor.map(compute_geog_ranking, zip(geogs, distcoefs)))
+
+    print(f"Finished computing rankings for {len(geogs)} geogs.")
 
 
 def shuffle_individuals(geogs: List[Geog]):
@@ -67,22 +87,6 @@ def shuffle_individuals(geogs: List[Geog]):
     return indiv_ordering
 
 
-# rank locations in descending order, subset to u_ij greater than outside option (epsilon_ij[0])
-def compute_geog_ranking(tt: Geog):
-    for ii in tt.individuals:
-        ii.u_ij = tt.ab_epsilon + ii.epsilon_ij[1:]
-        inside_inds = np.argwhere(ii.u_ij > ii.epsilon_ij[0]).flatten()
-        ii.location_ranking = inside_inds[np.argsort(ii.u_ij[inside_inds])][::-1]
-
-def compute_ranking(geogs: List[Geog], n_processes: int = 32):
-    with ProcessPoolExecutor(max_workers=min(n_processes, os.cpu_count())) as executor:
-        list(executor.map(compute_geog_ranking, geogs))
-
-
-def shuffle_list(original_list):
-    shuffled_list = original_list.copy()
-    random.shuffle(shuffled_list)
-    return shuffled_list
 
 
 def random_fcfs(geogs: List[Geog], 
@@ -99,11 +103,10 @@ def random_fcfs(geogs: List[Geog],
     time2 = time.time()
     # Iterate over individuals in the given random order
     for (tt,ii) in ordering:
-        for (jj,ll) in enumerate(geogs[tt].individuals[ii].location_ranking):
-            locid = geogs[tt].location_ids[ll]
-            if occupancies[locid].occupancy < capacity:
-                occupancies[locid].occupancy += 1
-                geogs[tt].individuals[ii].location_assigned = locid
+        for (jj,ll) in enumerate(geogs[tt].location_ids[:geogs[tt].individuals[ii].nlocs_considered]):
+            if occupancies[ll].occupancy < capacity:
+                occupancies[ll].occupancy += 1
+                geogs[tt].individuals[ii].location_assigned = ll
                 geogs[tt].individuals[ii].rank_assigned = jj #not needed if not reporting (?)
                 break
     time3 = time.time()
