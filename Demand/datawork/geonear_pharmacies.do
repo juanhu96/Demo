@@ -27,10 +27,13 @@ geonear blkid latitude longitude using "`nborlocs'", neighbors(id latitude longi
 rename id locid
 rename km_to_id dist
 
+gen logdist = log(dist)
+drop dist
+
 count
 ds
 
-gsort blkid dist
+gsort blkid logdist //this is important as future code assumes this
 
 export delim "`outpath'", replace
 

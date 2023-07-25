@@ -84,12 +84,6 @@ def compute_economy_ranking(economy: Economy, distcoefs, poolnum: int = 1):
 
     print("Finished computing rankings in:", time.time() - time1, "seconds")
 
-        
-
-
-
-
-
 
 
 def shuffle_individuals(individuals: List[Individual]):
@@ -98,7 +92,7 @@ def shuffle_individuals(individuals: List[Individual]):
     return indiv_ordering
 
 
-def random_fcfs(economy: Economy, 
+def random_fcfs(economy: Economy,
                 n_locations: int,
                 capacity: int,
                 ordering: List[int]):
@@ -109,18 +103,16 @@ def random_fcfs(economy: Economy,
     occupancies = np.zeros(n_locations)
 
     # Iterate over individuals in the given random order
-    for (it, (tt,ii)) in enumerate(ordering):
-        for (jj,ll) in enumerate(economy.locs[tt][:economy.individuals[tt][ii].nlocs_considered]):
-            if occupancies[ll] < capacity:
+    for (tt,ii) in ordering:
+        indiv = economy.individuals[tt][ii]
+        for (jj,ll) in enumerate(economy.locs[tt]):
+            if occupancies[ll] < capacity and jj < indiv.nlocs_considered:
                 occupancies[ll] += 1
-                economy.individuals[tt][ii].location_assigned = ll
-                economy.individuals[tt][ii].rank_assigned = jj #not needed if not reporting (?)
+                indiv.location_assigned = ll
+                indiv.rank_assigned = jj #not needed if not reporting (?)
                 break
-        if it % 1000000 == 0:
-            print(f"Assigned {it/1000000} million individuals out of {len(ordering)} in {round((time.time() - time1), 2)} seconds")
-    print("Finished assigning individuals:", time.time() - time1)
 
-
+    print("Finished assigning individuals in ", time.time() - time1, "seconds")
 
 
 def reset_assignments(individuals: List[Individual]):
@@ -134,10 +126,12 @@ def assignment_stats(individuals: List[Individual]):
     n_individuals = sum(len(ii) for ii in individuals)
     print("********\nReporting stats for {} individuals in {} geogs".format(n_individuals, len(individuals)))
 
-    assigned_ranks = np.array([ii.rank_assigned for tt in individuals for ii in tt if ii.location_assigned != -1])
+    assigned_ranks = np.array([ii.rank_assigned for tt in individuals for ii in tt if ii.rank_assigned != -1])
     print("\nAssigned ranks : ")
     rank_counts = np.bincount(assigned_ranks)
-    for rr in range(20):
-        print(f"Fraction assigned rank {rr}: {rank_counts[rr]/n_individuals}")
-    print("Fraction unassigned: {:.3f}".format(np.mean(assigned_ranks == -1)))
+    max_rank = max(assigned_ranks)
+    for rr in range(max_rank + 1):
+        print(f"% assigned rank {rr}: {round(rank_counts[rr]/n_individuals*100, 2)}")
+    print("Individuals unassigned: ", sum(assigned_ranks == -1))
+
 

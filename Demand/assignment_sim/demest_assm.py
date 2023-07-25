@@ -16,9 +16,8 @@ import importlib
 import sys
 sys.path.append("/mnt/staff/zhli/VaxDemandDistance/Demand/assignment_sim/") #TODO: only need this when running in terminal
 
-from vax_entities import Individual, Geog
-from assignment_funcs import initialize_geogs, compute_ranking, random_fcfs, reset_assignments, assignment_stats, shuffle_individuals
-
+from vax_entities import Individual, Economy
+from assignment_funcs import initialize_economy, random_fcfs, assignment_stats, shuffle_individuals, compute_economy_ranking, compute_geog_ranking
 # seed
 np.random.seed(1234)
 
@@ -29,11 +28,11 @@ datadir = "/export/storage_covidvaccine/Data"
 auxtag = "_110_blk_4q_tract" #config_tag and setting_tag
 geog_utils = pd.read_csv(f"{datadir}/Analysis/Demand/agent_utils{auxtag}.csv")
 geog_utils.columns.tolist()
-geog_utils['distcoefs'].value_counts()
+geog_utils['distcoef'].value_counts()
 geog_utils.abd.describe()
 abd=geog_utils.abd.values
 hpi=geog_utils.hpi_quantile.values.astype(int)
-distcoefs=geog_utils.distcoefs.values
+distcoefs=geog_utils.distcoef.values
 # ensure that the distance coefficient is negative TODO:
 assert np.all(distcoefs < 0)
 
@@ -51,7 +50,6 @@ distdf.shape
 distdf.columns.tolist()
 # keep blkids in data
 distdf = distdf.loc[distdf.blkid.isin(geog_utils.blkid.values), :]
-distdf['logdist'] = np.log(distdf['dist'])
 distdf.groupby('blkid').size().describe()
 
 # distances should be sorted ascending within each block.
@@ -72,8 +70,8 @@ dists = distdf.groupby('blkid').logdist.apply(np.array).values
 #=====REFRESH MODULES=====
 importlib.reload(sys.modules['vax_entities'])
 importlib.reload(sys.modules['assignment_funcs'])
-from vax_entities import Individual, Geog
-from assignment_funcs import initialize_economy, random_fcfs, reset_assignments, assignment_stats, shuffle_individuals, compute_economy_ranking, compute_geog_ranking
+from vax_entities import Individual, Economy
+from assignment_funcs import initialize_economy, random_fcfs, assignment_stats, shuffle_individuals, compute_economy_ranking, compute_geog_ranking
 #=========================
 #=========================
 #=========================
@@ -85,23 +83,15 @@ economy = initialize_economy(
     abd=abd,
     n_individuals=n_individuals
 )
-
+#55s   
 #=========================
 
 
-
-
 #=========================
-
-
 # compute ranking
 compute_economy_ranking(economy, distcoefs, poolnum=32)
-#129s TODO: do better
-
-
+#129s 
 #=========================
-
-
 # shuffle individuals
 ordering = shuffle_individuals(economy.individuals)
 
@@ -111,37 +101,15 @@ capacity = 10000
 
 # assignment
 random_fcfs(economy, n_locations, capacity, ordering)
-#16 minutes TODO: do better
+#149 seconds TODO: do better
 
 assignment_stats(economy.individuals)
-
-
-
+# max rank assigned is 63. 
 
 
 
 #=========================
-from scipy.stats import gumbel_r, logistic
-n_geogs = 50000
-epsilon1 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
-epsilon0 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)] # outside option
-epsilon_diff = [epsilon0[tt] - epsilon1[tt] for tt in range(n_geogs)]
-new_epsilon_diff = [logistic.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
-
-import matplotlib.pyplot as plt
-
-# Flatten the lists
-old_flat = [item for sublist in epsilon_diff for item in sublist]
-new_flat = [item for sublist in new_epsilon_diff for item in sublist]
-
-plt.clf()
-# Plot
-plt.hist(old_flat, bins=60, alpha=0.5, label='old_epsilon_diff')
-plt.hist(new_flat, bins=60, alpha=0.5, label='new_epsilon_diff')
-plt.legend(loc='upper right')
-plt.savefig("/mnt/staff/zhli/VaxDemandDistance/Demand/assignment_sim/epsilon_diff.png")
-
-
+# 
 
 
 #=========================
@@ -150,21 +118,20 @@ plt.savefig("/mnt/staff/zhli/VaxDemandDistance/Demand/assignment_sim/epsilon_dif
 
 # debugging
 individuals = economy.individuals
-
 (tt,ii) = ordering[200000]
 print(tt,ii)
 individuals[tt][ii].nlocs_considered
 individuals[tt][ii].location_assigned
 individuals[tt][ii].rank_assigned
-
-
 v_nlocs = np.array([ii.nlocs_considered for tt in individuals for ii in tt])
-v_nlocs.mean()
+print("Number of locations considered:")
+print(pd.Series(v_nlocs).describe())
+print("Fraction not vaccinated:", np.mean(v_nlocs==0))
+print("Fraction considering all locations measured:", np.mean(v_nlocs==300))
 
-np.mean(v_nlocs != 300)
 
-dists[0]
-np.mean(distcoefs)
+# dists[0]
+# np.mean(distcoefs)
 
 
 
