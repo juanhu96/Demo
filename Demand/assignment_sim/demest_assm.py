@@ -16,9 +16,14 @@ import importlib
 import sys
 sys.path.append("/mnt/staff/zhli/VaxDemandDistance/Demand/assignment_sim/") #TODO: only need this when running in terminal
 
+importlib.reload(sys.modules['vax_entities'])
+importlib.reload(sys.modules['assignment_funcs'])
+importlib.reload(sys.modules['demest_funcs'])
 from vax_entities import Individual, Economy
 from assignment_funcs import initialize_economy, random_fcfs, assignment_stats, shuffle_individuals, compute_economy_ranking, compute_geog_ranking
-# seed
+from demest_funcs import estimate_demand, shares_assigned, dists_assigned
+
+
 np.random.seed(1234)
 
 datadir = "/export/storage_covidvaccine/Data"
@@ -30,6 +35,13 @@ geog_utils = pd.read_csv(f"{datadir}/Analysis/Demand/agent_utils{auxtag}.csv")
 geog_utils.columns.tolist() #['blkid', 'market_ids', 'hpi_quantile', 'logdist', 'agent_utility', 'distcoef', 'delta', 'abd']
 geog_utils['delta'].value_counts() # 0 for all
 
+# TODO: subsetting blocks to test
+testing = True
+if testing:
+    blocks_tokeep = geog_utils.blkid.values[:10000]
+    geog_utils = geog_utils.loc[geog_utils.blkid.isin(blocks_tokeep), :]
+else:
+    blocks_tokeep = geog_utils.blkid.values
 
 geog_utils.shape
 geog_utils['distcoef'].value_counts()
@@ -40,19 +52,19 @@ distcoefs=geog_utils.distcoef.values
 assert np.all(distcoefs < 0)
 
 geog_data = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=["blkid", "market_ids", "population"])
-geog_data = geog_data.loc[geog_data.blkid.isin(geog_utils.blkid.values), :]
+geog_data = geog_data.loc[geog_data.blkid.isin(blocks_tokeep), :]
 n_individuals = geog_data.population.values
 
 print("Number of geogs:", geog_data.shape[0]) # 377K
 print("Number of individuals:", geog_data.population.sum()) # 39M
 
-# from block_dist.py. this is the long version, from which we just take the rankings of locations by distance. 
+# from block_dist.py. this is in long format
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
 
 distdf.shape
 distdf.columns.tolist()
 # keep blkids in data
-distdf = distdf.loc[distdf.blkid.isin(geog_utils.blkid.values), :]
+distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
 distdf.groupby('blkid').size().describe()
 # nearest for each block
 distnearest = distdf.groupby('blkid').head(1)
@@ -68,7 +80,7 @@ dists = dist_grp.logdist.apply(np.array).values
 
 # distmat = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_logdist_wide.csv", index_col='blkid') # from block_dist.py
 # keep blkids in data
-# distmat = distmat.loc[geog_utils.blkid.values, :]
+# distmat = distmat.loc[blocks_tokeep, :]
 
 
 #=========================
@@ -76,35 +88,31 @@ dists = dist_grp.logdist.apply(np.array).values
 #=====REFRESH MODULES=====
 importlib.reload(sys.modules['vax_entities'])
 importlib.reload(sys.modules['assignment_funcs'])
+importlib.reload(sys.modules['demest_funcs'])
 from vax_entities import Individual, Economy
 from assignment_funcs import initialize_economy, random_fcfs, assignment_stats, shuffle_individuals, compute_economy_ranking, compute_geog_ranking
+from demest_funcs import estimate_demand, shares_assigned, dists_assigned
 #=========================
 #=========================
 #=========================
 
-eps_var = (np.pi**2)/6
 
-for epsilon_opt in ["gumbel", "logistic", "zero"]:
-    for scale in [1, 1/eps_var, eps_var]:
-        print(f"epsilon_opt: {epsilon_opt}, scale: {scale}")
-
-        economy = initialize_economy(
-            locs=locs,
-            dists=dists,
-            abd=abd,
-            n_individuals=n_individuals,
-            epsilon_opt=epsilon_opt
-        )
+economy = initialize_economy(
+    locs=locs,
+    dists=dists,
+    abd=abd,
+    n_individuals=n_individuals
+)
 
 
-        #=========================
-        # compute ranking
-        compute_economy_ranking(economy, distcoefs, poolnum=32, scale=scale)
+#=========================
+# compute ranking
+compute_economy_ranking(economy, distcoefs, poolnum=32) #45 without subsetting, .7612, 06563
+#300s
 
-        v_nlocs = np.array([ii.nlocs_considered for tt in economy.individuals for ii in tt])
-        print("Fraction considering at least one location:", np.mean(v_nlocs!=0)) # should be 0.7364
-        print("Fraction considering all locations measured:", np.mean(v_nlocs==300))
-
+v_nlocs = np.array([ii.nlocs_considered for tt in economy.individuals for ii in tt])
+print("Fraction considering at least one location:", np.mean(v_nlocs!=0)) # should be 0.7364
+print("Fraction considering all locations measured:", np.mean(v_nlocs==300))
 
 
 #=========================
@@ -112,15 +120,26 @@ for epsilon_opt in ["gumbel", "logistic", "zero"]:
 ordering = shuffle_individuals(economy.individuals)
 
 #=========================
-n_locations = len(np.unique(distdf.locid.values))
+locids = np.unique(distdf.locid.values)
 capacity = 10000
 
 # assignment
-random_fcfs(economy, n_locations, capacity, ordering)
+weights = random_fcfs(economy, locids, capacity, ordering)
 #224 seconds TODO: do better
+
 
 assignment_stats(economy.individuals)
 # max rank assigned is 63. 
+
+
+#=========================
+
+agent_data_dist = dists_assigned(weights, distdf)
+agent_data_dist.shape
+
+agent_data_shares = shares_assigned(weights, geog_data)
+
+
 
 
 
@@ -139,8 +158,7 @@ assignment_stats(economy.individuals)
 
 np.searchsorted(-economy.abe[0], -0.5)
 individuals = economy.individuals
-(tt,ii) = ordering[2000] #300 considered
-(tt,ii) = ordering[20000] #0 considered
+(tt,ii) = ordering[2000] #2 considered
 print(tt,ii)
 individuals[tt][ii].nlocs_considered
 individuals[tt][ii].location_assigned

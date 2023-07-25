@@ -28,7 +28,10 @@ for hpi_level in ['tract']:
     df_read.columns.tolist()
     df_read['shares'].describe()
 
+
     agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv")
+    agent_data_read.columns.tolist()
+
 
     # subset to ZIPs that exist in df_read
     agent_data_read = agent_data_read.loc[agent_data_read['zip'].isin(df_read['zip']), :]
@@ -37,10 +40,7 @@ for hpi_level in ['tract']:
     agent_data_read['logdist'].describe()
     merged = df_read.merge(agent_data_read, on='zip', how='left')
     merged['inside_pop'] = merged['population_y'] * merged['shares']
-    merged['inside_pop'].describe()
     np.sum(merged['inside_pop']) / np.sum(merged['population_y'])
-
-
     # end test
 
     # make HPI quantiles 

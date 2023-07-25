@@ -15,11 +15,11 @@ def initialize_economy(
         abd: np.ndarray, #length = number of geogs
         n_individuals, # number of individuals in each geog
         seed: int = 1234,
-        epsilon_opt = "gumbel" # "logistic" or "gumbel" or "zero"
+        epsilon_opt = "logistic" # "logistic" or "gumbel" or "zero" 
         ):
 
     time1 = time.time()
-    print("Initializing economy...")
+    print("\nInitializing economy...")
     np.random.seed(seed)
     n_geogs = len(locs)
 
@@ -32,8 +32,11 @@ def initialize_economy(
         epsilon_diff = [logistic.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
     elif epsilon_opt == "zero":
         epsilon_diff = [-gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
-    
-    # logistic.rvs should be equivalent to gumbel_r.rvs - gumbel_r.rvs
+
+    # logistic is equivalent to gumbel, zero is not what we want
+
+    # sort epsilon_diff within each geog, ok since we'll shuffle for assignment
+    epsilon_diff = [np.sort(epsilon_diff[tt]) for tt in range(n_geogs)]
 
     print("Finished generating epsilons:", time.time() - time1)
 
@@ -60,15 +63,16 @@ def initialize_economy(
 # condition : ii.epsilon0 - ii.epsilon1 < ab_epsilon[ll]
 # condition : ii.epsilon_diff < ab_epsilon[ll]
 
-
 # ab_epsilon is sorted descending within each geog since distances are sorted ascending
-# individuals in geog tt are sorted by epsilon_diff (ascending)
+# epsilon_diff is sorted ascending within each geog
 
 def compute_geog_ranking(args: Tuple[List[Individual], np.ndarray]):
     individuals, ab_epsilon = args
-
+    abe_neg = -ab_epsilon
+    start_index = 0
     for ii in individuals:
-        ii.nlocs_considered = np.searchsorted(-ab_epsilon, -ii.epsilon_diff) 
+        start_index = np.searchsorted(abe_neg[start_index:], ii.epsilon_diff) + start_index
+        ii.nlocs_considered = start_index
     return individuals
 
 
@@ -77,7 +81,7 @@ def compute_economy_ranking(economy: Economy, distcoefs, poolnum: int = 1, scale
     economy.abe = [economy.abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)]
     economy.abe = [scale * economy.abe[tt] for tt in range(economy.n_geogs)]
 
-    print("Computing rankings using {} processes...".format(poolnum))
+    print("\nComputing rankings using {} processes...".format(poolnum))
     with Pool(poolnum) as p:
         economy.individuals = p.map(compute_geog_ranking, [(economy.individuals[tt], economy.abe[tt]) for tt in range(economy.n_geogs)])
 
@@ -92,22 +96,22 @@ def shuffle_individuals(individuals: List[Individual]):
 
 
 def random_fcfs(economy: Economy, 
-                n_locations: int,
+                locids: List[int],
                 capacity: int,
-                ordering: List[Tuple[int, int]]):
+                ordering: List[Tuple[int, int]]
+                ):
     
     time1 = time.time()
-    print("Assigning individuals...")
+    print("\nAssigning individuals...")
 
     # Initialize occupancies and full locations
-    occupancies = dict.fromkeys(range(n_locations), 0)
-    full_locations = set()
-
-
+    occupancies = dict.fromkeys(locids, 0)
+    full_locations = set() #set for performance reasons
 
     individuals = economy.individuals
     locs = economy.locs
-    weights = [np.zeros(shape=(len(locs[tt]))) for tt in range(len(locs))] #frequency weights for agent_data
+
+    weights = [np.zeros(shape=(1)) for tt in range(economy.n_geogs)] #frequency weights for agent_data
 
     # Iterate over individuals in the given random order
     for (it, (tt,ii)) in enumerate(ordering):
@@ -120,17 +124,21 @@ def random_fcfs(economy: Economy,
                 occupancies[ll] += 1
                 individuals[tt][ii].location_assigned = ll
                 individuals[tt][ii].rank_assigned = jj
-                weights[tt][jj] += 1
-                
+
+                # Update weights
+                if jj < len(weights[tt]):
+                    weights[tt][jj] += 1
+                else:
+                    weights[tt] = np.append(weights[tt], 1)
                 
                 # If the location has reached capacity, add it to the set of full locations
                 if occupancies[ll] == capacity:
                     full_locations.add(ll)
                 break
+
         if it % 1000000 == 0:
             print(f"Assigned {it/1000000} million individuals out of {len(ordering)} in {round((time.time() - time1), 2)} seconds")
-        print(f"Assigned {it} individuals out of {len(ordering)} in {round((time.time() - time1), 2)} seconds")
-        return weights
+    return weights
 
 
 def assignment_stats(individuals: List[Individual]):
