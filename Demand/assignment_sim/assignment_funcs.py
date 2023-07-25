@@ -1,6 +1,4 @@
-from vax_entities import Individual, Geog
-from vax_entities import Economy
-# , Location
+from vax_entities import Economy, Individual
 
 import numpy as np
 from scipy.stats import gumbel_r, logistic
@@ -8,10 +6,6 @@ from typing import List, Optional, Tuple
 import random
 import time
 from multiprocessing import Pool
-import os
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from tqdm import tqdm
-
 
 
 
@@ -20,23 +14,27 @@ def initialize_economy(
         dists: List[np.ndarray], #sorted within each geog
         abd: np.ndarray, #length = number of geogs
         n_individuals, # number of individuals in each geog
-        seed: int = 1234):
+        seed: int = 1234,
+        epsilon_opt = "gumbel" # "logistic" or "gumbel" or "zero"
+        ):
 
     time1 = time.time()
     print("Initializing economy...")
     np.random.seed(seed)
     n_geogs = len(locs)
 
-    # Generate random epsilon_i
-    epsilon_diff = [logistic.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
-    # verified that it's equivalent to:
-    # epsilon1 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
-    # epsilon0 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)] # outside option
-    # epsilon_diff = [epsilon0[tt] - epsilon1[tt] for tt in range(n_geogs)]
+    # Generate random epsilon_diff = epsilon0 - epsilon1
+    if epsilon_opt == "gumbel":
+        epsilon_0 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
+        epsilon_1 = [gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
+        epsilon_diff = [epsilon_0[tt] - epsilon_1[tt] for tt in range(n_geogs)]
+    elif epsilon_opt == "logistic":
+        epsilon_diff = [logistic.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
+    elif epsilon_opt == "zero":
+        epsilon_diff = [-gumbel_r.rvs(size=(n_individuals[tt])) for tt in range(n_geogs)]
+    
+    # logistic.rvs should be equivalent to gumbel_r.rvs - gumbel_r.rvs
 
-    # sort epsilon_diff (ascending) within each geog, for computing rank.
-    # OK since we'll do assignments shuffled.
-    epsilon_diff = [np.sort(epsilon_diff[tt]) for tt in range(n_geogs)]
     print("Finished generating epsilons:", time.time() - time1)
 
 
@@ -68,16 +66,17 @@ def initialize_economy(
 
 def compute_geog_ranking(args: Tuple[List[Individual], np.ndarray]):
     individuals, ab_epsilon = args
-    start_index = 0
+
     for ii in individuals:
-        start_index = np.searchsorted(ab_epsilon[start_index:], ii.epsilon_diff) + start_index
-        ii.nlocs_considered = start_index
+        ii.nlocs_considered = np.searchsorted(-ab_epsilon, -ii.epsilon_diff) 
     return individuals
 
 
-def compute_economy_ranking(economy: Economy, distcoefs, poolnum: int = 1):
+def compute_economy_ranking(economy: Economy, distcoefs, poolnum: int = 1, scale: float = 1.0):
     time1 = time.time()
-    economy.abe = [economy.abd[tt] + distcoefs[tt] * economy.dists[tt] for tt in range(economy.n_geogs)]
+    economy.abe = [economy.abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)]
+    economy.abe = [scale * economy.abe[tt] for tt in range(economy.n_geogs)]
+
     print("Computing rankings using {} processes...".format(poolnum))
     with Pool(poolnum) as p:
         economy.individuals = p.map(compute_geog_ranking, [(economy.individuals[tt], economy.abe[tt]) for tt in range(economy.n_geogs)])
@@ -92,46 +91,59 @@ def shuffle_individuals(individuals: List[Individual]):
     return indiv_ordering
 
 
-def random_fcfs(economy: Economy,
+def random_fcfs(economy: Economy, 
                 n_locations: int,
                 capacity: int,
-                ordering: List[int]):
+                ordering: List[Tuple[int, int]]):
     
     time1 = time.time()
     print("Assigning individuals...")
 
-    occupancies = np.zeros(n_locations)
+    # Initialize occupancies and full locations
+    occupancies = dict.fromkeys(range(n_locations), 0)
+    full_locations = set()
+
+
+
+    individuals = economy.individuals
+    locs = economy.locs
+    weights = [np.zeros(shape=(len(locs[tt]))) for tt in range(len(locs))] #frequency weights for agent_data
 
     # Iterate over individuals in the given random order
-    for (tt,ii) in ordering:
-        indiv = economy.individuals[tt][ii]
-        for (jj,ll) in enumerate(economy.locs[tt]):
-            if occupancies[ll] < capacity and jj < indiv.nlocs_considered:
+    for (it, (tt,ii)) in enumerate(ordering):
+        if individuals[tt][ii].nlocs_considered == 0:
+            continue
+
+        for (jj,ll) in enumerate(locs[tt][:individuals[tt][ii].nlocs_considered]):
+            # Check if location is not full and assign the individual to this location
+            if ll not in full_locations:
                 occupancies[ll] += 1
-                indiv.location_assigned = ll
-                indiv.rank_assigned = jj #not needed if not reporting (?)
+                individuals[tt][ii].location_assigned = ll
+                individuals[tt][ii].rank_assigned = jj
+                weights[tt][jj] += 1
+                
+                
+                # If the location has reached capacity, add it to the set of full locations
+                if occupancies[ll] == capacity:
+                    full_locations.add(ll)
                 break
-
-    print("Finished assigning individuals in ", time.time() - time1, "seconds")
-
-
-def reset_assignments(individuals: List[Individual]):
-    for tt in individuals:
-        for ii in tt:
-            ii.location_assigned = -1
-            ii.rank_assigned = -1
+        if it % 1000000 == 0:
+            print(f"Assigned {it/1000000} million individuals out of {len(ordering)} in {round((time.time() - time1), 2)} seconds")
+        print(f"Assigned {it} individuals out of {len(ordering)} in {round((time.time() - time1), 2)} seconds")
+        return weights
 
 
 def assignment_stats(individuals: List[Individual]):
     n_individuals = sum(len(ii) for ii in individuals)
     print("********\nReporting stats for {} individuals in {} geogs".format(n_individuals, len(individuals)))
 
-    assigned_ranks = np.array([ii.rank_assigned for tt in individuals for ii in tt if ii.rank_assigned != -1])
+    assigned_ranks = np.array([ii.rank_assigned for tt in individuals for ii in tt])
     print("\nAssigned ranks : ")
-    rank_counts = np.bincount(assigned_ranks)
-    max_rank = max(assigned_ranks)
-    for rr in range(max_rank + 1):
+    assigned_ind = assigned_ranks >= 0
+    rank_counts = np.bincount(assigned_ranks[assigned_ind])
+    max_rank = np.max(assigned_ranks[assigned_ind])
+    print("Max rank assigned: ", max_rank)
+    for rr in range(10):
         print(f"% assigned rank {rr}: {round(rank_counts[rr]/n_individuals*100, 2)}")
-    print("Individuals unassigned: ", sum(assigned_ranks == -1))
-
+    print(f"% unassigned: {round(np.sum(~assigned_ind)/n_individuals*100, 2)}")
 

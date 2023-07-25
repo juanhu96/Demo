@@ -27,11 +27,14 @@ datadir = "/export/storage_covidvaccine/Data"
 # block level data from demest_blocks.py
 auxtag = "_110_blk_4q_tract" #config_tag and setting_tag
 geog_utils = pd.read_csv(f"{datadir}/Analysis/Demand/agent_utils{auxtag}.csv")
-geog_utils.columns.tolist()
+geog_utils.columns.tolist() #['blkid', 'market_ids', 'hpi_quantile', 'logdist', 'agent_utility', 'distcoef', 'delta', 'abd']
+geog_utils['delta'].value_counts() # 0 for all
+
+
+geog_utils.shape
 geog_utils['distcoef'].value_counts()
 geog_utils.abd.describe()
 abd=geog_utils.abd.values
-hpi=geog_utils.hpi_quantile.values.astype(int)
 distcoefs=geog_utils.distcoef.values
 # ensure that the distance coefficient is negative TODO:
 assert np.all(distcoefs < 0)
@@ -51,10 +54,13 @@ distdf.columns.tolist()
 # keep blkids in data
 distdf = distdf.loc[distdf.blkid.isin(geog_utils.blkid.values), :]
 distdf.groupby('blkid').size().describe()
-
+# nearest for each block
+distnearest = distdf.groupby('blkid').head(1)
+distnearest.logdist.describe()
 # distances should be sorted ascending within each block.
-locs = distdf.groupby('blkid').locid.apply(np.array).values
-dists = distdf.groupby('blkid').logdist.apply(np.array).values
+dist_grp = distdf.groupby('blkid')
+locs = dist_grp.locid.apply(np.array).values
+dists = dist_grp.logdist.apply(np.array).values
 
 
 # 
@@ -76,21 +82,31 @@ from assignment_funcs import initialize_economy, random_fcfs, assignment_stats, 
 #=========================
 #=========================
 
+eps_var = (np.pi**2)/6
 
-economy = initialize_economy(
-    locs=locs,
-    dists=dists,
-    abd=abd,
-    n_individuals=n_individuals
-)
-#55s   
-#=========================
+for epsilon_opt in ["gumbel", "logistic", "zero"]:
+    for scale in [1, 1/eps_var, eps_var]:
+        print(f"epsilon_opt: {epsilon_opt}, scale: {scale}")
+
+        economy = initialize_economy(
+            locs=locs,
+            dists=dists,
+            abd=abd,
+            n_individuals=n_individuals,
+            epsilon_opt=epsilon_opt
+        )
 
 
-#=========================
-# compute ranking
-compute_economy_ranking(economy, distcoefs, poolnum=32)
-#129s 
+        #=========================
+        # compute ranking
+        compute_economy_ranking(economy, distcoefs, poolnum=32, scale=scale)
+
+        v_nlocs = np.array([ii.nlocs_considered for tt in economy.individuals for ii in tt])
+        print("Fraction considering at least one location:", np.mean(v_nlocs!=0)) # should be 0.7364
+        print("Fraction considering all locations measured:", np.mean(v_nlocs==300))
+
+
+
 #=========================
 # shuffle individuals
 ordering = shuffle_individuals(economy.individuals)
@@ -101,7 +117,7 @@ capacity = 10000
 
 # assignment
 random_fcfs(economy, n_locations, capacity, ordering)
-#149 seconds TODO: do better
+#224 seconds TODO: do better
 
 assignment_stats(economy.individuals)
 # max rank assigned is 63. 
@@ -109,26 +125,40 @@ assignment_stats(economy.individuals)
 
 
 #=========================
-# 
+# make demand input
+
+
+
+
 
 
 #=========================
-
-
-
 # debugging
+
+
+
+np.searchsorted(-economy.abe[0], -0.5)
 individuals = economy.individuals
-(tt,ii) = ordering[200000]
+(tt,ii) = ordering[2000] #300 considered
+(tt,ii) = ordering[20000] #0 considered
 print(tt,ii)
 individuals[tt][ii].nlocs_considered
 individuals[tt][ii].location_assigned
 individuals[tt][ii].rank_assigned
-v_nlocs = np.array([ii.nlocs_considered for tt in individuals for ii in tt])
-print("Number of locations considered:")
-print(pd.Series(v_nlocs).describe())
-print("Fraction not vaccinated:", np.mean(v_nlocs==0))
+
+
+
+
+
+v_nlocs = np.array([ii.nlocs_considered for tt in economy.individuals for ii in tt])
+print("Fraction considering at least one location:", np.mean(v_nlocs!=0)) # should be 0.7364
 print("Fraction considering all locations measured:", np.mean(v_nlocs==300))
 
+
+
+economy.abe[0]
+individuals[0][0].epsilon_diff
+individuals[0][1].epsilon_diff
 
 # dists[0]
 # np.mean(distcoefs)

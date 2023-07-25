@@ -24,11 +24,24 @@ for hpi_level in ['tract']:
 
     # read in data
     df_read = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
+
+    df_read.columns.tolist()
+    df_read['shares'].describe()
+
     agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv")
 
     # subset to ZIPs that exist in df_read
     agent_data_read = agent_data_read.loc[agent_data_read['zip'].isin(df_read['zip']), :]
 
+    # test
+    agent_data_read['logdist'].describe()
+    merged = df_read.merge(agent_data_read, on='zip', how='left')
+    merged['inside_pop'] = merged['population_y'] * merged['shares']
+    merged['inside_pop'].describe()
+    np.sum(merged['inside_pop']) / np.sum(merged['population_y'])
+
+
+    # end test
 
     # make HPI quantiles 
     splits = np.linspace(0, 1, nsplits+1)
@@ -107,6 +120,7 @@ for hpi_level in ['tract']:
     iteration_config = pyblp.Iteration(method='lm')
     optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10})
 
+    config = [True, True, False] #TODO: remove, for testing only
 
     for config in [
         [False, False, False],
@@ -215,6 +229,7 @@ for hpi_level in ['tract']:
         deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
         # compute block-level utilities: dot product of agent_vars and pis
         pilabs == agent_vars
+        print(f"pi labels: {pilabs}")
 
         agent_utils = agent_data[['blkid', 'market_ids', 'hpi_quantile', 'logdist']].assign(
             agent_utility = 0,
@@ -222,13 +237,14 @@ for hpi_level in ['tract']:
         )
 
         for (ii,vv) in enumerate(pilabs):
+            print(f"ii={ii}, vv={vv}")
             coef = pis[ii]
             if 'dist' in vv:
                 print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
                 if vv=='logdist':
                     deltas_df = deltas_df.assign(distcoef = agent_data[vv])
                 elif vv.startswith('logdistXhpi_quantile'):
-                    qq = int(vv[-1])
+                    qq = int(vv[-1]) #last character is the quantile number
                     agent_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef
             else:
                 print(f"Adding {vv} to agent-level utility")
