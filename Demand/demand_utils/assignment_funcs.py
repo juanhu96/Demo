@@ -102,10 +102,17 @@ def pref_stats(economy: Economy):
     print("Fraction considering at least one location:", np.mean(v_nlocs!=0)) # should match to demand estimation with nearest location
 
 
-def shuffle_individuals(individuals: List[Individual]):
-    indiv_ordering = [(tt,ii) for tt in range(len(individuals)) for ii in range(len(individuals[tt]))]
-    np.random.shuffle(indiv_ordering)
-    return indiv_ordering
+def add1_at(lst, pos):
+    """
+    Add 1 to the element at position pos in the list lst, appending with zeros if necessary.
+    """
+    if pos < len(lst):
+        lst[pos] += 1
+    else:
+        lst.extend([0] * (pos - len(lst)))
+        lst.append(1)
+    return lst
+
 
 
 def random_fcfs(economy: Economy, 
@@ -124,41 +131,28 @@ def random_fcfs(economy: Economy,
     occupancies = dict.fromkeys(locids, 0)
     full_locations = set() #set for performance reasons
 
-    individuals = economy.individuals
-    locs = economy.locs
-    economy.offers = [np.zeros(1) for tt in range(economy.n_geogs)]
-    economy.assignments = [np.zeros(1) for tt in range(economy.n_geogs)]
+    economy.offers = [[] for tt in range(economy.n_geogs)]
+    economy.assignments = [[] for tt in range(economy.n_geogs)]
     offers = economy.offers
     assignments = economy.assignments
 
-
     # Iterate over individuals in the given random order
-    for (it, (tt,ii)) in enumerate(ordering):
-        for (jj,ll) in enumerate(locs[tt]):
-            individual = individuals[tt][ii]
-            # Check if location is not full and offer the individual to this location
-            if ll not in full_locations:
-                if jj < len(offers[tt]):
-                    offers[tt][jj] += 1
-                else:
-                    offers[tt] = np.append(offers[tt], 1)
-                
-                if jj < individual.nlocs_considered: # the individual is vaccinated here
-                    individual.assigned = True
+    for (tt,ii) in ordering:
+        individual = economy.individuals[tt][ii]
+        loc = economy.locs[tt] #locs[tt] is ordered by preference 
+        for (jj,ll) in enumerate(loc):
+            if ll not in full_locations: # -> the individual is offered here
+                offers[tt] = add1_at(offers[tt], jj)
+                if jj < individual.nlocs_considered: # -> the individual is vaccinated here
+                    assignments[tt] = add1_at(assignments[tt], jj)
                     occupancies[ll] += 1
-                    if jj < len(assignments[tt]):
-                        assignments[tt][jj] += 1
-                    else:
-                        assignments[tt] = np.append(assignments[tt], 1)
-                    
-                    # If the location has reached capacity, add it to the set of full locations
                     if occupancies[ll] == capacity:
                         full_locations.add(ll)
                 break
 
-        if it % 1000000 == 0:
-            print(f"Assigned {it/1000000} million individuals out of {len(ordering)} in {round((time.time() - time1), 2)} seconds")
+    print("Finished assigning individuals in:", time.time() - time1, "seconds")
     return
+
 
 
 def assignment_stats(economy: Economy):
@@ -187,7 +181,7 @@ def assignment_stats(economy: Economy):
 
 
 def assignment_shares(
-    assignments:List[np.array],
+    assignments:List[List[int]],
     df:pd.DataFrame,
     cw_pop:pd.DataFrame,
     clip:Tuple[float, float] = (0.05, 0.95)

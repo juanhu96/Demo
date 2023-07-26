@@ -69,11 +69,14 @@ def estimate_demand(
     """
     Estimate demand using BLP - this is not very flexible and is meant to be run in the fixed point.
     """
+
+
     
-    # make agent data
     agent_formulation = problem0.agent_formulation
     agent_vars = str(agent_formulation).split(' + ')
 
+    df = add_ivcols(df, agent_data, agent_vars=agent_vars)
+    
     # set up and run BLP problem
     problem = pyblp.Problem(
         product_formulations=problem0.product_formulations, 

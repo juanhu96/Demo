@@ -12,12 +12,15 @@ import numpy as np
 import pyblp
 import importlib
 
+
 try:
     from demand_utils import assignment_funcs as af
     from demand_utils import demest_funcs as de
+    from demand_utils import fixed_point as fp
 except:
     from Demand.demand_utils import assignment_funcs as af
     from Demand.demand_utils import demest_funcs as de
+    from Demand.demand_utils import fixed_point as fp
 
 
 np.random.seed(1234)
@@ -29,9 +32,8 @@ datadir = "/export/storage_covidvaccine/Data"
 #=================================================================
 # block level data from demest_blocks.py
 auxtag = "_110_blk_4q_tract" #config_tag and setting_tag
-geog_utils = pd.read_csv(f"{datadir}/Analysis/Demand/agent_utils{auxtag}.csv")
+geog_utils = pd.read_csv(f"{datadir}/Analysis/Demand/agent_utils{auxtag}.csv") #output of demest_blocks.py
 geog_utils.columns.tolist() #['blkid', 'market_ids', 'hpi_quantile', 'logdist', 'agent_utility', 'distcoef', 'delta', 'abd']
-geog_utils['delta'].value_counts() # 0 for all
 
 # TODO: subsetting blocks to test
 testing = True
@@ -47,8 +49,7 @@ else:
 
 abd=geog_utils.abd.values
 distcoefs=geog_utils.distcoef.values
-# ensure that the distance coefficient is negative TODO:
-assert np.all(distcoefs < 0)
+assert np.all(distcoefs < 0) # ensure that the distance coefficient is negative TODO:
 
 cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=["blkid", "market_ids", "population"])
 cw_pop = cw_pop.loc[cw_pop.blkid.isin(blocks_tokeep), :]
@@ -57,14 +58,13 @@ n_individuals = cw_pop.population.values
 print("Number of geogs:", cw_pop.shape[0]) # 377K
 print("Number of individuals:", cw_pop.population.sum()) # 39M
 
-# from block_dist.py. this is in long format
+# from block_dist.py. this is in long format. sorted by blkid, then logdist
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
+distdf.sort_values(['blkid', 'logdist'], inplace=True)
 
 # keep blkids in data
 distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
 distdf.groupby('blkid').size().describe()
-# nearest for each block
-distnearest = distdf.groupby('blkid').head(1)
 
 # distances should be sorted ascending within each block.
 dist_grp = distdf.groupby('blkid')
@@ -75,12 +75,14 @@ dists = dist_grp.logdist.apply(np.array).values
 economy = af.initialize_economy(
     locs=locs,
     dists=dists,
-    n_individuals=n_individuals
+    n_individuals=n_individuals,
+    shuffle=True
 )
 
-ordering = af.shuffle_individuals(economy.individuals)
+locids = np.unique(distdf.locid.values)
+len(locids)
+np.max(locids)
 
-locids = np.unique(distdf.locid.values) #TODO: is this the right index/order?
 capacity = 10000 * test_frac 
 
 #=================================================================
@@ -92,42 +94,51 @@ splits = np.linspace(0, 1, nsplits+1)
 hpi_level = 'tract'
 
 results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results{auxtag}.pkl")
-problem0 = results.problem
-agent_vars=str(problem0.agent_formulation).split(' + ')
-control_vars = str(problem0.product_formulations[0]).split(' + ').remove('1')
+problem_init = results.problem 
+agent_vars=str(problem_init.agent_formulation).split(' + ')
+control_vars = str(problem_init.product_formulations[0]).split(' + ')
+control_vars.remove('1')
 df_colstokeep = control_vars + ['market_ids', 'firm_ids']
 
-df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv", usecols=df_colstokeep)
+df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 df = df.loc[df.market_ids.isin(geog_utils.market_ids), :]
 
 df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=True, add_dist=False)
+df = df.loc[:, df_colstokeep]
 
 # agent_data that has all the locs
 agent_data_full = distdf.merge(geog_utils[['blkid', 'market_ids', 'hpi_quantile']], on='blkid', how='left')
 agent_data_full = de.hpi_dist_terms(agent_data_full, nsplits=nsplits, add_bins=False, add_dummies=True, add_dist=True)
 agent_data_full = agent_data_full.assign(nodes = 0)
 
-
-
+agent_data_full.columns.tolist()
 #=================================================================
 # Stuff for assignment (run in loop)
 #=================================================================
 af.compute_pref(economy, abd, distcoefs)
 
 # assignment
-af.random_fcfs(economy, locids, capacity, ordering)
+af.random_fcfs(economy, locids, capacity)
+a1 = economy.assignments
+
+af.random_fcfs(economy, locids, capacity*0.7)
 #322 seconds TODO: do better
+
+a2 = economy.assignments
+
+fp.assignment_difference(a1, a2)
 
 
 #=================================================================
 # Stuff for demand estimation (run in loop)
 #=================================================================
 agent_data = af.subset_locs(economy.offers, agent_data_full) #subset to locs that were offered, add weights column
-df = af.assignment_shares(economy.assignments, cw_pop) #collapse to market-level shares following assignment
 
-df = de.add_ivcols(df, agent_data, agent_vars=agent_vars)
+df = af.assignment_shares(economy.assignments, df, cw_pop) #collapse to market-level shares following assignment
 
-agent_results = de.estimate_demand(df, agent_data, problem0)
+
+
+agent_results = de.estimate_demand(df, agent_data, problem_init)
 abd = agent_results['abd'].values
 distcoefs = agent_results['distcoef'].values
 
@@ -138,12 +149,15 @@ distcoefs = agent_results['distcoef'].values
 
 importlib.reload(af)
 importlib.reload(de)
+importlib.reload(fp)
 try:
     from demand_utils import assignment_funcs as af
     from demand_utils import demest_funcs as de
+    from demand_utils import fixed_point as fp
 except:
     from Demand.demand_utils import assignment_funcs as af
     from Demand.demand_utils import demest_funcs as de
+    from Demand.demand_utils import fixed_point as fp
 
 #=================================================================
 
