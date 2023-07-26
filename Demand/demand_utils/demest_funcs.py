@@ -1,8 +1,3 @@
-try:
-    from demand_utils.vax_entities import Economy, Individual
-except:
-    from Demand.demand_utils.vax_entities import Economy, Individual
-
 import numpy as np
 import pandas as pd
 import pyblp
@@ -60,11 +55,12 @@ def estimate_demand(
         df:pd.DataFrame, #need: market_ids, controls (incl. hpi_quantile), firm_ids=1, prices=0, shares
         agent_data:pd.DataFrame, #need: distances, market_ids, blkid, nodes
         problem0:pyblp.Problem,
+        pi_init:np.ndarray = None,
         poolnum = 32,
         gtol = 1e-10,
         iteration_config = pyblp.Iteration(method='lm'),
         optimization_config = None
-    ) -> pd.DataFrame:
+    ) -> Tuple[np.ndarray, pd.DataFrame]:
 
     """
     Estimate demand using BLP - this is not very flexible and is meant to be run in the fixed point.
@@ -88,17 +84,19 @@ def estimate_demand(
     if optimization_config is None:
         optimization_config = pyblp.Optimization('trust-constr', {'gtol':gtol})
 
+    if pi_init is None:
+        pi_init = 0.01*np.ones((1,len(agent_vars)))
 
     with pyblp.parallel(poolnum): 
         results = problem.solve(
-            pi=0.01*np.ones((1,len(agent_vars))), 
+            pi=pi_init,
             sigma = 0, 
             iteration = iteration_config, 
             optimization = optimization_config)
 
     df_out = compute_abd(results, df, agent_data)
-
-    return df_out
+    pi_result = results.pi
+    return pi_result, df_out
 
 
 

@@ -16,9 +16,11 @@ class Economy:
         self.ordering = [(tt,ii) for tt in range(len(individuals)) for ii in range(len(individuals[tt]))] # list of tuples of (geog, individual) indices
         if shuffle:
             np.random.shuffle(self.ordering)
-        self.abd = None # all-but-distance (and epsilon), length n_geogs
         self.abe = None # all-but-epsilon,  n_geogs x n_locs. abe[tt][ll] = abd[tt] + distcoef * dists[tt][ll]
         self.offers = None # list of lists of location rankings offered, length n_geogs. offers[tt][ll] = number of individuals in tt offered location ranked ll
-        self.assignments = None # list of lists of locations assigned, length n_geogs. assignments[tt][ll] = number of individuals in tt assigned the location ranked ll
+        self.assignments = [[0] for tt in range(len(individuals))]
+         # list of lists of locations assigned, length n_geogs. assignments[tt][ll] = number of individuals in tt assigned the location ranked ll
         self.n_geogs = len(locs)
+        locids = np.unique(np.concatenate(locs))
+        self.occupancies = dict.fromkeys(np.unique(locids), 0) # number of individuals assigned to each location
 
