@@ -42,13 +42,15 @@ def add_ivcols(
     """
     Make instruments in product_data using the weighted average of agent variables
     """
+    ivcols = []
     for (ii,vv) in enumerate(agent_vars):
         print(f"demand_instruments{ii}: {vv}")
         ivcol = pd.DataFrame({f'demand_instruments{ii}': agent_data.groupby('market_ids')[vv].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights']))})
-        df = df.merge(ivcol, left_on='market_ids', right_index=True)
+        ivcols.append(ivcol)
 
+    iv_df = pd.concat(ivcols, axis=1)
+    df = df.merge(iv_df, left_on='market_ids', right_index=True)
     return df
-
 
 
 def estimate_demand(
@@ -65,8 +67,6 @@ def estimate_demand(
     """
     Estimate demand using BLP - this is not very flexible and is meant to be run in the fixed point.
     """
-
-
     
     agent_formulation = problem0.agent_formulation
     agent_vars = str(agent_formulation).split(' + ')
@@ -94,11 +94,9 @@ def estimate_demand(
             iteration = iteration_config, 
             optimization = optimization_config)
 
-    df_out = compute_abd(results, df, agent_data)
+    agent_data_out = compute_abd(results, df, agent_data)
     pi_result = results.pi
-    return pi_result, df_out
-
-
+    return pi_result, agent_data_out
 
 
 
@@ -111,17 +109,16 @@ def compute_abd(
     """
     Compute agent-level utilities (all-but-distance) from pyblp results.
     Accounts for distance terms in the pi vector in the following form: logdist or logdistXhpi_quantile{qq}
-    Requires agent_data to have columns blkid, market_ids, hpi_quantile, logdist.
-    Output DataFrame has columns blkid, market_ids, hpi_quantile, logdist, agent_utility, delta, abd, distcoef
+    Requires agent_data to have columns blkid, market_ids, hpi_quantile{qq}, logdist.
+    Output DataFrame has everything in agent_data plus agent_utility, distcoef, delta, abd
 
     """
     deltas = results.compute_delta(market_id = df['market_ids'])
     deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
-    # compute block-level utilities: dot product of agent_vars and pis
 
     print(f"pi labels: {results.pi_labels}")
 
-    agent_utils = agent_data[['blkid', 'market_ids', 'hpi_quantile', 'logdist']].assign(
+    agent_utils = agent_data.assign(
         agent_utility = 0,
         distcoef = 0
     )
