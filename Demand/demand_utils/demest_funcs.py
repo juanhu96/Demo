@@ -1,3 +1,5 @@
+# mostly helper functions for estimating demand using pyblp
+
 import numpy as np
 import pandas as pd
 import pyblp
@@ -95,8 +97,8 @@ def estimate_demand(
             optimization = optimization_config)
 
     agent_data_out = compute_abd(results, df, agent_data)
-    pi_result = results.pi
-    return pi_result, agent_data_out
+    
+    return results, agent_data_out
 
 
 

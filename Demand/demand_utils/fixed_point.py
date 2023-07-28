@@ -5,6 +5,7 @@ import pandas as pd
 import pyblp
 pyblp.options.digits = 3
 from typing import List, Optional, Tuple
+import copy
 
 try:
     from demand_utils.vax_entities import Economy
@@ -33,7 +34,8 @@ def run_fp(
         gtol:float = 1e-10, #can change to 1e-8 when testing
         pi_init = None,
         maxiter:int = 100,
-        tol = 1e-3
+        tol = 1e-3,
+        outdir:str = '/export/storage_covidvaccine/Data/Analysis/Demand'
         ) -> Tuple[np.ndarray, np.ndarray, pd.DataFrame, pd.DataFrame]:
     """
     Run fixed point algorithm. 
@@ -43,7 +45,7 @@ def run_fp(
     iter = 0
 
     while adiff > tol and iter < maxiter:
-        a0 = economy.assignments
+        a0 = copy.deepcopy(economy.assignments)
 
         # assignment
         af.random_fcfs(economy, distcoefs, abd, capacity)
@@ -51,26 +53,32 @@ def run_fp(
             print("Warning: not all individuals are offered")
             return abd, distcoefs, df, agent_data
         
-        a1 = economy.assignments
-        adiff = assignment_difference(a0, a1, economy.total_pop)
+        adiff = assignment_difference(a0, economy.assignments, economy.total_pop)
 
         # demand estimation
 
         # subset agent_data to the locations that were actually offered
         offer_weights = np.concatenate(economy.offers)
         offer_inds = np.flatnonzero(offer_weights)
-        agent_data = agent_data_full.loc[offer_inds].copy()
-        agent_data['weights'] = offer_weights[offer_inds]
+        agent_data = agent_data_full.loc[offer_inds]
+        agent_data['weights'] = offer_weights[offer_inds]/agent_data['population']
 
         df = af.assignment_shares(df, economy.assignments, cw_pop)
-    
-        pi_init, agent_results = de.estimate_demand(df, agent_data, problem, pi_init=pi_init, gtol=gtol)
+        pi_iter = pi_init if iter == 0 else pi_result
+        results, agent_results = de.estimate_demand(df, agent_data, problem, pi_init=pi_iter, gtol=gtol)
+        pi_result = results.pi
         abd = agent_results['abd'].values
         distcoefs = agent_results['distcoef'].values
-        print(f"\n************\nDistance coefficients: {pi_init}")
+
+        print(f"\n************\nDistance coefficients: {pi_result}")
         if np.any(distcoefs > 0):
             print(f"\n************\nWarning: distance coefficient is positive for some geographies in iteration {iter}.")     
         print(f"\n************\nIteration {iter}\nAssignment difference: {adiff}")
+
+
+        # save results
+        results.to_pickle(f"{outdir}/pyblp_results_fp.pkl")
+        agent_results.to_csv(f"{outdir}/agent_results_fp.csv")
 
         iter += 1
 

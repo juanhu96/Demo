@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import pyblp
 import importlib
+import copy
 
 
 try:
@@ -37,11 +38,11 @@ geog_utils = pd.read_csv(f"{datadir}/Analysis/Demand/agent_utils{auxtag}.csv") #
 geog_utils.columns.tolist() #['blkid', 'market_ids', 'hpi_quantile', 'logdist', 'agent_utility', 'distcoef', 'delta', 'abd']
 
 
-testing = False   # TODO: subsetting blocks to test
+testing = True   # TODO: subsetting blocks to test
 print(f"Testing: {testing}")
 print(f"Setting tag: {auxtag}")
 if testing:
-    test_frac = 0.05
+    test_frac = 0.1
     test_ngeog = int(round(test_frac*geog_utils.shape[0], 0))
     blocks_tokeep = np.random.choice(geog_utils.blkid, size=test_ngeog, replace=False)
     geog_utils = geog_utils.loc[geog_utils.blkid.isin(blocks_tokeep), :]
@@ -83,7 +84,6 @@ capacity = 10000 * test_frac  #capacity per location. lower when testing
 #=================================================================
 
 nsplits = 4
-splits = np.linspace(0, 1, nsplits+1)
 hpi_level = 'tract'
 
 results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results{auxtag}.pkl")
@@ -102,13 +102,24 @@ df = df.loc[:, df_colstokeep]
 agent_data_full = distdf.merge(geog_utils[['blkid', 'market_ids', 'hpi_quantile']], on='blkid', how='left')
 agent_data_full = de.hpi_dist_terms(agent_data_full, nsplits=nsplits, add_bins=False, add_dummies=True, add_dist=True)
 agent_data_full = agent_data_full.assign(nodes = 0)
-
-
+# merge in market population
+mktpop = cw_pop.groupby('market_ids').agg({'population': 'sum'}).reset_index()
+agent_data_full = agent_data_full.merge(mktpop, on='market_ids', how='left')
 
 
 #=================================================================
 #=================================================================
+# things modified in FP:
+# economy = vaxclass.Economy(locs, dists, geog_pops)
+# df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
+# df = df.loc[df.market_ids.isin(geog_utils.market_ids), :]
+# df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=True, add_dist=False)
+# df = df.loc[:, df_colstokeep]
+#=================================================================
+
+
 # RUN FIXED POINT
+
 fp.run_fp(
     economy=economy,
     abd=abd,
@@ -125,89 +136,165 @@ fp.run_fp(
 
 
 
-#=================================================================
-#=================================================================
-#=================================================================
-#=====REFRESH MODULES=====
-
-importlib.reload(vaxclass)
-importlib.reload(af)
-importlib.reload(de)
-importlib.reload(fp)
-try:
-    from demand_utils import vax_entities as vaxclass
-    from demand_utils import assignment_funcs as af
-    from demand_utils import demest_funcs as de
-    from demand_utils import fixed_point as fp
-except:
-    from Demand.demand_utils import vax_entities as vaxclass
-    from Demand.demand_utils import assignment_funcs as af
-    from Demand.demand_utils import demest_funcs as de
-    from Demand.demand_utils import fixed_point as fp
-
-#=================================================================
-
-# #=================================================================
-# # Stuff for assignment (run in loop)
-# #=================================================================
-
-af.random_fcfs(economy, distcoefs, abd, capacity) #182s
-
 # #=================================================================
 # #=================================================================
-# debugging
+# #=================================================================
+# #=====REFRESH MODULES=====
 
-# assignment
-af.pref_stats(economy)
+# importlib.reload(vaxclass)
+# importlib.reload(af)
+# importlib.reload(de)
+# importlib.reload(fp)
+# try:
+#     from demand_utils import vax_entities as vaxclass
+#     from demand_utils import assignment_funcs as af
+#     from demand_utils import demest_funcs as de
+#     from demand_utils import fixed_point as fp
+# except:
+#     from Demand.demand_utils import vax_entities as vaxclass
+#     from Demand.demand_utils import assignment_funcs as af
+#     from Demand.demand_utils import demest_funcs as de
+#     from Demand.demand_utils import fixed_point as fp
 
-df = af.assignment_shares(df, economy.assignments, cw_pop)
+# # #=================================================================
+# # debugging
+# # economy = vaxclass.Economy(locs, dists, geog_pops)
 
-af.assignment_stats(economy) 
+# capacity = 10000000
+# af.random_fcfs(economy, distcoefs, abd, capacity)
 
+# # subset agent_data to the locations that were actually offered
+# offer_weights = np.concatenate(economy.offers)
+# offer_weights.shape
+# offer_inds = np.flatnonzero(offer_weights)
+# offer_inds.shape
+# agent_data = agent_data_full.loc[offer_inds]
+# agent_data['weights'] = offer_weights[offer_inds]/agent_data['population']
 
+# agent_data.shape
+# agent_data.blkid.nunique()
+# problem0 = problem_init
 
+# agent_formulation = problem0.agent_formulation
+# agent_vars = str(agent_formulation).split(' + ')
 
-#=================================================================
-# debugging
-af.assignment_stats(economy) #
-a1 = economy.assignments
-af.random_fcfs(economy, capacity+15)
-a2 = economy.assignments
-
-tt = 300
-ii = 0
-
-geo1 = [a1[tt]]
-geo2 = [a2[tt]]
-geo1
-geo2
-fp.assignment_difference(geo1, geo2)
-
-fp.assignment_difference(a1, a2)
-
-
-#=================================================================
-# Stuff for demand estimation (run in loop)
-#=================================================================
-agent_data = af.subset_locs(economy.offers, agent_data_full) #subset to locs that were offered, add weights column
-
-df = af.assignment_shares(df, economy.assignments, cw_pop)#collapse to market-level shares following assignment
+# df = de.add_ivcols(df, agent_data, agent_vars=agent_vars)
+# problem = pyblp.Problem(
+#     product_formulations=problem0.product_formulations, 
+#     product_data=df, 
+#     agent_formulation=agent_formulation, 
+#     agent_data=agent_data)
 
 
-pi_result, agent_results = de.estimate_demand(df, agent_data, problem_init)
-abd = agent_results['abd'].values
-distcoefs = agent_results['distcoef'].values
+# gtol = 1e-8
+# optimization_config = pyblp.Optimization('trust-constr', {'gtol':gtol})
+
+
+# pi_init = results.pi
+# poolnum = 32
+# iteration_config = pyblp.Iteration(method='lm')
+# with pyblp.parallel(poolnum): 
+#     results = problem.solve(
+#         pi=pi_init,
+#         sigma = 0, 
+#         iteration = iteration_config, 
+#         optimization = optimization_config)
 
 
 
-#=================================================================
-# debugging
-#=================================================================
+# agent_data.blkid.nunique()
 
-# gumbel_variance = np.pi**2 / 6
-# for epsilon_opt in ["zero", "logistic"]:
-#     for scale in [1, gumbel_variance, 1/gumbel_variance]:
-#         print(f"\n**********\nepsilon_opt: {epsilon_opt}, scale: {scale}")
-# # ...
-#         af.pref_stats(economy) #TODO: does it match with empirical shares?
+
+# fp.run_fp(
+#     economy=economy,
+#     abd=abd,
+#     distcoefs=distcoefs,
+#     capacity=10000000,
+#     agent_data_full=agent_data_full,
+#     cw_pop=cw_pop,
+#     df=df,
+#     problem=problem_init,
+#     gtol=1e-8,
+#     pi_init=results.pi
+# )
+
+
+# # # #=================================================================
+# # # # Stuff for assignment (run in loop)
+# # # #=================================================================
+# # a0 = economy.assignments
+
+# # af.random_fcfs(economy, distcoefs, abd, capacity) 
+# # a1 = economy.assignments
+# # adiff = fp.assignment_difference(a0, a1, economy.total_pop)
+# # a0[100]
+# # a1[100]
+# # adiff
+
+# # offer_weights = np.concatenate(economy.offers)
+# # offer_inds = np.flatnonzero(offer_weights)
+# # agent_data = agent_data_full.loc[offer_inds].copy()
+# # agent_data['weights'] = offer_weights[offer_inds]
+
+# # df = af.assignment_shares(df, economy.assignments, cw_pop)
+
+# # pi_init, agent_results = de.estimate_demand(df, agent_data, problem_init, pi_init=results.pi)
+
+# # # #=================================================================
+# # # #=================================================================
+# # # debugging
+
+# # # assignment
+# # af.pref_stats(economy)
+
+# # df = af.assignment_shares(df, economy.assignments, cw_pop)
+
+# # af.assignment_stats(economy) 
+
+
+
+
+# # #=================================================================
+# # # debugging
+# # af.assignment_stats(economy) #
+# # a1 = economy.assignments
+# # af.random_fcfs(economy, capacity+15)
+# # a2 = economy.assignments
+
+# # tt = 300
+# # ii = 0
+
+# # geo1 = [a1[tt]]
+# # geo2 = [a2[tt]]
+# # geo1
+# # geo2
+# # fp.assignment_difference(geo1, geo2)
+
+# # fp.assignment_difference(a1, a2)
+
+
+# # #=================================================================
+# # # Stuff for demand estimation (run in loop)
+# # #=================================================================
+# # agent_data = af.subset_locs(economy.offers, agent_data_full) #subset to locs that were offered, add weights column
+
+# # df = af.assignment_shares(df, economy.assignments, cw_pop)#collapse to market-level shares following assignment
+
+
+# # pi_result, agent_results = de.estimate_demand(df, agent_data, problem_init)
+# # abd = agent_results['abd'].values
+# # distcoefs = agent_results['distcoef'].values
+
+
+
+# # #=================================================================
+# # # debugging
+# # #=================================================================
+
+# # # gumbel_variance = np.pi**2 / 6
+# # # for epsilon_opt in ["zero", "logistic"]:
+# # #     for scale in [1, gumbel_variance, 1/gumbel_variance]:
+# # #         print(f"\n**********\nepsilon_opt: {epsilon_opt}, scale: {scale}")
+# # # # ...
+# # #         af.pref_stats(economy) # match with empirical shares?
 

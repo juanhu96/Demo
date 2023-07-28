@@ -1,3 +1,6 @@
+# assignment_funcs.py
+# functions to assign individuals to locations
+
 try:
     from demand_utils.vax_entities import Economy
 except:
@@ -36,6 +39,9 @@ def random_fcfs(economy: Economy,
     # reset occupancies 
     economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
     full_locations = set()
+    # reset offers and assignments
+    economy.offers = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
+    economy.assignments = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
 
     # Iterate over individuals in the shuffled ordering
     for (tt,ii) in economy.ordering:
@@ -51,6 +57,46 @@ def random_fcfs(economy: Economy,
 
     print("Assigned individuals in:", round(time.time() - time2, 2), "seconds")
     return
+
+
+
+def seq_lotteries(economy: Economy,
+                  distcoefs: np.ndarray,
+                  abd: np.ndarray,
+                  capacity: int
+                  ): #TODO: test this
+    """
+    In each round rr, assign individuals to their ranked rr-th location, breaking ties randomly if capacity is reached.
+    """
+    time1 = time.time()
+    # compute all-but-epsilon for each location for each geography
+    economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)]
+    time2 = time.time()
+    print("Computed abepsilon in:", round(time2- time1, 2), "seconds.\nAssigning individuals...")
+
+    # reset occupancies
+    economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
+    full_locations = set()
+
+    indivs_rem = economy.ordering.copy()
+    rank = 0
+    while indivs_rem:
+        np.random.shuffle(indivs_rem)
+        for (tt,ii) in indivs_rem:
+            ll = economy.locs[tt][rank]
+            if ll not in full_locations:  # -> the individual is offered here
+                economy.offers[tt][rank] += 1
+                indivs_rem.remove((tt,ii))
+                if economy.abepsilon[tt][rank] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
+                    economy.assignments[tt][rank] += 1
+                    economy.occupancies[ll] += 1
+                    if economy.occupancies[ll] == capacity:
+                        full_locations.add(ll)
+        rank += 1
+
+    print("Assigned individuals in:", round(time.time() - time2, 2), "seconds")
+    return
+
 
 
 def pref_stats(economy: Economy):
@@ -104,14 +150,14 @@ def assignment_shares(
     assignments:List[List[int]],
     cw_pop:pd.DataFrame, #must be sorted by blkid
     clip:Tuple[float, float] = (0.05, 0.95) #clip shares to be between 0.05 and 0.95
-    ) -> pd.DataFrame:
+    ):
     """
-    Compute shares of each ZIP code from the block-level assignment
+    Compute shares of each market from the geog-level assignment
     Input: 
         assignments: economy.assignment after random_fcfs
         df: DataFrame at the market level, need market_ids
         cw_pop: DataFrame at the geog level with columns market_ids, blkid, population
-    Output: DataFrame at the market-level with 'shares' column replaced
+    Replace 'shares' column of df
     """
     # check that cw_pop is sorted by blkid
     # assert cw_pop['blkid'].is_monotonic_increasing
@@ -125,4 +171,6 @@ def assignment_shares(
 
     # replace shares in df
     df.drop(columns=['shares'], inplace=True)
-    return df.merge(df_g[['market_ids', 'shares']], on='market_ids', how='left')
+    df = df.merge(df_g[['market_ids', 'shares']], on='market_ids', how='left')
+
+    return df
