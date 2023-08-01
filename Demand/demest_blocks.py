@@ -98,7 +98,7 @@ for hpi_level in ['tract']:
     iteration_config = pyblp.Iteration(method='lm')
     optimization_config = pyblp.Optimization('trust-constr', {'gtol':1e-10})
 
-    config = [True, True, False] #TODO: remove, for testing only
+    config = [True, True, True] #TODO: remove, for testing only
 
     for config in [
         [False, False, False],
@@ -153,6 +153,7 @@ for hpi_level in ['tract']:
 
         # Solve problem
         problem = pyblp.Problem(product_formulations=(formulation1, formulation2), product_data=df, agent_formulation=agent_formulation, agent_data=agent_data)
+
         with pyblp.parallel(poolnum): 
             results = problem.solve(pi=pi_init, sigma = 0, iteration = iteration_config, optimization = optimization_config)
         

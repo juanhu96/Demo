@@ -89,12 +89,19 @@ def estimate_demand(
     if pi_init is None:
         pi_init = 0.01*np.ones((1,len(agent_vars)))
 
-    with pyblp.parallel(poolnum): 
+    if poolnum==1:
         results = problem.solve(
             pi=pi_init,
             sigma = 0, 
             iteration = iteration_config, 
             optimization = optimization_config)
+    else:
+        with pyblp.parallel(poolnum): 
+            results = problem.solve(
+                pi=pi_init,
+                sigma = 0, 
+                iteration = iteration_config, 
+                optimization = optimization_config)
 
     agent_data_out = compute_abd(results, df, agent_data)
     
@@ -141,8 +148,8 @@ def compute_abd(
 
     agent_utils = agent_utils.merge(deltas_df, on='market_ids')
     agent_utils = agent_utils.assign(abd = agent_utils['agent_utility'] + agent_utils['delta'])
+    agent_utils.sort_values(by=['blkid', 'market_ids'], inplace=True)
     return agent_utils
-        
 
 
 def start_table(tablevars:List[str]) -> Tuple[List[str], List[str], List[str]]:

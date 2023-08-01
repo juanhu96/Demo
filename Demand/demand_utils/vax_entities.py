@@ -8,6 +8,7 @@ class Economy:
             locs, # list of lists of location IDs, corresponding to dists
             dists, # list of lists of distances, sorted ascending
             geog_pops, # list of lengths of individuals in each geography
+            max_rank = 100, # max rank to offer
             shuffle=True, # whether to shuffle the ordering of individuals
             epsilon_opt = "logistic", # "logistic", "gumbel", "zero"
             epsilon_scale = 1, # scale factor for epsilon
@@ -16,8 +17,8 @@ class Economy:
 
         np.random.seed(seed)
 
-        self.locs = locs # list of location IDs, sorted by distance within each geography
-        self.dists = dists # list of distances, sorted by distance within each geography
+        self.locs = [ll[:max_rank] for ll in locs] # list of location IDs, sorted by distance within each geography
+        self.dists = [dd[:max_rank] for dd in dists] # list of distances, sorted by distance within each geography
         n_geogs = len(geog_pops)
         self.n_geogs = n_geogs
         self.total_pop = np.sum(geog_pops)
@@ -26,13 +27,13 @@ class Economy:
         if shuffle:
             np.random.shuffle(self.ordering)
 
-        self.abepsilon = [np.zeros(len(locs[tt])) for tt in range(n_geogs)] 
+        self.abepsilon = [np.zeros(max_rank) for tt in range(n_geogs)] 
         # all-but-epsilon,  n_geogs x n_locs. abepsilon[tt][ll] = abd[tt] + distcoef * dists[tt][ll]. 
 
-        self.offers = [np.zeros(len(locs[tt])) for tt in range(n_geogs)]
+        self.offers = [np.zeros(max_rank) for tt in range(n_geogs)]
         # list of lists of location rankings offered, length n_geogs. offers[tt][ll] = number of individuals in tt offered location ranked ll
 
-        self.assignments = [np.zeros(len(locs[tt])) for tt in range(n_geogs)]
+        self.assignments = [np.zeros(max_rank) for tt in range(n_geogs)]
         # list of lists of locations assigned, length n_geogs. assignments[tt][ll] = number of individuals in tt assigned the location ranked ll
         
         locids = np.unique(np.concatenate(locs))

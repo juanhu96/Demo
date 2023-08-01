@@ -46,7 +46,8 @@ def random_fcfs(economy: Economy,
     # Iterate over individuals in the shuffled ordering
     for (tt,ii) in economy.ordering:
         for (jj,ll) in enumerate(economy.locs[tt]): #locs[tt] is ordered by distance from geography tt, in ascending order
-            if ll not in full_locations: # -> the individual is offered here
+            if ll not in full_locations or jj==len(economy.locs[tt])-1:
+                # -> the individual is offered here
                 economy.offers[tt][jj] += 1
                 if economy.abepsilon[tt][jj] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
                     economy.assignments[tt][jj] += 1
@@ -115,15 +116,16 @@ def pref_stats(economy: Economy):
     return
 
 
-def assignment_stats(economy: Economy):
+def assignment_stats(economy: Economy, max_rank: int = 10):
     total_pop = np.sum([len(economy.epsilon_diff[tt]) for tt in range(economy.n_geogs)])
     
     # offers
     offers = economy.offers
     print("Offers:")
-    for ii in range(5):
+    for ii in range(max_rank):
         offers_ii = [offers[tt][ii] for tt in range(economy.n_geogs) if ii < len(offers[tt])]
-        print(f"% Rank {ii} offers: {np.sum(offers_ii)/total_pop*100}")
+        sum_offers_ii = np.sum(offers_ii)
+        print(f"% Rank {ii} offers: {sum_offers_ii/total_pop*100}")
 
     frac_offered_any = np.sum([np.sum(offers[tt]) for tt in range(economy.n_geogs)]) / total_pop
     print(f"% Offered: {frac_offered_any * 100}")
@@ -136,7 +138,7 @@ def assignment_stats(economy: Economy):
     # assignments
     assignments = economy.assignments
     print("Assignments:")
-    for ii in range(5):
+    for ii in range(max_rank):
         assignments_ii = [assignments[tt][ii] for tt in range(economy.n_geogs) if ii < len(assignments[tt])]
         print(f"% Rank {ii} assignments: {np.sum(assignments_ii)/total_pop*100}")
     print(f"% Assigned: {np.sum([np.sum(assignments[tt]) for tt in range(economy.n_geogs)]) / total_pop * 100}")
