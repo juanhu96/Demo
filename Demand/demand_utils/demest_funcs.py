@@ -63,12 +63,14 @@ def estimate_demand(
         poolnum = 32,
         gtol = 1e-10,
         iteration_config = pyblp.Iteration(method='lm'),
-        optimization_config = None
+        optimization_config = None,
+        verbose:bool = True
     ) -> Tuple[np.ndarray, pd.DataFrame]:
 
     """
     Estimate demand using BLP - this is not very flexible and is meant to be run in the fixed point.
     """
+    pyblp.options.verbose = verbose
     
     agent_formulation = problem0.agent_formulation
     agent_vars = str(agent_formulation).split(' + ')
@@ -112,7 +114,8 @@ def estimate_demand(
 def compute_abd(
         results:pyblp.ProblemResults,
         df:pd.DataFrame,
-        agent_data:pd.DataFrame
+        agent_data:pd.DataFrame,
+        verbose:bool = False
 ) -> pd.DataFrame:
     
     """
@@ -133,17 +136,20 @@ def compute_abd(
     )
 
     for (ii,vv) in enumerate(results.pi_labels):
-        print(f"ii={ii}, vv={vv}")
+        if verbose:
+            print(f"ii={ii}, vv={vv}")
         coef = results.pi.flatten()[ii]
         if 'dist' in vv:
-            print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
+            if verbose:
+                print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
             if vv=='logdist':
                 deltas_df = deltas_df.assign(distcoef = agent_data[vv])
             elif vv.startswith('logdistXhpi_quantile'):
                 qq = int(vv[-1]) #last character is the quantile number
                 agent_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef
         else:
-            print(f"Adding {vv} to agent-level utility")
+            if verbose:
+                print(f"Adding {vv} to agent-level utility")
             agent_utils.loc[:, 'agent_utility'] += agent_data[vv] * coef
 
     agent_utils = agent_utils.merge(deltas_df, on='market_ids')
