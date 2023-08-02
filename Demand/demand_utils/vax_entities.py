@@ -30,10 +30,11 @@ class Economy:
         self.abepsilon = [np.zeros(max_rank) for tt in range(n_geogs)] 
         # all-but-epsilon,  n_geogs x n_locs. abepsilon[tt][ll] = abd[tt] + distcoef * dists[tt][ll]. 
 
-        self.offers = [np.zeros(max_rank, dtype=int) for tt in range(n_geogs)]
+        self.offers = [np.concatenate([[geog_pops[tt]], np.zeros(len(locs[tt])-1, dtype=int)]) for tt in range(n_geogs)]
         # list of lists of location rankings offered, length n_geogs. offers[tt][ll] = number of individuals in tt offered location ranked ll
+        # initialize with all individuals offered their nearest location for the first demand estimation
 
-        self.assignments = [np.zeros(max_rank, dtype=int) for tt in range(n_geogs)]
+        self.assignments = [np.zeros(len(locs[tt]), dtype=int) for tt in range(n_geogs)]
         # list of lists of locations assigned, length n_geogs. assignments[tt][ll] = number of individuals in tt assigned the location ranked ll
         
         locids = np.unique(np.concatenate(locs))

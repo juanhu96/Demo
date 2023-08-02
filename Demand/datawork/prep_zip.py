@@ -168,7 +168,7 @@ panel.drop(columns=["_merge"], inplace=True)
 
 
 # subset to March 2022
-df = panel.loc[panel.date == "2022-03-01", :]
+df = panel.loc[panel.date == "2022-03-01", :].copy()
 
 
 ##############
@@ -194,6 +194,23 @@ cols_to_keep = ['zip', 'vaxfull', 'hpi', 'shares', 'race_black', 'race_asian',
 df = df[cols_to_keep]
 
 
+agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv")
+agent_data_read = agent_data_read.loc[agent_data_read['zip'].isin(df['zip']), :]
+df = df.loc[df['zip'].isin(agent_data_read['zip']), :]
+
+# log of some variables
+logvars = ['medianhhincome', 'medianhomevalue', 'popdensity']
+for vv in logvars:
+    print(f"\n{vv}:")
+    print("Observations <=0: ", np.sum(df[vv] <= 0))
+    # Winsorizing to lowest non-zero value
+    win_cut = np.min(df.loc[df[vv] > 0, vv])
+    print("Winsorizing to: ", win_cut)
+    df[vv] = df[vv].clip(lower=win_cut)
+    df[f"log{vv}"] = np.log(df[vv])
+
+
+# for pyblp
 df['market_ids'] = df['zip']
 df['firm_ids'] = 1
 df['prices'] = 0
@@ -206,46 +223,46 @@ df['prices'] = 0
 df.to_csv(f'{datadir}/Analysis/Demand/demest_data.csv', index=False)
 
 
-# inspect 
-pd.options.display.max_columns = None
-pd.options.display.max_rows = 30
-print(df.describe())
-print(df.isna().sum())
+# # inspect 
+# pd.options.display.max_columns = None
+# pd.options.display.max_rows = 30
+# print(df.describe())
+# print(df.isna().sum())
 
-###############
-# read
-df = pd.read_csv(f'{datadir}/Analysis/Demand/demest_data.csv', dtype={'zip': str})
-
-
-# old datasets to compare to
-
-mar01 = pd.read_csv(f"{datadir}/Raw/notreallyraw/MAR01.csv").reset_index(drop=True)
-old = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data_deprecated.csv", dtype={'zip':str}).reset_index(drop=True)
-
-mar01.columns
-mar01.Pop5up
-old.columns
+# ###############
+# # read
+# df = pd.read_csv(f'{datadir}/Analysis/Demand/demest_data.csv', dtype={'zip': str})
 
 
-set(df.columns) - set(old.columns)
-set(old.columns) - set(df.columns)
+# # old datasets to compare to
 
-df.loc[~df.zip.isin(old.zip), :]
+# mar01 = pd.read_csv(f"{datadir}/Raw/notreallyraw/MAR01.csv").reset_index(drop=True)
+# old = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data_deprecated.csv", dtype={'zip':str}).reset_index(drop=True)
 
-m = df.merge(old, on="zip", how="outer", indicator=True)
-# sort columns
-m = m.reindex(sorted(m.columns), axis=1)
-m
-
-vaxdiff = m.vaxfull_x - m.vaxfull_y
-vaxdiff.describe(percentiles=[0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, .95, .99])
+# mar01.columns
+# mar01.Pop5up
+# old.columns
 
 
-# TODO: vaxfull, sample
+# set(df.columns) - set(old.columns)
+# set(old.columns) - set(df.columns)
 
-# oldpanel = pd.read_csv(f"{datadir}/Raw/notreallyraw/CaliforniaVaccinationZip.csv").reset_index(drop=True)
+# df.loc[~df.zip.isin(old.zip), :]
+
+# m = df.merge(old, on="zip", how="outer", indicator=True)
+# # sort columns
+# m = m.reindex(sorted(m.columns), axis=1)
+# m
+
+# vaxdiff = m.vaxfull_x - m.vaxfull_y
+# vaxdiff.describe(percentiles=[0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, .95, .99])
 
 
-# for cc in set(df.columns) & set(demest_data.columns):
-#     print(round(np.mean(df[cc]), 3), round(np.mean(demest_data[cc]), 3), cc)
+# # TODO: vaxfull, sample
+
+# # oldpanel = pd.read_csv(f"{datadir}/Raw/notreallyraw/CaliforniaVaccinationZip.csv").reset_index(drop=True)
+
+
+# # for cc in set(df.columns) & set(demest_data.columns):
+# #     print(round(np.mean(df[cc]), 3), round(np.mean(demest_data[cc]), 3), cc)
 

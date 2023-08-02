@@ -31,47 +31,39 @@ except:
 np.random.seed(1234)
 
 datadir = "/export/storage_covidvaccine/Data"
-auxtag = "_111_blk_4q_tract" #config_tag and setting_tag
 
 
 #=================================================================
 # SETTINGS
 #=================================================================
 testing = False # TODO: subsetting blocks to test
-capacity = 10000
+capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
 max_rank = 10 #maximum rank to offer
 
 
 #=================================================================
-# Stuff for assignment (run once)
+# Data for assignment: distances, block-market crosswalk, population
 #=================================================================
-# block level data from demest_blocks.py
-geog_utils = pd.read_csv(f"{datadir}/Analysis/Demand/agent_utils{auxtag}.csv") #output of demest_blocks.py
-geog_utils.columns.tolist() #['blkid', 'market_ids', 'hpi_quantile', 'logdist', 'agent_utility', 'distcoef', 'delta', 'abd']
-
 
 print(f"Testing: {testing}")
-print(f"Setting tag: {auxtag}")
-if testing:
-    test_frac = 0.05
-    test_ngeog = int(round(test_frac*geog_utils.shape[0], 0))
-    blocks_tokeep = np.random.choice(geog_utils.blkid, size=test_ngeog, replace=False)
-    geog_utils = geog_utils.loc[geog_utils.blkid.isin(blocks_tokeep), :]
-    capacity = capacity * test_frac  #capacity per location. lower when testing
-
-else:
-    test_frac = 1
-    blocks_tokeep = geog_utils.blkid.values
-
-geog_utils.sort_values(by=['blkid'], inplace=True)
-abd=geog_utils.abd.values
-distcoefs=geog_utils.distcoef.values
+print(f"Capacity: {capacity}")
 
 cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=["blkid", "market_ids", "population"])
+blocks_unique = np.unique(cw_pop.blkid.values)
+markets_unique = np.unique(cw_pop.market_ids.values)
+if testing:
+    test_frac = 0.05
+    ngeog = len(blocks_unique)
+    test_ngeog = int(round(test_frac*ngeog, 0))
+    blocks_tokeep = np.random.choice(blocks_unique, size=test_ngeog, replace=False)
+    capacity = capacity * test_frac  #capacity per location. lower when testing
+else:
+    test_frac = 1
+    blocks_tokeep = blocks_unique
+
+
 cw_pop = cw_pop.loc[cw_pop.blkid.isin(blocks_tokeep), :]
 cw_pop.sort_values(by=['blkid'], inplace=True)
-
-geog_pops = cw_pop.population.values
 
 print("Number of geogs:", cw_pop.shape[0]) # 377K
 print("Number of individuals:", cw_pop.population.sum()) # 39M
@@ -79,43 +71,80 @@ print("Number of individuals:", cw_pop.population.sum()) # 39M
 # from block_dist.py. this is in long format. sorted by blkid, then logdist
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
 # assert (distdf['blkid'].is_monotonic_increasing and distdf.groupby('blkid')['logdist'].apply(lambda x: x.is_monotonic_increasing).all())
-
 # keep blkids in data
 distdf = distdf.groupby('blkid').head(max_rank).reset_index(drop=True)
 distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
-dist_grp = distdf.groupby('blkid')
-locs = dist_grp.locid.apply(np.array).values
-dists = dist_grp.logdist.apply(np.array).values
-
-print("Start creating economy at time:", round(time.time()-time_entered, 2), "seconds")
-# create economy
-economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank)
-
-print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
-
 
 
 #=================================================================
-# Stuff for demand estimation (run once)
+# Data for demand estimation: market-level data, agent-level data
 #=================================================================
 
 nsplits = 4
 hpi_level = 'tract'
+ref_lastq = False
 
-results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results{auxtag}.pkl")
-problem_init = results.problem
-agent_vars=str(problem_init.agent_formulation).split(' + ')
-control_vars = str(problem_init.product_formulations[0]).split(' + ')
-control_vars.remove('1')
-df_colstokeep = control_vars + ['market_ids', 'firm_ids', 'shares']
 
+controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
+    'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
+    'collegegrad', 'unemployment', 'poverty', 'logmedianhhincome', 
+    'logmedianhomevalue', 'logpopdensity']
+df_colstokeep = controls + ['market_ids', 'firm_ids', 'shares', 'prices'] + ['hpi']
+
+formulation1_str = "1 + prices"
+for qq in range(1, nsplits):
+    formulation1_str += f' + hpi_quantile{qq}'
+for vv in controls:
+    formulation1_str += " + " + vv
+
+agent_formulation_str = '0 +'
+for qq in range(1, nsplits):
+    agent_formulation_str += f' logdistXhpi_quantile{qq} +'
+if ref_lastq:
+    agent_formulation_str += ' logdist'
+else:
+    agent_formulation_str += f' logdistXhpi_quantile{nsplits}'
+
+formulation1 = pyblp.Formulation(formulation1_str)
+formulation2 = pyblp.Formulation('1')
+product_formulations = (formulation1, formulation2)
+agent_formulation = pyblp.Formulation(agent_formulation_str)
+
+
+# read in product_data
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
-df = df.loc[df.market_ids.isin(geog_utils.market_ids), :]
-df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=True, add_dist=False)
+df = df.loc[df.market_ids.isin(markets_unique), :]
 df = df.loc[:, df_colstokeep]
+df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=True, add_dist=False)
 
-# agent_data that has all the locs
-agent_data_full = distdf.merge(geog_utils[['blkid', 'market_ids', 'hpi_quantile']], on='blkid', how='left')
+
+# read in agent_data
+agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=['blkid', 'market_ids'])
+
+# keep markets in both
+mkts_in_both = set(df['market_ids'].tolist()).intersection(set(agent_data_read['market_ids'].tolist()))
+print("Number of markets:", len(mkts_in_both))
+agent_data_read = agent_data_read.loc[agent_data_read.market_ids.isin(mkts_in_both), :]
+df = df.loc[df.market_ids.isin(mkts_in_both), :]
+
+# subset distances and crosswalk also
+distdf = distdf.loc[distdf.blkid.isin(agent_data_read.blkid.unique()), :]
+cw_pop = cw_pop.loc[cw_pop.market_ids.isin(mkts_in_both), :]
+
+
+# add HPI quantile to agent data
+if hpi_level == 'zip':
+    agent_data_read = agent_data_read.merge(df[['market_ids', 'hpi_quantile']], on='market_ids', how='left')
+elif hpi_level == 'tract':
+    tract_hpi = pd.read_csv(f"{datadir}/Intermediate/tract_hpi_nnimpute.csv") #from prep_tracts.py
+    blk_tract_cw = pd.read_csv(f"{datadir}/Intermediate/blk_tract.csv", usecols=['tract', 'blkid']) #from block_cw.py
+    splits = np.linspace(0, 1, nsplits+1)
+    agent_data_read = agent_data_read.merge(blk_tract_cw, on='blkid', how='left')
+    tract_hpi['hpi_quantile'] = pd.cut(tract_hpi['hpi'], splits, labels=False, include_lowest=True) + 1
+    agent_data_read = agent_data_read.merge(tract_hpi[['tract', 'hpi_quantile']], on='tract', how='left')
+
+# merge distances
+agent_data_full = distdf.merge(agent_data_read[['blkid', 'market_ids', 'hpi_quantile']], on='blkid', how='left')
 agent_data_full = de.hpi_dist_terms(agent_data_full, nsplits=nsplits, add_bins=False, add_dummies=True, add_dist=True)
 agent_data_full['nodes'] = 0
 # merge in market population
@@ -124,14 +153,23 @@ agent_data_full = agent_data_full.merge(mktpop, on='market_ids', how='left')
 
 print("agent_data_full.shape:", agent_data_full.shape)
 
+
+# Create Economy object
+print("Start creating economy at time:", round(time.time()-time_entered, 2), "seconds")
+# create economy
+dist_grp = distdf.groupby('blkid')
+locs = dist_grp.locid.apply(np.array).values
+dists = dist_grp.logdist.apply(np.array).values
+geog_pops = cw_pop.population.values
+economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank)
+
+print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
+
 #=================================================================
 #=================================================================
 # things modified in FP:
 # economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank)
-# df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
-# df = df.loc[df.market_ids.isin(geog_utils.market_ids), :]
-# df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=True, add_dist=False)
-# df = df.loc[:, df_colstokeep]
+
 
 #=================================================================
 #=================================================================
@@ -143,16 +181,12 @@ sys.stdout.flush()
 
 fp.run_fp(
     economy=economy,
-    abd=abd,
-    distcoefs=distcoefs,
     capacity=capacity,
     agent_data_full=agent_data_full,
     cw_pop=cw_pop,
     df=df,
-    problem=problem_init,
-    poolnum=16,
-    gtol=1e-8,
-    pi_init=results.pi
+    product_formulations=product_formulations,
+    agent_formulation=agent_formulation
 )
 
 
@@ -160,23 +194,23 @@ fp.run_fp(
 # #=================================================================
 # #=================================================================
 # #=====REFRESH MODULES=====
-# import importlib
-# import copy
+import importlib
+import copy
 
-# importlib.reload(vaxclass)
-# importlib.reload(af)
-# importlib.reload(de)
-# importlib.reload(fp)
-# try:
-#     from demand_utils import vax_entities as vaxclass
-#     from demand_utils import assignment_funcs as af
-#     from demand_utils import demest_funcs as de
-#     from demand_utils import fixed_point as fp
-# except:
-#     from Demand.demand_utils import vax_entities as vaxclass
-#     from Demand.demand_utils import assignment_funcs as af
-#     from Demand.demand_utils import demest_funcs as de
-#     from Demand.demand_utils import fixed_point as fp
+importlib.reload(vaxclass)
+importlib.reload(af)
+importlib.reload(de)
+importlib.reload(fp)
+try:
+    from demand_utils import vax_entities as vaxclass
+    from demand_utils import assignment_funcs as af
+    from demand_utils import demest_funcs as de
+    from demand_utils import fixed_point as fp
+except:
+    from Demand.demand_utils import vax_entities as vaxclass
+    from Demand.demand_utils import assignment_funcs as af
+    from Demand.demand_utils import demest_funcs as de
+    from Demand.demand_utils import fixed_point as fp
 
 # # #=================================================================
 # # # debugging

@@ -20,6 +20,8 @@ except:
     from Demand.demand_utils import assignment_funcs as af
     from Demand.demand_utils import demest_funcs as de
 
+
+
 def assignment_difference(original_assm: List[List[int]], economy:Economy, cw_pop:pd.DataFrame, tol:float) -> float:
     # Compute the fraction of individuals whose assignment changed
     total_diff = np.sum(np.abs(np.concatenate(original_assm) - np.concatenate(economy.assignments)))
@@ -52,7 +54,7 @@ def wasserstein_distance(p0: np.ndarray, p1: np.ndarray, dists: np.ndarray) -> f
     return wasserstein_dist
 
 
-def wdist_checker(dists_mm_sorted, sorted_indices, a0, a1, wdists, tol):
+def wdist_checker(a0, a1, dists_mm_sorted, sorted_indices, wdists, tol):
     # break it up by market
     for (mm, mm_inds) in enumerate(sorted_indices):
         d_mm = dists_mm_sorted[mm]
@@ -70,23 +72,36 @@ def wdist_checker(dists_mm_sorted, sorted_indices, a0, a1, wdists, tol):
     print(f"Index of max wasserstein distance: {np.argmax(wdists)}")
     return np.sum(wdists > tol) == 0
 
-    
+
+
+def wdist_init(cw_pop:pd.DataFrame, dists:List[np.ndarray]):
+    # one-time stuff to speed up wdist_checker
+    cw_pop = cw_pop.reset_index(drop=True)
+    cw_pop['geog_ind'] = cw_pop.index
+    mktinds = np.unique(cw_pop['market_ids'])
+    mm_where = [np.where(cw_pop['market_ids'].values == mm)[0] for mm in mktinds]
+    dists_mm = [np.concatenate([dists[tt] for tt in mm]) for mm in mm_where]
+    sorted_indices = [np.argsort(dd) for dd in dists_mm]
+    dists_mm_sorted = [dists_mm[i][sorted_indices[i]] for i in range(len(dists_mm))]
+    wdists = np.zeros(len(mktinds)) #preallocate
+
+    return dists_mm_sorted, sorted_indices, wdists
+
+
 
 def run_fp(
         economy:Economy,
-        abd:np.ndarray,
-        distcoefs:np.ndarray,
         capacity:float,
         agent_data_full:pd.DataFrame, #geog-loc level. need: blkid, locid, logdist, market_ids, nodes, hpi_quantile{qq}, logdistXhpi_quantile{qq}. need all the locs for each geog.
         cw_pop:pd.DataFrame, #market-geog level. need: market_ids, blkid, population. need to be sorted by blkid
         df:pd.DataFrame, #market-level data for product_data
-        problem:pyblp.Problem, 
+        product_formulations,
+        agent_formulation,
         gtol:float = 1e-10, #can change to 1e-8 when testing
         poolnum:int = 1,
         micro_computation_chunks:Optional[int] = 1,
-        pi_init = None,
         maxiter:int = 100,
-        tol = 1e-3,
+        tol = 0.002,
         outdir:str = '/export/storage_covidvaccine/Data/Analysis/Demand'
         ) -> Tuple[np.ndarray, np.ndarray, pd.DataFrame, pd.DataFrame]:
     """
@@ -97,56 +112,34 @@ def run_fp(
 
     converged = False
     iter = 0
-
-    # helpers for wdist_checker
-    cw_pop = cw_pop.reset_index(drop=True)
-    cw_pop['geog_ind'] = cw_pop.index
-    mktinds = np.unique(cw_pop['market_ids'])
-    wdists = np.zeros(len(mktinds)) #preallocate
-    mm_where = [np.where(cw_pop['market_ids'].values == mm)[0] for mm in mktinds]
-    dists_mm = [np.concatenate([economy.dists[tt] for tt in mm]) for mm in mm_where]
-    sorted_indices = [np.argsort(dd) for dd in dists_mm]
-    dists_mm_sorted = [dists_mm[i][sorted_indices[i]] for i in range(len(dists_mm))]
-
-
+    dists_mm_sorted, sorted_indices, wdists = wdist_init(cw_pop, economy.dists)
 
 
     while not converged and iter < maxiter:
-        a0 = copy.deepcopy(economy.assignments)
 
-        # assignment
-        af.random_fcfs(economy, distcoefs, abd, capacity)
-        if af.assignment_stats(economy) < 0.999:
-            print("Warning: not all individuals are offered")
-            return None, None, None, None
-        
-        converged = wdist_checker(dists_mm_sorted, sorted_indices, a0, economy.assignments, wdists, tol)
-
-        # demand estimation
-        # subset agent_data to the locations that were actually offered
-        offer_weights = np.concatenate(economy.offers)
+        # subset agent_data to the offered locations
+        offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
         offer_inds = np.flatnonzero(offer_weights)
         offer_weights = offer_weights[offer_inds]
         print(f"Number of agents: {len(offer_inds)}")
         agent_data = agent_data_full.loc[offer_inds].copy()
         agent_data['weights'] = offer_weights/agent_data['population']
 
-        # df = af.assignment_shares(df, economy.assignments, cw_pop) 
-        pi_iter = pi_init if iter == 0 else results.pi
-        results, agent_results = de.estimate_demand(df, agent_data, problem, pi_init=pi_iter, gtol=gtol, poolnum=poolnum, verbose=False)
+        pi_init = results.pi if iter > 0 else 0.001*np.ones((1, len(str(agent_formulation).split('+')))) #initialize pi to last result, unless first iteration
+        results, agent_results = de.estimate_demand(df, agent_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=False)
         abd = agent_results['abd'].values
         distcoefs = agent_results['distcoef'].values
 
-        print(f"\n************\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}")
-        if np.any(distcoefs > 0):
-            print(f"\n************\nWarning: distance coefficient is positive for some geographies in iteration {iter}.")     
-        sys.stdout.flush()
+        print(f"\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}\n")
 
-        # save results
-        results.to_pickle(f"{outdir}/pyblp_results_fp.pkl")
-        agent_results.to_csv(f"{outdir}/agent_results_fp.csv")
-
+        # assignment
+        a0 = copy.deepcopy(economy.assignments)
+        af.random_fcfs(economy, distcoefs, abd, capacity)
+        af.assignment_stats(economy)
+        converged = wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol)
+        print(f"Iteration {iter}")
         iter += 1
+
     print(f"\n************\nExiting fixed point.\nSaved results to {outdir}")
     return abd, distcoefs, df, agent_data
     

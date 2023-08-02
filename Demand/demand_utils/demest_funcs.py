@@ -39,14 +39,16 @@ def hpi_dist_terms(
 def add_ivcols(
         df:pd.DataFrame,
         agent_data:pd.DataFrame,
-        agent_vars:List[str]
+        agent_vars:List[str],
+        verbose:bool = False
         ) -> pd.DataFrame:
     """
     Make instruments in product_data using the weighted average of agent variables
     """
     ivcols = []
     for (ii,vv) in enumerate(agent_vars):
-        print(f"demand_instruments{ii}: {vv}")
+        if verbose:
+            print(f"demand_instruments{ii}: {vv}")
         ivcol = pd.DataFrame({f'demand_instruments{ii}': agent_data.groupby('market_ids')[vv].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights']))})
         ivcols.append(ivcol)
 
@@ -58,9 +60,10 @@ def add_ivcols(
 def estimate_demand(
         df:pd.DataFrame, #need: market_ids, controls (incl. hpi_quantile), firm_ids=1, prices=0, shares
         agent_data:pd.DataFrame, #need: distances, market_ids, blkid, nodes
-        problem0:pyblp.Problem,
+        product_formulations,
+        agent_formulation,
         pi_init:np.ndarray = None,
-        poolnum = 32,
+        poolnum = 1,
         gtol = 1e-10,
         iteration_config = pyblp.Iteration(method='lm'),
         optimization_config = None,
@@ -72,14 +75,13 @@ def estimate_demand(
     """
     pyblp.options.verbose = verbose
     
-    agent_formulation = problem0.agent_formulation
     agent_vars = str(agent_formulation).split(' + ')
 
-    df = add_ivcols(df, agent_data, agent_vars=agent_vars)
+    df = add_ivcols(df, agent_data, agent_vars=agent_vars, verbose=verbose)
     
     # set up and run BLP problem
     problem = pyblp.Problem(
-        product_formulations=problem0.product_formulations, 
+        product_formulations=product_formulations, 
         product_data=df, 
         agent_formulation=agent_formulation, 
         agent_data=agent_data)
@@ -127,8 +129,8 @@ def compute_abd(
     """
     deltas = results.compute_delta(market_id = df['market_ids'])
     deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
-
-    print(f"pi labels: {results.pi_labels}")
+    if verbose:
+        print(f"pi labels: {results.pi_labels}")
 
     agent_utils = agent_data.assign(
         agent_utility = 0,
@@ -158,40 +160,56 @@ def compute_abd(
     return agent_utils
 
 
-def start_table(tablevars:List[str]) -> Tuple[List[str], List[str], List[str]]:
+from typing import List, Tuple
+
+def start_table(tablevars: List[str]) -> Tuple[List[str], List[str], List[str]]:
     """
     Start table column with variable names
     """
     coefrows = []
     serows = []
     varlabels = []
-    for vv in tablevars:
-        if vv == '1':
-            vv_fmt = 'Constant'
-        else:
-            vv_fmt = vv
-        vv_fmt = vv_fmt.replace('_', ' ')
-        vv_fmt = vv_fmt.replace('Xhpi', '*hpi')
-        vv_fmt = vv_fmt.replace('.0]', '').replace('[', '')
-        vv_fmt = vv_fmt.replace('logdist', 'log(distance)')
-        vv_fmt = vv_fmt.replace('medianhhincome', 'Median Household Income')
-        vv_fmt = vv_fmt.replace('medianhomevalue', 'Median Home Value')
-        vv_fmt = vv_fmt.replace('popdensity', 'Population Density')
-        vv_fmt = vv_fmt.replace('collegegrad', 'College Grad')
-        vv_fmt = vv_fmt.title()
-        vv_fmt = vv_fmt.replace('Hpi', 'HPI')
 
+    # Dictionary to map variable names to formatted labels
+    format_dict = {
+        '1': 'Constant',
+        'logdist': 'Log(Distance)',
+        'logdistXhpi_quantile1': 'Log(Distance) * HPI Quantile 1',
+        'logdistXhpi_quantile2': 'Log(Distance) * HPI Quantile 2',
+        'logdistXhpi_quantile3': 'Log(Distance) * HPI Quantile 3',
+        'logdistXhpi_quantile4': 'Log(Distance) * HPI Quantile 4',
+        'hpi_quantile1': 'HPI Quantile 1',
+        'hpi_quantile2': 'HPI Quantile 2',
+        'hpi_quantile3': 'HPI Quantile 3',
+        'race_black': 'Race Black',
+        'race_asian': 'Race Asian',
+        'race_hispanic': 'Race Hispanic',
+        'race_other': 'Race Other',
+        'health_employer': 'Health Employer',
+        'health_medicare': 'Health Medicare',
+        'health_medicaid': 'Health Medicaid',
+        'health_other': 'Health Other',
+        'collegegrad': 'College Grad',
+        'unemployment': 'Unemployment',
+        'poverty': 'Poverty',
+        'medianhhincome': 'Median Household Income',
+        'logmedianhhincome': 'Log(Median Household Income)',
+        'medianhomevalue': 'Median Home Value',
+        'logmedianhomevalue': 'Log(Median Home Value)',
+        'popdensity': 'Population Density',
+        'logpopdensity': 'Log(Population Density)'
+    }
+
+    for vv in tablevars:
+        vv_fmt = format_dict[vv]
         varlabels.append(vv_fmt)
-        if vv.startswith('hpi_quantile'):
-            coefrows.append(f"{vv_fmt} ")
-        elif 'dist' in vv:
+        if 'dist' in vv:
             coefrows.append(f"{vv_fmt}" + "$^{\\dag}$ ")
         else:
             coefrows.append(f"{vv_fmt} ")
         serows.append(" ")
 
     return coefrows, serows, varlabels
-
 
 def fill_table(
         results:pyblp.ProblemResults,
