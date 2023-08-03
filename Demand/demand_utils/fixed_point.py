@@ -101,8 +101,8 @@ def run_fp(
         poolnum:int = 1,
         micro_computation_chunks:Optional[int] = 1,
         maxiter:int = 100,
-        tol = 0.002,
-        outdir:str = '/export/storage_covidvaccine/Data/Analysis/Demand'
+        tol = 0.003,
+        coefsavepath:str = None
         ) -> Tuple[np.ndarray, np.ndarray, pd.DataFrame, pd.DataFrame]:
     """
     Run fixed point algorithm. 
@@ -131,6 +131,10 @@ def run_fp(
         distcoefs = agent_results['distcoef'].values
 
         print(f"\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}\n")
+        # save results
+        if coefsavepath is not None:
+            np.save(coefsavepath+str(iter), results.pi)
+            np.save(coefsavepath, results.pi)
 
         # assignment
         a0 = copy.deepcopy(economy.assignments)
@@ -138,8 +142,8 @@ def run_fp(
         af.assignment_stats(economy)
         converged = wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol)
         print(f"Iteration {iter}")
+        sys.stdout.flush()
         iter += 1
 
-    print(f"\n************\nExiting fixed point.\nSaved results to {outdir}")
     return abd, distcoefs, df, agent_data
     

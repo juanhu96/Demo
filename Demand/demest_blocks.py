@@ -18,12 +18,13 @@ outdir = "/export/storage_covidvaccine/Result"
 poolnum = 1 #number of cores to use
 save_to_pipeline = False #save results to pipeline directory
 
+#===================================================================================================
 #### Settings
 # nohup python3 /users/facsupport/zhli/VaxDemandDistance/Demand/demest_blocks.py 4 tract False > demest_blocks_4q_tract.out &
 
 print("Running demest_blocks.py with settings:", sys.argv)
 #number of HPI quantiles
-nsplits = int(sys.argv[1]) if len(sys.argv) > 1 else 4
+nsplits = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 
 #zip or tract
 hpi_level = sys.argv[2] if len(sys.argv) > 2 else 'tract'
@@ -33,7 +34,6 @@ ref_lastq = False
 if len(sys.argv) > 3:
     if sys.argv[3] == 'True':
         ref_lastq = True
-
 #===================================================================================================
 
 setting_tag = f"blk_{nsplits}q{'_reflastq' if ref_lastq else ''}_{hpi_level}"
@@ -163,10 +163,6 @@ for config in [
         with pyblp.parallel(poolnum): 
             results = problem.solve(pi=pi_init, sigma = 0, iteration = iteration_config, optimization = optimization_config)
     
-    # Save results
-
-    # results = pyblp.read_pickle(f"{datadir}/Analysis/Demand/demest_results_{config_tag}_{setting_tag}.pkl")
-
     # Write coefficients to table column
     coefrows, serows = de.fill_table(results, coefrows, serows, tablevars)
 
