@@ -46,7 +46,7 @@ def random_fcfs(economy: Economy,
     # Iterate over individuals in the shuffled ordering
     for (tt,ii) in economy.ordering:
         for (jj,ll) in enumerate(economy.locs[tt]): #locs[tt] is ordered by distance from geography tt, in ascending order
-            if ll not in full_locations or jj==len(economy.locs[tt])-1:
+            if ll not in full_locations or jj==len(economy.locs[tt])-1: #TODO: check if the indexing is right, and decide if we offer the last location. 
                 # -> the individual is offered here
                 economy.offers[tt][jj] += 1
                 if economy.abepsilon[tt][jj] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
@@ -130,9 +130,11 @@ def assignment_stats(economy: Economy, max_rank: int = 10):
     frac_offered_any = np.sum([np.sum(offers[tt]) for tt in range(economy.n_geogs)]) / total_pop
     print(f"% Offered: {frac_offered_any * 100}")
     if frac_offered_any < 1:
-        print("*********\nWarning: not all individuals are offered")
+        print("*********\nWarning: not all individuals are offered") #shouldn't happen since we offer the last location
     max_rank_offered = np.max([np.max(np.flatnonzero(offers[tt])) for tt in range(economy.n_geogs)])
     print(f"Max rank offered: {max_rank_offered}")
+    # number of individuals offered max_rank_offered
+    print(f"Number of individuals offered max_rank_offered: {np.sum([offers[tt][max_rank_offered] for tt in range(economy.n_geogs) if max_rank_offered < len(offers[tt])])}")
 
 
     # assignments

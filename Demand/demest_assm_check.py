@@ -12,6 +12,7 @@ import numpy as np
 import pyblp
 import sys
 import time
+import copy
 
 print("Entering demest_assm.py")
 time_entered = time.time()
@@ -181,6 +182,97 @@ print("Done creating economy at time:", round(time.time()-time_entered, 2), "sec
 #=================================================================
 #=================================================================
 #=================================================================
+# TESTING
+
+# gtol= 1e-10
+# poolnum = 1
+# micro_computation_chunks= 1
+# tol = 0.005
+
+
+# converged = False
+# iter = 0
+# dists_mm_sorted, sorted_indices, wdists = fp.wdist_init(cw_pop, economy.dists)
+
+
+# #=================================================================
+# # WHILE LOOP STARTS
+
+# offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
+# offer_inds = np.flatnonzero(offer_weights)
+# offer_weights = offer_weights[offer_inds]
+# print(f"Number of agents: {len(offer_inds)}")
+# agent_data = agent_data_full.loc[offer_inds].copy()
+# agent_data['weights'] = offer_weights/agent_data['population']
+
+
+# pi_init = results.pi if iter > 0 else 0.001*np.ones((1, len(str(agent_formulation).split('+')))) #initialize pi to last result, unless first iteration
+# results, agent_results = de.estimate_demand(df, agent_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=False)
+# abd = agent_results['abd'].values
+# distcoefs = agent_results['distcoef'].values
+# print(f"\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}\n")
+
+
+# a0 = copy.deepcopy(economy.assignments)
+# af.random_fcfs(economy, distcoefs, abd, capacity)
+# af.assignment_stats(economy)
+# converged = fp.wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol)
+# print(f"Iteration {iter} complete.\n\n")
+# sys.stdout.flush()
+# iter += 1
+
+
+
+# #=================================================================NEXT ITERATION
+
+# offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
+# offer_inds = np.flatnonzero(offer_weights)
+# offer_weights = offer_weights[offer_inds]
+# print(f"Number of agents: {len(offer_inds)}")
+# agent_data = agent_data_full.loc[offer_inds].copy()
+# agent_data['weights'] = offer_weights/agent_data['population']
+
+
+# pi_init = results.pi if iter > 0 else 0.001*np.ones((1, len(str(agent_formulation).split('+')))) #initialize pi to last result, unless first iteration
+# results, agent_results = de.estimate_demand(df, agent_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=False)
+# abd = agent_results['abd'].values
+# distcoefs = agent_results['distcoef'].values
+# print(f"\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}\n")
+
+
+
+# a0 = copy.deepcopy(economy.assignments)
+# af.random_fcfs(economy, distcoefs, abd, capacity)
+# af.assignment_stats(economy)
+# converged = fp.wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol)
+# print(f"Iteration {iter} complete.\n\n")
+# sys.stdout.flush()
+# iter += 1
+
+
+
+
+
+
+
+
+
+
+
+
+#CHECK WDIST COMPUTATION
+
+
+
+
+
+# WHILE LOOP ENDS
+#=================================================================
+
+
+#=================================================================
+#=================================================================
+#=================================================================
 
 # RUN FIXED POINT
 
@@ -196,7 +288,8 @@ agent_results = fp.run_fp(
     product_formulations=product_formulations,
     agent_formulation=agent_formulation,
     coefsavepath=coefsavepath,
-    micro_computation_chunks=1 if max_rank <= 50 else 10
+    micro_computation_chunks=1 if max_rank <= 50 else 10,
+    maxiter = 10 #TODO: remove!!!
 )
 
 print("Done with fixed point loop at time:", round(time.time()-time_entered, 2), "seconds")
@@ -204,17 +297,139 @@ sys.stdout.flush()
 
 # save agent_results
 
-if not testing:
-    try:
-        agent_results[['blkid', 'hpi_quantile', 'market_ids', 'abd', 'distcoef']].to_csv(f"{outdir}/agent_results_{setting_tag}.csv", index=False)
-        print(f"Saved agent_results to {outdir}/agent_results_{setting_tag}.csv")
-    except: #if no storage space 
-        agent_results[['blkid', 'market_ids', 'abd', 'distcoef']].to_csv(f"/export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv", index=False)
-        print(f"Saved agent_results to /export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv")
+# TODO: add back:
 
+# if not testing:
+#     try:
+#         agent_results[['blkid', 'hpi_quantile', 'market_ids', 'abd', 'distcoef']].to_csv(f"{outdir}/agent_results_{setting_tag}.csv", index=False)
+#         print(f"Saved agent_results to {outdir}/agent_results_{setting_tag}.csv")
+#     except: #if no storage space 
+#         agent_results[['blkid', 'market_ids', 'abd', 'distcoef']].to_csv(f"/export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv", index=False)
+#         print(f"Saved agent_results to /export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv")
+
+# # #=================================================================
 # #=================================================================
-# #=================================================================
-# #=================================================================
+
+
+#CHECK ASSIGNMENT
+# economy.assignments[0]
+# economy.assignments[1]
+# economy.dists[1]
+# economy.occupancies
+# quantiles of economy.occupancies
+occs = np.array(list(economy.occupancies.values()))
+occs
+for q in np.linspace(0, 1, 21):
+    print(f"{int(q*100)}: {int(np.quantile(occs, q))}")
+
+# histogram
+import matplotlib.pyplot as plt
+
+plt.clf()
+plt.hist(occs, bins=25)
+plt.xlabel('Occupancy')
+plt.ylabel('Number of locations')
+plt.savefig('occupancies.png')
+
+
+np.mean(occs>=10000)
+
+
+
+def weighted_quantiles(data, weights, quantiles):
+    # Sort data and rearrange weights
+    sorted_indices = np.argsort(data)
+    sorted_data = data[sorted_indices]
+    sorted_weights = weights[sorted_indices]
+
+    # Compute the cumulative sum of weights
+    cum_weights = np.cumsum(sorted_weights)
+    
+    # Total sum of weights
+    total_weight = np.sum(weights)
+
+    # Compute quantiles
+    quantile_positions = quantiles * total_weight
+    quantile_values = np.interp(quantile_positions, cum_weights, sorted_data)
+
+    return quantile_values
+
+
+
+# distances offered
+
+offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
+offer_inds = np.flatnonzero(offer_weights)
+offer_weights = offer_weights[offer_inds]
+
+len(offer_weights)
+dists_offered = np.concatenate(economy.dists)[offer_inds]
+len(dists_offered)
+
+
+qtlticks = np.linspace(0, 1, 101)
+offer_qtls = np.exp(weighted_quantiles(dists_offered, offer_weights, qtlticks))
+# line plot
+plt.clf()
+plt.plot(qtlticks[:-1], offer_qtls[:-1])
+plt.xlabel('Quantile')
+plt.ylabel('Distance Offered (km)')
+plt.savefig('dist_quantiles.png')
+
+plt.clf()
+plt.plot(qtlticks, offer_qtls)
+plt.xlabel('Quantile')
+plt.ylabel('Distance Offered (km)')
+plt.savefig('dist_quantiles_full.png')
+
+
+# distances assigned
+assm_weights = np.concatenate(economy.assignments) 
+assm_inds = np.flatnonzero(assm_weights)
+assm_weights = assm_weights[assm_inds]
+dists_assigned = np.concatenate(economy.dists)[assm_inds]
+assm_qtls = np.exp(weighted_quantiles(dists_assigned, assm_weights, qtlticks))
+# line plot
+plt.clf()
+plt.plot(qtlticks[:-1], assm_qtls[:-1])
+plt.xlabel('Quantile')
+plt.ylabel('Distance Assigned (km)')
+plt.savefig('dist_quantiles_assigned.png')
+
+plt.clf()
+plt.plot(qtlticks, assm_qtls)
+plt.xlabel('Quantile')
+plt.ylabel('Distance Assigned (km)')
+plt.savefig('dist_quantiles_assigned_full.png')
+
+
+# ranks offered
+ranks = [range(len(x)) for x in economy.dists]
+ranks_offered = np.concatenate(ranks)[offer_inds]
+ranks_assigned = np.concatenate(ranks)[assm_inds]
+ranks_offered_qtls = weighted_quantiles(ranks_offered, offer_weights, qtlticks)
+ranks_assigned_qtls = weighted_quantiles(ranks_assigned, assm_weights, qtlticks)
+
+
+# line plot
+# ranks offered
+
+plt.clf()
+plt.plot(qtlticks, ranks_offered_qtls)
+plt.xlabel('Quantile')
+plt.ylabel('Rank Offered')
+plt.savefig('quantiles_ranks_offered_full.png')
+
+# ranks assigned
+plt.clf()
+plt.plot(qtlticks, ranks_assigned_qtls)
+plt.xlabel('Quantile')
+plt.ylabel('Rank Assigned')
+plt.savefig('quantiles_ranks_assigned_full.png')
+
+
+
+
 # #=================================================================
 # #=====REFRESH MODULES=====
 # import importlib

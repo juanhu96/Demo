@@ -101,9 +101,9 @@ def run_fp(
         poolnum:int = 1,
         micro_computation_chunks:Optional[int] = 1,
         maxiter:int = 100,
-        tol = 0.003,
+        tol = 0.005,
         coefsavepath:str = None
-        ) -> Tuple[np.ndarray, np.ndarray, pd.DataFrame, pd.DataFrame]:
+        ) -> pd.DataFrame:
     """
     Run fixed point algorithm. 
     Stop when assignments stop changing or maxiter is reached.
@@ -141,9 +141,9 @@ def run_fp(
         af.random_fcfs(economy, distcoefs, abd, capacity)
         af.assignment_stats(economy)
         converged = wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol)
-        print(f"Iteration {iter}")
+        print(f"Iteration {iter} complete.\n\n")
         sys.stdout.flush()
         iter += 1
 
-    return abd, distcoefs, df, agent_data
+    return agent_results
     
