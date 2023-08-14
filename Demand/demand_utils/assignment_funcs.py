@@ -30,7 +30,7 @@ def random_fcfs(economy: Economy,
     """
     
     time1 = time.time()
-
+    assert len(distcoefs) == economy.n_geogs == len(abd)
     # compute all-but-epsilon for each location for each geography
     economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)] 
     time2 = time.time()
@@ -46,7 +46,7 @@ def random_fcfs(economy: Economy,
     # Iterate over individuals in the shuffled ordering
     for (tt,ii) in economy.ordering:
         for (jj,ll) in enumerate(economy.locs[tt]): #locs[tt] is ordered by distance from geography tt, in ascending order
-            if ll not in full_locations or jj==len(economy.locs[tt])-1: #TODO: check if the indexing is right, and decide if we offer the last location. 
+            if ll not in full_locations or jj==len(economy.locs[tt])-1:
                 # -> the individual is offered here
                 economy.offers[tt][jj] += 1
                 if economy.abepsilon[tt][jj] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
@@ -147,34 +147,3 @@ def assignment_stats(economy: Economy, max_rank: int = 10):
 
     return frac_offered_any
 
-
-
-def assignment_shares(
-    df:pd.DataFrame,
-    assignments:List[List[int]],
-    cw_pop:pd.DataFrame, #must be sorted by blkid
-    clip:Tuple[float, float] = (0.05, 0.95) #clip shares to be between 0.05 and 0.95
-    ):
-    """
-    Compute shares of each market from the geog-level assignment
-    Input: 
-        assignments: economy.assignment after random_fcfs
-        df: DataFrame at the market level, need market_ids
-        cw_pop: DataFrame at the geog level with columns market_ids, blkid, population
-    Replace 'shares' column of df
-    """
-    # check that cw_pop is sorted by blkid
-    # assert cw_pop['blkid'].is_monotonic_increasing
-    
-    cw_pop['assigned_pop'] = np.array([np.sum(ww) for ww in assignments])
-    df_g = cw_pop.groupby('market_ids').agg({'population': 'sum', 'assigned_pop': 'sum'}).reset_index()
-    df_g['shares'] = df_g['assigned_pop'] / df_g['population']
-    
-    # winsorize shares for demand estimation
-    df_g['shares'] = df_g['shares'].clip(clip[0], clip[1])
-
-    # replace shares in df
-    df.drop(columns=['shares'], inplace=True)
-    df = df.merge(df_g[['market_ids', 'shares']], on='market_ids', how='left')
-
-    return df

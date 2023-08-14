@@ -66,7 +66,8 @@ print(figpath)
 
 #=================================================================
 # plot coefficients over iterations
-capacity, max_rank, nsplits = 10000, 10, 3
+# capacity, max_rank, nsplits = 10000, 10, 3
+capacity, max_rank, nsplits = 10000, 200, 3
 setting_tag = f"{capacity}_{max_rank}_{nsplits}q"
 coefsavepath = f"{outdir}/coefs/{setting_tag}_coefs"
 coefs = []

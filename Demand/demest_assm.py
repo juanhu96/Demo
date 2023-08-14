@@ -40,7 +40,7 @@ outdir = "/export/storage_covidvaccine/Result/Demand"
 testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
 testing = False  #TODO:
 capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
-max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 100 #maximum rank to offer
+max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 50 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 3 #number of HPI quantiles
 
 # in rundemest_assm.sh we have, e.g.:
@@ -187,7 +187,7 @@ print("Done creating economy at time:", round(time.time()-time_entered, 2), "sec
 print("Entering fixed point loop...\nTime:", round(time.time()-time_entered, 2), "seconds")
 sys.stdout.flush()
 
-agent_results = fp.run_fp(
+agent_results, results = fp.run_fp(
     economy=economy,
     capacity=capacity,
     agent_data_full=agent_data_full,
@@ -208,9 +208,15 @@ if not testing:
     try:
         agent_results[['blkid', 'hpi_quantile', 'market_ids', 'abd', 'distcoef']].to_csv(f"{outdir}/agent_results_{setting_tag}.csv", index=False)
         print(f"Saved agent_results to {outdir}/agent_results_{setting_tag}.csv")
+        results.to_pickle(f"{outdir}/results_{setting_tag}.pkl")
+        print(f"Saved results to {outdir}/results_{setting_tag}.pkl")
     except: #if no storage space 
         agent_results[['blkid', 'market_ids', 'abd', 'distcoef']].to_csv(f"/export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv", index=False)
         print(f"Saved agent_results to /export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv")
+        results.to_pickle(f"/export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
+        print(f"Saved results to /export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
+
+
 
 # #=================================================================
 # #=================================================================

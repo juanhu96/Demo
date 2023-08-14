@@ -13,6 +13,9 @@ import pyblp
 import sys
 import time
 import copy
+from matplotlib import pyplot as plt
+from statsmodels.stats.weightstats import DescrStatsW
+
 
 print("Entering demest_assm.py")
 time_entered = time.time()
@@ -41,7 +44,7 @@ outdir = "/export/storage_covidvaccine/Result/Demand"
 testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
 testing = False  #TODO:
 capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
-max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 100 #maximum rank to offer
+max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 50 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 3 #number of HPI quantiles
 
 # in rundemest_assm.sh we have, e.g.:
@@ -180,6 +183,335 @@ economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank)
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 
 #=================================================================
+#=================================================================
+#=================================================================
+#TESTING ASSIGNMENT
+
+len(economy.locs[0])
+economy.locs[0]
+
+len(economy.dists[0])
+economy.dists[0]
+
+geog_pops[0]
+len(economy.abepsilon)
+len(economy.abepsilon[0])
+economy.abepsilon[0]
+
+len(economy.epsilon_diff)
+len(economy.epsilon_diff[0])
+economy.epsilon_diff[0]
+
+
+len(economy.offers[0])
+len(economy.assignments[0])
+
+gtol= 1e-10
+poolnum = 1
+micro_computation_chunks= 1
+tol = 0.005
+
+
+converged = False
+iter = 0
+dists_mm_sorted, sorted_indices, wdists = fp.wdist_init(cw_pop, economy.dists)
+
+
+#=================================================================
+
+offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
+offer_inds = np.flatnonzero(offer_weights)
+offer_weights = offer_weights[offer_inds]
+print(f"Number of agents: {len(offer_inds)}")
+agent_data = agent_data_full.loc[offer_inds].copy()
+agent_data['weights'] = offer_weights/agent_data['population']
+
+
+pi_init = results.pi if iter > 0 else 0.001*np.ones((1, len(str(agent_formulation).split('+')))) #initialize pi to last result, unless first iteration
+results, agent_results = de.estimate_demand(df, agent_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=False)
+abd = agent_results['abd'].values
+distcoefs = agent_results['distcoef'].values
+print(f"\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}\n")
+
+
+a0 = copy.deepcopy(economy.assignments)
+
+##### ASSIGNMENT #####
+
+economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)] 
+
+# reset occupancies 
+economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
+full_locations = set()
+# reset offers and assignments
+economy.offers = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
+economy.assignments = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
+
+
+economy.ordering[0]
+tt, ii = economy.ordering[0]
+
+jj=0
+ll = economy.locs[tt][jj]
+ll 
+economy.occupancies[ll]
+ll in full_locations
+
+
+economy.offers[tt]
+len(economy.offers[tt])
+economy.offers[tt][jj]
+len(economy.assignments[tt])
+economy.locs[tt]
+len(economy.locs[tt])
+economy.dists[tt]
+len(economy.dists[tt])
+economy.abepsilon[tt]
+len(economy.abepsilon[tt])
+economy.epsilon_diff[tt]
+len(economy.epsilon_diff[tt])
+geog_pops[tt]
+
+####
+#### RESET:
+economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
+full_locations = set()
+# reset offers and assignments
+economy.offers = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
+economy.assignments = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
+####
+####
+
+
+for (tt,ii) in economy.ordering:
+    for (jj,ll) in enumerate(economy.locs[tt]): #locs[tt] is ordered by distance from geography tt, in ascending order
+        print(f"tt: {tt}, ii: {ii}, jj: {jj}, ll: {ll}")
+        if ll not in full_locations or jj==len(economy.locs[tt])-1:
+            print(f"   OFFERED")
+            # -> the individual is offered here
+            economy.offers[tt][jj] += 1
+            if economy.abepsilon[tt][jj] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
+                print(f"   ASSIGNED")
+                economy.assignments[tt][jj] += 1
+                economy.occupancies[ll] += 1
+                if economy.occupancies[ll] == capacity:
+                    full_locations.add(ll)
+            break #TODO: check if we need one more break or something
+
+tt = 1
+economy.epsilon_diff[tt]
+np.mean(economy.epsilon_diff[tt])
+economy.epsilon_diff[tt][25]
+economy.abepsilon[tt][0]
+economy.abepsilon[tt]
+
+
+
+
+#=================================================================
+af.random_fcfs(economy, distcoefs, abd, capacity)
+
+
+#=================================================================
+
+# TODO: look at why assignment/offer plot is wrong - it's not wrong, just the denominator is the total assigned vs total population
+qtlticks = np.linspace(0, 1, 101)
+
+
+def weighted_quantiles(data, weights, quantiles):
+    # Sort data and rearrange weights
+    sorted_indices = np.argsort(data)
+    sorted_data = data[sorted_indices]
+    sorted_weights = weights[sorted_indices]
+
+    # Compute the cumulative sum of weights
+    cum_weights = np.cumsum(sorted_weights)
+    
+    # Total sum of weights
+    total_weight = np.sum(weights)
+
+    # Compute quantiles
+    quantile_positions = quantiles * total_weight
+    quantile_values = np.interp(quantile_positions, cum_weights, sorted_data)
+
+    return quantile_values
+
+offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
+offer_inds = np.flatnonzero(offer_weights)
+offer_weights = offer_weights[offer_inds]
+
+economy.assignments[0]
+len(economy.assignments)
+assm_weights = np.concatenate(economy.assignments) 
+len(np.concatenate(economy.assignments))
+assm_inds = np.flatnonzero(assm_weights)
+assm_weights = assm_weights[assm_inds]
+dists_assigned = np.concatenate(economy.dists)[assm_inds]
+assm_qtls = np.exp(weighted_quantiles(dists_assigned, assm_weights, qtlticks))
+
+
+
+
+ranks = [range(len(x)) for x in economy.dists]
+
+len(np.concatenate(ranks))
+economy.n_geogs
+len(np.concatenate(ranks))/economy.n_geogs
+
+len(offer_inds)
+
+ranks_offered = np.concatenate(ranks)[offer_inds]
+ranks_assigned = np.concatenate(ranks)[assm_inds]
+ranks_offered_qtls = weighted_quantiles(ranks_offered, offer_weights, qtlticks)
+ranks_assigned_qtls = weighted_quantiles(ranks_assigned, assm_weights, qtlticks)
+
+
+
+
+ranks_offered_qtls_dsw =  DescrStatsW(data=ranks_offered, weights=offer_weights).quantile(probs=qtlticks)
+ranks_offered_qtls_dsw.iloc[70:89]
+
+
+ranks_assigned_qtls_dsw =  DescrStatsW(data=ranks_assigned, weights=assm_weights).quantile(probs=qtlticks)
+ranks_assigned_qtls_dsw.iloc[70:89]
+
+
+# plt.clf()
+# plt.plot(qtlticks, np.quantile(ranks_offered, qtlticks))
+# plt.savefig('quantiles_ranks_offered_unw.png')
+
+# plt.clf()
+# plt.plot(qtlticks, np.quantile(ranks_assigned, qtlticks))
+# plt.savefig('quantiles_ranks_assigned_unw.png')
+
+# line plot
+# ranks offered
+
+plt.clf()
+plt.plot(qtlticks, ranks_offered_qtls)
+plt.xlabel('Quantile')
+plt.ylabel('Rank Offered')
+plt.savefig('quantiles_ranks_offered_full.png')
+
+# ranks assigned
+plt.clf()
+plt.plot(qtlticks, ranks_assigned_qtls)
+plt.xlabel('Quantile')
+plt.ylabel('Rank Assigned')
+plt.savefig('quantiles_ranks_assigned_full.png')
+
+
+ranks_fortotal = np.concatenate(ranks)
+len(ranks_fortotal)
+len(offer_inds)
+len(assm_inds)
+offered_unassigned = np.setdiff1d(offer_inds, assm_inds)
+ranks_fortotal[offered_unassigned] = 10000
+ranks_fortotal = ranks_fortotal[offer_inds]
+len(offer_weights)
+len(ranks_fortotal)
+np.sum(offer_weights==0)
+np.sum(ranks_fortotal==10000)
+np.sum(ranks_fortotal==10000)/len(ranks_fortotal)
+ranks_fortotal_qtls = DescrStatsW(data=ranks_fortotal, weights=offer_weights).quantile(probs=qtlticks)
+ranks_fortotal_qtls
+np.mean(ranks_fortotal)
+plt.clf()
+plt.plot(qtlticks, ranks_fortotal_qtls)
+plt.xlabel('Quantile')
+plt.ylabel('Rank Assigned')
+plt.savefig('quantiles_ranks_assigned_totaldenom.png')
+
+
+#=================================================================
+
+
+
+
+len(distcoefs)
+len(abd)
+len(economy.locs)
+len(np.concatenate(economy.locs))
+len(np.concatenate(economy.locs))/50
+
+
+a0[0]
+economy.assignments[0]
+
+af.assignment_stats(economy)
+
+converged = fp.wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol)
+
+### back to start of while loop
+
+offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
+len(np.concatenate(economy.offers))
+offer_inds = np.flatnonzero(offer_weights)
+len(offer_inds)
+offer_weights = offer_weights[offer_inds]
+len(offer_weights)
+print(f"Number of agents: {len(offer_inds)}")
+agent_data = agent_data_full.loc[offer_inds].copy()
+agent_data['weights'] = offer_weights/agent_data['population']
+
+pi_init = results.pi
+results, agent_results = de.estimate_demand(df, agent_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=False)
+abd = agent_results['abd'].values
+distcoefs = agent_results['distcoef'].values
+
+print(f"\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}\n")
+
+a0 = copy.deepcopy(economy.assignments)
+o0 = copy.deepcopy(economy.offers)
+af.assignment_stats(economy)
+
+af.random_fcfs(economy, distcoefs, abd, capacity)
+a1 = copy.deepcopy(economy.assignments)
+o1 = copy.deepcopy(economy.offers)
+af.assignment_stats(economy)
+
+fp.wdist_checker(a0, a1, dists_mm_sorted, sorted_indices, wdists, tol)
+
+maxwdist_ind = np.argmax(wdists)
+maxwdist_ind 
+len(dists_mm_sorted)
+dists_mm_sorted[maxwdist_ind]
+len(sorted_indices)
+sorted_indices[maxwdist_ind]
+len(dists_mm_sorted[maxwdist_ind])
+sorted_indices[maxwdist_ind]
+len(sorted_indices[maxwdist_ind])
+
+fp.assignment_difference(a0, economy)
+
+
+len(offer_weights)
+agent_data = agent_data_full.loc[offer_inds].copy()
+agent_data['weights'] = offer_weights/agent_data['population']
+
+agent_data_full
+len(np.concatenate(economy.offers))
+#=================================================================
+# TODO: DISTANCE VS RANK
+logdistsbyrank = [np.mean([economy.dists[tt][rr] for tt in range(economy.n_geogs) if len(economy.dists[tt])>rr]) for rr in range(50)]
+leveldistsbyrank = [np.mean([np.exp(economy.dists[tt][rr]) for tt in range(economy.n_geogs) if len(economy.dists[tt])>rr]) for rr in range(50)]
+
+plt.clf()
+plt.plot(logdistsbyrank)
+plt.xlabel("Rank")
+plt.ylabel("Mean log distance")
+plt.savefig("logdistsbyrank.png")
+
+plt.clf()
+plt.plot(leveldistsbyrank)
+plt.xlabel("Rank")
+plt.ylabel("Mean distance (km)")
+plt.savefig("leveldistsbyrank.png")
+
+
+#=================================================================
+#=================================================================
+
 #=================================================================
 #=================================================================
 # TESTING
@@ -432,20 +764,20 @@ plt.savefig('quantiles_ranks_assigned_full.png')
 
 # #=================================================================
 # #=====REFRESH MODULES=====
-# import importlib
-# import copy
+import importlib
+import copy
 
-# importlib.reload(vaxclass)
-# importlib.reload(af)
-# importlib.reload(de)
-# importlib.reload(fp)
-# try:
-#     from demand_utils import vax_entities as vaxclass
-#     from demand_utils import assignment_funcs as af
-#     from demand_utils import demest_funcs as de
-#     from demand_utils import fixed_point as fp
-# except:
-#     from Demand.demand_utils import vax_entities as vaxclass
-#     from Demand.demand_utils import assignment_funcs as af
-#     from Demand.demand_utils import demest_funcs as de
-#     from Demand.demand_utils import fixed_point as fp
+importlib.reload(vaxclass)
+importlib.reload(af)
+importlib.reload(de)
+importlib.reload(fp)
+try:
+    from demand_utils import vax_entities as vaxclass
+    from demand_utils import assignment_funcs as af
+    from demand_utils import demest_funcs as de
+    from demand_utils import fixed_point as fp
+except:
+    from Demand.demand_utils import vax_entities as vaxclass
+    from Demand.demand_utils import assignment_funcs as af
+    from Demand.demand_utils import demest_funcs as de
+    from Demand.demand_utils import fixed_point as fp

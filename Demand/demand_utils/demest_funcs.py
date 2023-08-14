@@ -71,7 +71,7 @@ def estimate_demand(
     ) -> Tuple[np.ndarray, pd.DataFrame]:
 
     """
-    Estimate demand using BLP - this is not very flexible and is meant to be run in the fixed point.
+    Simple wrapper for estimating demand using BLP - this is not very flexible and is meant to be run in the fixed point.
     """
     pyblp.options.verbose = verbose
     
@@ -107,16 +107,16 @@ def estimate_demand(
                 iteration = iteration_config, 
                 optimization = optimization_config)
 
-    agent_data_out = compute_abd(results, df, agent_data)
     
-    return results, agent_data_out
+    return results
 
 
 
 def compute_abd(
         results:pyblp.ProblemResults,
         df:pd.DataFrame,
-        agent_data:pd.DataFrame,
+        agent_data:pd.DataFrame, #agent-level data with hpi_quantile{qq}, market_ids, and anything in pi_labels
+        coefs = None, #optional. if not provided, use results.pi
         verbose:bool = False
 ) -> pd.DataFrame:
     
@@ -127,6 +127,7 @@ def compute_abd(
     Output DataFrame has everything in agent_data plus agent_utility, distcoef, delta, abd
 
     """
+    coefs = results.pi if coefs is None else coefs
     deltas = results.compute_delta(market_id = df['market_ids'])
     deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
     if verbose:
@@ -140,7 +141,7 @@ def compute_abd(
     for (ii,vv) in enumerate(results.pi_labels):
         if verbose:
             print(f"ii={ii}, vv={vv}")
-        coef = results.pi.flatten()[ii]
+        coef = coefs[ii]
         if 'dist' in vv:
             if verbose:
                 print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
@@ -152,7 +153,8 @@ def compute_abd(
         else:
             if verbose:
                 print(f"Adding {vv} to agent-level utility")
-            agent_utils.loc[:, 'agent_utility'] += agent_data[vv] * coef
+            agent_utils.loc[:, 'agent_utility'] += agent_data[vv] * coef 
+            #agent_utility will be agent-level utility without distance terms. if all the agent-level terms are distance, we'll just be returning delta
 
     agent_utils = agent_utils.merge(deltas_df, on='market_ids')
     agent_utils = agent_utils.assign(abd = agent_utils['agent_utility'] + agent_utils['delta'])
