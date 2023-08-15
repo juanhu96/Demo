@@ -25,7 +25,6 @@ def main():
     Demand_parameter = [[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]] # v2
     V_D_current, V_D_total, V_DH_current, V_DH_total  = construct_V(Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
 
-
     C_current_order = np.argsort(C_current, axis=1)
     S, y = daa(Population, C_current_order, V_DH_current, num_tracts, num_current_stores)
     total_vaccination, total_proportion = compute_results(Population, Quartile, y)
@@ -40,10 +39,8 @@ def main():
 
 
 
-    
 
-
-def daa(P, C_order, V, num_tracts, num_stores, M=10, K=10000):
+def daa(P, C_order, V, num_tracts, num_stores, M=5, K=8000):
 
     """
     Deferred acceptence algorithm with M closest sites
