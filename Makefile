@@ -1,7 +1,7 @@
 #Initial Setup
 #######################################################################
 #Define in .bashrc:
-# export VAXdir = "/export/storage_covidvaccine"
+# export VAXdir='/mnt/staff/zhli/VaxDemandDistance'
 
 #Running Makefile
 #######################################################################
@@ -24,14 +24,15 @@ R_CMD = R CMD BATCH
 endif
 
 
-VAXdir = /export/storage_covidvaccine
-datadir = ${VAXdir}/Data
-codedir = ${VAXdir}/Code
-resultdir = ${VAXdir}/Result
+codedir = ${VAXdir}
+projectdir = /export/storage_covidvaccine
+datadir = $(projectdir)/Data
+resultdir = $(projectdir)/Result
 
 
-all: $(datadir)/Result/summary_table_BLP
-
+all: $(datadir)/Analysis/Demand/tract_utils.csv
+# all: $(datadir)/Result/summary_table_BLP
+# TODO: demand estimation output for now, change back to optimization output later
 
 $(datadir)/CA_demand.csv \
 $(datadir)/CA_tractID.csv \
@@ -80,8 +81,8 @@ $(datadir)/Intermediate/TRACT_merged.csv: \
 
 
 $(datadir)/Intermediate/zip_coords.csv: \
-		$(codedir)/aux_zip.R
-	$(R_CMD) $(codedir)/aux_zip.R
+		$(codedir)/Demand/datawork/aux_zip.R
+	$(R_CMD) $(codedir)/Demand/datawork/aux_zip.R
 
 
 $(datadir)/Intermediate/tract_nearest_dist.csv: \
@@ -139,8 +140,8 @@ $(datadir)/Analysis/Demand/agent_data.csv: \
 $(datadir)/Analysis/Demand/tract_utils.csv: \
 		$(datadir)/Analysis/Demand/agent_data.csv \
 		$(datadir)/Analysis/Demand/demest_data.csv \
-		$(codedir)/Demand/datawork/demest_tractdemog.py
-	python3 $(codedir)/Demand/datawork/demest_tractdemog.py
+		$(codedir)/Demand/demest_tractdemog.py
+	python3 $(codedir)/Demand/demest_tractdemog.py
 
 
 # OPTIMIZATION:

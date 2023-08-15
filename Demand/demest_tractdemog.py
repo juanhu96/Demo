@@ -11,38 +11,55 @@ datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result"
 
 
-poolnum = 16 #number of cores to use
-impute_hpi_method = 'bottom' # 'drop' or 'bottom' or 'nearest'  TODO: switch
+poolnum = 32 #number of cores to use
 
 
-# settings = [True, False, False, 4]
-# settings = [True, False, False, 2]
-# settings = [False, False, False, 4]
-# settings = [False, False, False, 2]
+settings = [True, False, False, 2, 'drop', 'tract']
+
 
 for settings in [
-    # [True, False, False, 4]
+    # [True, False, False, 2, 'drop', 'tract']
     # ,
-    # [True, False, False, 2],
-    [False, False, False, 4]
+    # [True, False, False, 2, 'bottom', 'tract']
     # ,
-    # [False, False, False, 2]
+    # [True, False, False, 2, 'nearest', 'tract']
+    # ,
+    # [False, False, False, 2, 'bottom', 'tract']
+    # ,
+    # [True, False, False, 4, 'drop', 'tract']
+    # ,
+    # [True, False, False, 4, 'bottom', 'tract']
+    # ,
+    # [True, False, False, 4, 'nearest', 'tract']
+    # ,
+    # [False, False, False, 4, 'bottom', 'tract']
+    [True, False, False, 4, 'drop', 'old']
+    ,
+    [True, False, False, 4, 'bottom', 'old']
+    ,
+    [True, False, False, 4, 'nearest', 'old']
+    ,
+    [False, False, False, 4, 'bottom', 'old']
+
 ]:
     
     hpi_quantile_in_tract = settings[0] #If True, include HPI quantile dummies in tract-level controls. If False, include them in zip-level controls. Importantly, if False, tract-level HPI*dist term must take on ZIP-level HPI quantile values.
-    save_to_pipeline = settings[1] #If True, save tract-level ABD and coefficients to pipeline. If False, don't save.
+    save_to_pipeline = settings[1] #If True, save tract-level ABD and coefficients to pipeline. 
     ref_lastq = settings[2] #If True, make the last quantile the reference for dist*hpi interaction terms. If False, each quantile is its own variable.
     nsplits = settings[3] #Number of quantiles to split HPI into
+    impute_hpi_method = settings[4] # 'drop' or 'bottom' or 'nearest'
+    pop_method = settings[5] # 'tract' or 'zip' or 'old'
 
-    print(f"***********\nRunning settings: hpi_quantile_in_tract={hpi_quantile_in_tract}, save_to_pipeline={save_to_pipeline}, ref_lastq={ref_lastq}, nsplits={nsplits}")
+    print(f"***********\nRunning settings: hpi_quantile_in_tract={hpi_quantile_in_tract}, save_to_pipeline={save_to_pipeline}, ref_lastq={ref_lastq}, nsplits={nsplits}, impute_hpi_method={impute_hpi_method}, pop_method={pop_method}")
 
-    setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{nsplits}"
+    setting_tag = f"{int(bool(hpi_quantile_in_tract))}{int(bool(ref_lastq))}{nsplits}{impute_hpi_method}{pop_method}"
 
     # data
     df_read = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
-    agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data_{impute_hpi_method}.csv")
+    agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data_{impute_hpi_method}_{pop_method}.csv")
 
-    df_read['hpi_quantile'] = pd.qcut(df_read['hpi'], nsplits, labels=False) + 1
+    splits = np.linspace(0, 1, nsplits+1)
+    df_read['hpi_quantile'] = pd.cut(df_read['hpi'], splits, labels=False, include_lowest=True) + 1
 
     # add HPI quantile to agent_data_read (depending on whether it's in tract or zip)
     tract_hpi = agent_data_read[['tract', 'hpi']].drop_duplicates()
@@ -58,14 +75,18 @@ for settings in [
         # agent_data_read = agent_data_read.merge(tract_hpi, on='tract') #TODO: this is just a temporary thing get HPI quantile not as a RC, but HPI*dist using tract-level HPI quantile
 
 
+
     # assign hpi quantile dummies and interaction terms
     for qq in range(1, nsplits+1):
+        print(f"Adding hpi_quantile{qq} and logdistXhpi_quantile{qq}")
         df_read[f'hpi_quantile{qq}'] = (df_read['hpi_quantile'] == qq).astype(int)
         agent_data_read[f'hpi_quantile{qq}'] = (agent_data_read['hpi_quantile'] == qq).astype(int)
         agent_data_read[f'logdistXhpi_quantile{qq}'] = agent_data_read[f'logdist'] * agent_data_read[f'hpi_quantile{qq}']
 
     pd.options.display.max_columns = None
     agent_data_read.describe()
+    agent_data_read.isna().sum()
+    agent_data_read.hpi_quantile.value_counts()
 
     # full list of controls
     controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
@@ -195,8 +216,7 @@ for settings in [
         problem = pyblp.Problem(product_formulations=(formulation1, formulation2), product_data=df, agent_formulation=agent_formulation, agent_data=agent_data)
         with pyblp.parallel(poolnum): 
             results = problem.solve(pi=pi_init, sigma = 0, iteration = iteration_config, optimization = optimization_config)
-
-
+        
         # Save results
         results.to_pickle(f"{datadir}/Analysis/Demand/demest_results_{config_tag}_{setting_tag}.pkl")
 
@@ -279,7 +299,6 @@ for settings in [
 
 
 
-
     # Complete table
     coefrows = [r + "\\\\ \n" for r in coefrows]
     serows = [r + "\\\\ \n\\addlinespace\n" for r in serows]
@@ -290,7 +309,7 @@ for settings in [
         latex += serows[ii]
 
     latex += "\\bottomrule\n\\end{tabular}\n\n\nNote: $^{\\dag}$ indicates a variable at the tract level."
-    table_path = f"{outdir}/Demand/coeftable_{setting_tag}_{impute_hpi_method}.tex" #TODO: remove_impute_hpi_method
+    table_path = f"{outdir}/Demand/coeftable_{setting_tag}.tex" 
     with open(table_path, "w") as f:
         print(f"Saved table at: {table_path}")
         f.write(latex)
@@ -303,3 +322,5 @@ for settings in [
 
 # np.load(f'{datadir}/Analysis/m1coefs.npy')
 # np.load(f'{datadir}/Analysis/m2coefs.npy')
+
+pd.read_csv("/export/storage_covidvaccine/Data/Analysis/Demand/tract_utils.csv")

@@ -1,9 +1,4 @@
-# prepare and merge tract data for demest_tracts.py and demest_rc.py
-# Combine the following data sources:
-# 1. tract demographics
-# 2. tract-HPI
-# 3. tract-ZIP crosswalk (crerated by ziptract.py)
-# 4. tract-pharmacy distance pairs
+# prepare and merge tract data for demand estimation
 
 import pandas as pd
 import numpy as np
@@ -28,13 +23,14 @@ tracts.loc[tracts['tr_pop'] == 0, 'tr_pop'] = 1 # for computing weights later
 # impute vote shares
 tracts['dshare'] = tracts['dshare'].fillna(tracts['dshare'].mean())
 
-# impute health variables TODO: check
+# impute health variables  - we're actually not using these
 for vv in ['health_employer','health_medicare','health_medicaid','health_other']: 
     tracts[vv] = tracts[vv].fillna(tracts[vv].mean())
 
 # impute HPI
 # 
-impute_hpi_method = 'bottom' # 'drop' or 'bottom' or 'nearest' or  TODO: switch
+# 'drop' or 'bottom' or 'nearest' or  TODO: switch
+impute_hpi_method = 'nearest' 
 # not using 2011 since it doesn't add that many observations
 if impute_hpi_method == 'drop':
     tracts = tracts.loc[tracts['hpi'].notnull(), :]
@@ -53,16 +49,34 @@ elif impute_hpi_method == 'nearest': #use KDTree to find nearest neighbor
     # tracts.loc[(np.isclose(tracts['hpi'],0.586650)) | (np.isclose(tracts['hpi_filled'],0.586650)), ['hpi', 'hpi_filled', 'latitude', 'longitude']]
     tracts.fillna({'hpi': tracts['hpi_filled']}, inplace=True)
     tracts.drop(columns=['hpi_filled'], inplace=True)
+    # save this imputation
+    tracts[['tract', 'hpi']].to_csv(f"{datadir}/Intermediate/tract_hpi_nnimpute.csv", index=False)
+
+
 
 
 
 # merge to tract_nearest_df
 tracts = tract_nearest_df.merge(tracts, on='tract', how='outer', indicator=True)
 print("Merge between distance and demographics:\n", tracts._merge.value_counts()) #perfect match
+tracts = tracts.loc[tracts._merge == 'both', :]
 tracts.drop(columns=['_merge'], inplace=True)
 
 # merge with tract-ZIP crosswalk - now at the tract-ZIP intersection level
 tractzip_cw = pd.read_csv(f"{datadir}/Intermediate/tract_zip_crosswalk.csv", dtype={'zip': str, 'tract': str})
+
+############
+tractzip_cw.shape
+tractzip_cw.groupby('tract')['zip'].count().describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9])
+(tractzip_cw.groupby('tract')['zip'].count() > 1).mean() # 5 tracts with more than 1 ZIP
+tractzip_cw.loc[tractzip_cw.groupby('tract')['zip'].transform('count') > 10, 'tract']
+
+tractzip_cw.groupby('zip')['tract'].count().describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9])
+(tractzip_cw.groupby('zip')['tract'].count() > 1).mean() # 20k ZIPs with more than 1 tract
+
+
+
+############
 
 agent_data = tracts.merge(tractzip_cw, on='tract', how='outer', indicator=True)
 agent_data['_merge'].value_counts() # 5 left, 20k both
@@ -74,9 +88,8 @@ list(agent_data.columns)
 
 # ZIP-level from prep_zip.py - should not be modified in this script
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv", dtype={'zip': str})
-df['zip'].isin(agent_data['zip']).value_counts() #8 ZIPs in df but not in agent_data
-df.columns.tolist()
-# keep tracts that are in df
+
+# keep only tracts whose ZIPs are in df
 agent_data['zip'].isin(df['zip']).value_counts()
 agent_data = agent_data[agent_data['zip'].isin(df['zip'])]
 
@@ -84,6 +97,7 @@ agent_data = agent_data[agent_data['zip'].isin(df['zip'])]
 agent_data = agent_data.merge(df[['zip', 'population']].rename(columns={'population':'zip_pop'}), on='zip', how='left')
 
 pop_method = 'tract' # 'tract' or 'zip' TODO: switch
+pop_method = 'old' # TODO: remove
 if pop_method == 'tract': # compute weights based on tract population and fraction of the tract's area that is in the ZIP-tract cell
     agent_data['cell_pop'] = agent_data['tr_pop'] * agent_data['frac_of_tract_area']
     agent_data['market_pop'] = agent_data.groupby('zip')['cell_pop'].transform('sum')
@@ -93,14 +107,19 @@ elif pop_method == 'zip': # compute weights based on ZIP population and fraction
     agent_data['market_pop'] = agent_data['zip_pop']
     agent_data['weights'] = agent_data['cell_pop'] / agent_data['market_pop']
     # there are NAs because some ZIPs have zero population 
-
+elif pop_method == 'old':
+    zip_pop = agent_data.groupby('zip')['tr_pop'].transform('sum')
+    agent_data['weights'] = agent_data['tr_pop']/zip_pop
 
 pd.set_option('display.max_columns', None)
 agent_data.describe()
 
-# TODO: there are 8 ZIPs in df but not in agent_data - make tracts for these ZIPs that are the ZIPs themselves
-# identify these ZIPs
-df['zip'].isin(agent_data['zip']).value_counts() #8 ZIPs in df but not in agent_data
+# number of tracts for each zip
+
+
+# there are a few ZIPs in df but not in agent_data - make tracts for these ZIPs that are the ZIPs themselves
+print("ZIPs in df but not in agent_data:")
+print(df['zip'].isin(agent_data['zip']).value_counts())
 df.loc[~df['zip'].isin(agent_data['zip']),'zip'].tolist()
 
 
@@ -126,14 +145,19 @@ aux_tracts= aux_tracts.merge(zip_coords, on='zip', how='left')
 aux_tracts = aux_tracts.drop(columns=['vaxfull', 'shares', 'population', 'firm_ids', 'prices'])
 set(aux_tracts.columns.tolist()) - set(agent_data.columns.tolist())
 set(agent_data.columns.tolist()) - set(aux_tracts.columns.tolist())
-# distance - compute euclidean distance between lat/long of ZIP and pharmacy locations
+# distance - compute distance between lat/long of ZIP and pharmacy locations
 pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID'])
 # subset to CA
 pharmacy_locations = pharmacy_locations.loc[pharmacy_locations['StateID'] == 6, :]
 pharmacy_locations.drop(columns=['StateID'], inplace=True)
-# compute distance #TODO: check
-from scipy.spatial import distance
-aux_tracts['dist'] = [distance.euclidean(aa, bb) for aa, bb in zip(aux_tracts[['latitude', 'longitude']].values, pharmacy_locations[['latitude', 'longitude']].values)]
+# compute distance 
+from haversine import haversine, Unit
+def nearest_dist(tt):
+    dist_allpharms = [haversine((tt['latitude'], tt['longitude']), (pp['latitude'], pp['longitude']), unit=Unit.KILOMETERS) for pp in pharmacy_locations.to_dict('records')]
+    return min(dist_allpharms)
+
+aux_tracts['dist'] = aux_tracts.apply(nearest_dist, axis=1)
+# verified that it matches MAR01.csv
 
 # append to agent_data
 agent_data = pd.concat([agent_data, aux_tracts], axis=0)
@@ -147,9 +171,10 @@ print("product data describe() \n", df.describe())
 
 
 # save to csv
-agent_data.to_csv(f"{datadir}/Analysis/Demand/agent_data.csv", index=False)
+if pop_method == 'tract' and impute_hpi_method == 'nearest':
+    agent_data.to_csv(f"{datadir}/Analysis/Demand/agent_data.csv", index=False)
 
-agent_data.to_csv(f"{datadir}/Analysis/Demand/agent_data_{impute_hpi_method}.csv", index=False)
+agent_data.to_csv(f"{datadir}/Analysis/Demand/agent_data_{impute_hpi_method}_{pop_method}.csv", index=False)
 
 # summarize tract distance
 print("Distance (tract-level):")
