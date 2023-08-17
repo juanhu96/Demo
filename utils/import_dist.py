@@ -75,3 +75,4 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data", MAXD
 
     return Population, Quartile, p_current, p_total, pc_current, pc_total, C_total_mat, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores
 
+

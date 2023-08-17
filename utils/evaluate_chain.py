@@ -42,26 +42,27 @@ def evaluate_chain(Chain_type, Model, M, K, Demand_parameter, expdirpath, constr
             z_total = np.genfromtxt(f'{expdirpath}{opt_constr}/z_total.csv', delimiter = ",", dtype = float)
             z_current = np.genfromtxt(f'{expdirpath}{opt_constr}/z_current.csv', delimiter = ",", dtype = float)
 
-            for eval_constr in constraint_list:
+            eval_constr = opt_constr
+            # for eval_constr in constraint_list:
 
-                if Chain_type == 'Dollar':
-                    evaluate_rate(scenario = 'current', constraint = eval_constr, z = z_current,
-                                pc = pc_current, pf = pfdh_current, ncp = p_current, p = Population,
-                                closest = Closest_current, K=K, 
-                                num_current_stores=num_current_stores,
-                                num_total_stores=num_total_stores, 
-                                num_tracts=num_tracts,
-                                scale_factor=scale_factor,
-                                path = expdirpath + opt_constr + '/')
-
-                evaluate_rate(scenario = 'total', constraint = eval_constr, z = z_total,
-                            pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
-                            closest = Closest_total, K=K,
+            if Chain_type == 'Dollar':
+                evaluate_rate(scenario = 'current', constraint = eval_constr, z = z_current,
+                            pc = pc_current, pf = pfdh_current, ncp = p_current, p = Population,
+                            closest = Closest_current, K=K, 
                             num_current_stores=num_current_stores,
-                            num_total_stores=num_total_stores,
+                            num_total_stores=num_total_stores, 
                             num_tracts=num_tracts,
                             scale_factor=scale_factor,
                             path = expdirpath + opt_constr + '/')
+
+            evaluate_rate(scenario = 'total', constraint = eval_constr, z = z_total,
+                        pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
+                        closest = Closest_total, K=K,
+                        num_current_stores=num_current_stores,
+                        num_total_stores=num_total_stores,
+                        num_tracts=num_tracts,
+                        scale_factor=scale_factor,
+                        path = expdirpath + opt_constr + '/')
 
 
     else: # MinDist

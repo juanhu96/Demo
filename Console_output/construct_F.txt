@@ -1,0 +1,12 @@
+Constructing F_BLP_current...
+
+Traceback (most recent call last):
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 53, in <module>
+    main()
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 30, in main
+    initial_BLP_estimation(Chain_type='Dollar', capacity=10000)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/import_demand.py", line 36, in initial_BLP_estimation
+    construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/import_demand.py", line 97, in construct_F_BLP
+    blocks_utility = blocks_abd + blocks_distcoef * logdists
+ValueError: operands could not be broadcast together with shapes (85,) (87,) 

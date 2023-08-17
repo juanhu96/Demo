@@ -14,7 +14,7 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix
-from utils.construct_F import construct_F_BLP, construct_F_LogLin, # import_demand_estimation
+from utils.construct_F import construct_F_BLP, construct_F_LogLin
 from utils.import_dist import import_dist
 
 scale_factor = 10000
@@ -28,18 +28,19 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
     
     BLP_models = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP']
     LogLin_models = ['MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin']
-    
-    # TODO: do matching between tract & zip, and also include demographics
-    F_D_current, F_D_total, F_DH_current, F_DH_total  = import_demand_estimation()
 
-    # if Model in BLP_models: 
-    #     #Demand_parameter = [[1.227, -0.452], [2.028, -0.120, -1.357, -1.197, -0.925, -0.254, -0.218, -0.114]] # v3
-    #     Demand_parameter = [[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]] # v2
-    #     F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
 
-    # if Model in LogLin_models: 
-    #     Demand_parameter = [[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, 0.053, 0.047, 0.039]]
-    #     F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_LogLin(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
+    if Model in BLP_models: 
+        Demand_parameter = [[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]] # v2
+
+        ## TODO: F_D undefined, this is dummy only
+        F_D_current, F_D_total, _, _  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile) 
+
+        _, _, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K)
+
+    if Model in LogLin_models: 
+        Demand_parameter = [[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, 0.053, 0.047, 0.039]]
+        F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_LogLin(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
 
 
     ###########################################################################
