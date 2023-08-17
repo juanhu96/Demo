@@ -13,9 +13,13 @@ def import_demand_estimation(Model, capacity, C_total, num_tracts, num_current_s
         # F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
 
         tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int}) # tract info
+        block = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv") # ['zip', 'blkid', 'dist', 'population', 'weights', 'market_ids', 'nodes', 'logdist']
+        block.sort_values(by=['blkid'], inplace=True)
         blk_tract = pd.read_csv(f"{datadir}/Intermediate/blk_tract.csv", usecols=['tract', 'blkid']) # block-tract
         block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_3q.csv', delimiter = ",") # block estimates
         distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
+
+
 
         F_D_current, F_D_total, F_DH_current, F_DH_total = construct_F_BLP()
 
@@ -31,15 +35,41 @@ def import_demand_estimation(Model, capacity, C_total, num_tracts, num_current_s
 
 def construct_F_BLP():
 
+    C_current = C_total[:,0:num_current_stores]
+    M_closest_current = np.argpartition(C_current, M, axis=1)[:,:M]
+    F_current = np.zeros((num_tracts, num_current_stores))
+
     for i in range(num_tracts):
 
-        # find all blocks within
         tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
-        blocks_id = blk_tract[blk_tract['tract'] == tract_id]['blkid']
+        tract_closest_sites = M_closest_current[i]
+
+        blocks_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
+
+        for site in tract_closest_sites:
+
+            tract_site_willingess = 0
+
+            for block_id in blocks_id:
+                    
+                block_pop = block[block.blkid == block_id].population.values[0]
+                block_abd, block_distcoef = block_utils[block_utils.blkid == block_id].abd.values[0], block_utils[block_utils.blkid == block_id].distcoef.values[0]
+                logdist = distdf[(distdf.blkid == block_id) & (distdf.locid == site)].logdist.values[0]
+
+                block_utility = block_abd + block_distcoef * logdist
+                tract_site_willingess += (block_pop / tract_pop) * np.exp(block_utility)/(1 + np.exp(block_utility))
+
+            print(f'New willingness {str(tract_site_willingess)}\n')
+
+            F_current[i][site] = tract_site_willingess
 
 
-        for block in blocks_id:
-            
+    pass
+
+
+
+
+
 
 
 
