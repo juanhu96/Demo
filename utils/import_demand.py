@@ -66,7 +66,7 @@ def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_store
     M here doesn't matter, because we have C_closest in the optimization constraint
     (as long as greater than 10)
     '''
-
+    
     if Chain_type == 'Dollar':
         
         print('Constructing F_BLP_current...\n')
@@ -79,42 +79,76 @@ def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_store
 
         for i in range(num_tracts):
 
-            tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
+            print(i)
 
-            blocks_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
-            blocks_pop = block[block.blkid.isin(blocks_id)].population.to_numpy()
-            blocks_abd = block_utils[block_utils.blkid.isin(blocks_id)].abd.to_numpy()
-            blocks_distcoef = block_utils[block_utils.blkid.isin(blocks_id)].distcoef.to_numpy()
-            block_distdf = distdf[distdf.blkid.isin(blocks_id)]
+            tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
+            blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
+            block_id = block[block.blkid.isin(blk_tract_id)].blkid.to_list()
+            block_utils_id = block_utils[block_utils.blkid.isin(blk_tract_id)].blkid.to_list()
+
+
+            if len(blk_tract_id) != len(block_id) or len(block_id) != len(block_utils_id) or len(block_utils_id) != len(blk_tract_id):
+                print(i, len(blk_tract_id), len(block_id), len(block_utils_id))
+                common_blocks_id = set(blk_tract_id) & set(block_id) & set(block_utils_id)
+            else:
+                common_blocks_id = blk_tract_id
+
+
+            blocks_pop = block[block.blkid.isin(common_blocks_id)].population.to_numpy()
+            blocks_abd = block_utils[block_utils.blkid.isin(common_blocks_id)].abd.to_numpy()
+            blocks_distcoef = block_utils[block_utils.blkid.isin(common_blocks_id)].distcoef.to_numpy()
+            block_distdf = distdf[distdf.blkid.isin(common_blocks_id)]
 
             tract_pop = np.sum(blocks_pop)
-
+            
             for site in M_closest_current[i]:
                 
-                tract_site_willingess = 0            
-                logdists = block_distdf[block_distdf.locid == site].logdist.to_numpy()
+                tract_site_willingess = 0    
+                dist_blocks_id = block_distdf[block_distdf.locid == site].blkid.to_list()
 
-                blocks_utility = blocks_abd + blocks_distcoef * logdists
-                tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+                ############################################################
+                # Tract 361 and site 8: 85 block ids, but 87 logdists
+                # e.g., 18545 is in blk_tract and distdf, but not in block and block_utils, so we need to take the subset
 
-                # for block_id in blocks_id:
-                        
-                #     block_pop = block[block.blkid == block_id].population.values[0]
-                #     block_abd, block_distcoef = block_utils[block_utils.blkid == block_id].abd.values[0], block_utils[block_utils.blkid == block_id].distcoef.values[0]
-                #     logdist = distdf[(distdf.blkid == block_id) & (distdf.locid == site)].logdist.values[0]
+                # Tract 1104: has 5906 population, and two blocks (97708, 97709) from blk_tract & block_data, but none in the agent_results
+                ############################################################
 
-                #     block_utility = block_abd + block_distcoef * logdist
-                #     tract_site_willingess += (block_pop / tract_pop) * (np.exp(block_utility)/(1 + np.exp(block_utility)))
+                if len(dist_blocks_id) != len(common_blocks_id):
+                    
+                    # print("****************************\n")
+                    # print(i, site, len(blocks_pop), len(blocks_abd), len(dist_blocks_id))
+                    # print("****************************\n")
 
+                    # subset
+                    temp_common_blocks_id = set(dist_blocks_id) & set(common_blocks_id)
+                    temp_blocks_pop = block[block.blkid.isin(temp_common_blocks_id)].population.to_numpy()
+                    temp_blocks_abd = block_utils[block_utils.blkid.isin(temp_common_blocks_id)].abd.to_numpy()
+                    temp_blocks_distcoef = block_utils[block_utils.blkid.isin(temp_common_blocks_id)].distcoef.to_numpy()
+                    temp_block_distdf = block_distdf[block_distdf.blkid.isin(temp_common_blocks_id)]
+                    temp_tract_pop = np.sum(temp_blocks_pop)
+                    
+                    logdists = temp_block_distdf[temp_block_distdf.locid == site].logdist.to_numpy()
+
+                    blocks_utility = temp_blocks_abd + temp_blocks_distcoef * logdists
+                    tract_site_willingess = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+
+                else:
+                    
+                    logdists = block_distdf[block_distdf.locid == site].logdist.to_numpy()
+
+                    blocks_utility = blocks_abd + blocks_distcoef * logdists
+                    tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+
+                
                 F_current[i][site] = tract_site_willingess
 
         print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')
         F_current_df = pd.DataFrame(F_current)
         F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}.csv', header=False, index=False)
 
-
     ######################################################################
-    
+
+
     print(f'Constructing F_BLP_{Chain_type}...\n')
 
     C_chains = C_total[:,num_current_stores:num_total_stores]
@@ -125,25 +159,54 @@ def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_store
 
     for i in range(num_tracts):
 
-        tract_id = tract['GEOID'][i]
+        print(i)
 
-        blocks_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
-        blocks_pop = block[block.blkid.isin(blocks_id)].population.to_numpy()
-        blocks_abd = block_utils[block_utils.blkid.isin(blocks_id)].abd.to_numpy()
-        blocks_distcoef = block_utils[block_utils.blkid.isin(blocks_id)].distcoef.to_numpy()
+        tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
+        blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
+        block_id = block[block.blkid.isin(blk_tract_id)].blkid.to_list()
+        block_utils_id = block_utils[block_utils.blkid.isin(blk_tract_id)].blkid.to_list()
 
-        block_distdf = distdf_chain[distdf_chain.blkid.isin(blocks_id)] # only difference
+
+        if len(blk_tract_id) != len(block_id) or len(block_id) != len(block_utils_id) or len(block_utils_id) != len(blk_tract_id):
+            print(i, len(blk_tract_id), len(block_id), len(block_utils_id))
+            common_blocks_id = set(blk_tract_id) & set(block_id) & set(block_utils_id)
+        else:
+            common_blocks_id = blk_tract_id
+
+
+        blocks_pop = block[block.blkid.isin(common_blocks_id)].population.to_numpy()
+        blocks_abd = block_utils[block_utils.blkid.isin(common_blocks_id)].abd.to_numpy()
+        blocks_distcoef = block_utils[block_utils.blkid.isin(common_blocks_id)].distcoef.to_numpy()
+        block_distdf = distdf_chain[distdf_chain.blkid.isin(common_blocks_id)] # difference 1
 
         tract_pop = np.sum(blocks_pop)
-
+            
         for site in M_closest_chains[i]:
 
-            tract_site_willingess = 0            
-            logdists = block_distdf[block_distdf.locid == site].logdist.to_numpy()
+            tract_site_willingess = 0    
+            dist_blocks_id = block_distdf[block_distdf.locid == site].blkid.to_list()
 
-            blocks_utility = blocks_abd + blocks_distcoef * logdists
-            tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
-            
+            if len(dist_blocks_id) != len(common_blocks_id):
+                    
+                temp_common_blocks_id = set(dist_blocks_id) & set(common_blocks_id)
+                temp_blocks_pop = block[block.blkid.isin(temp_common_blocks_id)].population.to_numpy()
+                temp_blocks_abd = block_utils[block_utils.blkid.isin(temp_common_blocks_id)].abd.to_numpy()
+                temp_blocks_distcoef = block_utils[block_utils.blkid.isin(temp_common_blocks_id)].distcoef.to_numpy()
+                temp_block_distdf = block_distdf[block_distdf.blkid.isin(temp_common_blocks_id)]
+                temp_tract_pop = np.sum(temp_blocks_pop)
+                    
+                logdists = temp_block_distdf[temp_block_distdf.locid == site].logdist.to_numpy()
+
+                blocks_utility = temp_blocks_abd + temp_blocks_distcoef * logdists
+                tract_site_willingess = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+
+            else:
+                    
+                logdists = block_distdf[block_distdf.locid == site].logdist.to_numpy()
+
+                blocks_utility = blocks_abd + blocks_distcoef * logdists
+                tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+
             F_chains[i][site] = tract_site_willingess
 
     print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')    

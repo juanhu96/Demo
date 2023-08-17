@@ -28,7 +28,8 @@ def main():
     '''
 
     initial_BLP_estimation(Chain_type='Dollar', capacity=10000)
-
+    # F_current, F_total, _, _ = import_BLP_estimation(Chain_type='Dollar', capacity=10000)
+    # print(np.max(F_current), np.max(F_total))
 
     # optimize_main(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
     # evaluate_main(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5]) # TODO: need to modify F
