@@ -21,6 +21,8 @@ def initial_BLP_estimation(Chain_type, capacity, datadir='/export/storage_covidv
     ca_blk_pharm_dist.csv : block-pharmacy
     ca_blk_{Chain_type}_dist.csv : block-chain, need to be computed from block_dist_chain.py (with geonear in STATA)
     '''
+    
+    print(f'Start initializing BLP matrices from estimation for {Chain_type} under capacity {str(capacity)}... (only need to do this once)')
 
     tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int})
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
@@ -220,5 +222,8 @@ def import_BLP_estimation(Chain_type, capacity, resultdir='/export/storage_covid
     F_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}.csv', delimiter = ",", dtype = float) 
     F_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}.csv', delimiter = ",", dtype = float)
     F_total = np.concatenate((F_current, F_chain), axis = 1)
+
+    # print(F_current.shape, F_total.shape)
+    # print(np.max(F_current), np.max(F_total))
 
     return F_current, F_total, F_current, F_total

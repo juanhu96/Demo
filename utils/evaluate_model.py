@@ -64,7 +64,7 @@ def evaluate_rate(scenario, constraint, z, pc, pf, ncp, p, closest, K,
     env.setParam("OutputFlag",0)
     env.start()
     m = gp.Model("Vaccination")
-    m.Params.IntegralityFocus = 1
+    # m.Params.IntegralityFocus = 1
     m.Params.MIPGap = MIPGap
     
     total_demand = sum(p)

@@ -10,7 +10,7 @@ def construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_st
     See utils/import_demand.py
     '''
 
-    print("Warning: this should not be in use! \n")
+    print("Warning: this should not be in use unless for dummy matricies! \n")
 
     Deltahat = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
     F_D_total = np.exp(Deltahat) / (1+np.exp(Deltahat))

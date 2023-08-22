@@ -16,6 +16,7 @@ os.chdir(dname)
 from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix
 from utils.construct_F import construct_F_BLP, construct_F_LogLin
 from utils.import_dist import import_dist
+from utils.import_demand import import_BLP_estimation
 
 scale_factor = 10000
 
@@ -35,7 +36,6 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
 
         ## TODO: F_D undefined, this is dummy only
         F_D_current, F_D_total, _, _  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile) 
-
         _, _, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K)
 
     if Model in LogLin_models: 
@@ -139,7 +139,7 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
 
         if Chain_type == 'Dollar':
             optimize_dist(scenario = 'current',
-                        pc = pc_currentMinDist,  ncp = p_current, p = Population, K=K, 
+                        pc = pc_currentMinDist, ncp = p_current, p = Population, K=K, 
                         num_current_stores=num_current_stores,
                         num_total_stores=num_total_stores, 
                         num_tracts=num_tracts, 

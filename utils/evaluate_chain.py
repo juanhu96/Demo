@@ -16,6 +16,7 @@ os.chdir(dname)
 from utils.evaluate_model import evaluate_rate
 from utils.construct_F import construct_F_BLP, construct_F_LogLin
 from utils.import_dist import import_dist
+from utils.import_demand import import_BLP_estimation
 
 scale_factor = 10000
 
@@ -26,7 +27,9 @@ def evaluate_chain(Chain_type, Model, M, K, Demand_parameter, expdirpath, constr
     
     Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type, M)
     
-    F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
+    # TODO: subject to update
+    F_D_current, F_D_total, _, _  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
+    _, _, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K)
     
     f_dh_current = F_DH_current.flatten()
     f_dh_total = F_DH_total.flatten()
@@ -71,7 +74,7 @@ def evaluate_chain(Chain_type, Model, M, K, Demand_parameter, expdirpath, constr
         z_total = np.genfromtxt(f'{expdirpath}z_total.csv', delimiter = ",", dtype = float)
         z_current = np.genfromtxt(f'{expdirpath}z_current.csv', delimiter = ",", dtype = float)
         
-        constraint_list = ['assigned'] # TEMP
+        # constraint_list = ['assigned'] # TEMP
         for eval_constr in constraint_list:
 
             if Chain_type == 'Dollar':

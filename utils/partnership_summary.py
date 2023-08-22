@@ -17,6 +17,7 @@ maindir = '/export/storage_covidvaccine/'
 
 from utils.partnerships_summary_helpers import import_solution, create_row, tract_summary
 from utils.construct_F import construct_F_BLP, construct_F_LogLin
+from utils.import_demand import import_BLP_estimation
 
 def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
                         Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
@@ -95,7 +96,15 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
             
 
             ## Demand matrix for chain
-            if Vaccination_estimation == 'BLP': F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
+            if Vaccination_estimation == 'BLP': 
+
+                # F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
+                
+                ## TODO: F_D undefined, this is dummy only
+                ## TODO: also K = 10000 is temp, now F is K depend and need to be imported inside the loop
+                F_D_current, F_D_total, _, _  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile) 
+                _, _, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, 10000)
+
             if Vaccination_estimation == 'linear': F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_LogLin(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
 
             
@@ -125,25 +134,27 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
                         for opt_constr in constraint_list:
 
                             path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/{opt_constr}/'
+                            
+                            eval_constr = opt_constr
 
-                            for eval_constr in constraint_list:
+                            # for eval_constr in constraint_list:
 
-                                mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("total", path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest_total, Farthest_total)
+                            mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("total", path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest_total, Farthest_total)
 
-                                chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, eval_constr,\
-                                Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_total, C_total, C_total_walkable)
+                            chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, eval_constr,\
+                            Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_total, C_total, C_total_walkable)
+
+                            chain_summary_table.append(chain_summary)
+
+
+                            if Chain_type == 'Dollar':
+
+                                mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("current", path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest_current, Farthest_current)
+
+                                chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, opt_constr, eval_constr,\
+                                Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_current, C_current, C_current_walkable)
 
                                 chain_summary_table.append(chain_summary)
-
-
-                                if Chain_type == 'Dollar':
-
-                                    mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R = import_solution("current", path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest_current, Farthest_current)
-
-                                    chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, opt_constr, eval_constr,\
-                                    Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH_current, C_current, C_current_walkable)
-
-                                    chain_summary_table.append(chain_summary)
 
                                     # if export_tract_table==True:
 
