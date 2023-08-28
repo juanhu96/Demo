@@ -20,6 +20,16 @@ from utils.import_demand import import_BLP_estimation
 
 scale_factor = 10000
 
+try:
+    from demand_utils.vax_entities import Economy
+    from demand_utils import assignment_funcs as af
+    from demand_utils import demest_funcs as de
+except:
+    from Demand.demand_utils.vax_entities import Economy
+    from Demand.demand_utils import assignment_funcs as af
+    from Demand.demand_utils import demest_funcs as de
+
+
 
 def evaluate_chain_MIP(Chain_type, Model, M, K, Demand_parameter, expdirpath, constraint_list = ['assigned', 'vaccinated']):
     
