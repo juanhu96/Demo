@@ -21,7 +21,7 @@ from utils.import_demand import import_BLP_estimation
 scale_factor = 10000
 
 
-def evaluate_chain(Chain_type, Model, M, K, Demand_parameter, expdirpath, constraint_list = ['assigned', 'vaccinated']):
+def evaluate_chain_MIP(Chain_type, Model, M, K, Demand_parameter, expdirpath, constraint_list = ['assigned', 'vaccinated']):
     
     print(f'Evaluating Chain type: {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
     
@@ -103,5 +103,29 @@ def evaluate_chain(Chain_type, Model, M, K, Demand_parameter, expdirpath, constr
     pass
 
 
+
+def evaluate_chain_random_fcfs(Chain_type, Model, M, K, expdirpath)
+
+    print(f'Evaluating random order first-come-first served with Chain type: {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
+
+        # Import optimal z from optimziation
+    if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
+
+        for opt_constr in constraint_list:
+
+            print(f'{expdirpath}{opt_constr}/z...')
+            z_total = np.genfromtxt(f'{expdirpath}{opt_constr}/z_total.csv', delimiter = ",", dtype = float)
+            z_current = np.genfromtxt(f'{expdirpath}{opt_constr}/z_current.csv', delimiter = ",", dtype = float)
+
+    else: # MinDist
+
+        print(f'{expdirpath}z...')
+        z_total = np.genfromtxt(f'{expdirpath}z_total.csv', delimiter = ",", dtype = float)
+        z_current = np.genfromtxt(f'{expdirpath}z_current.csv', delimiter = ",", dtype = float)
+
+
+    random_fcfs(hain_type, Model, M, K, expdirpath,)
+
+    pass
 
 

@@ -15,7 +15,7 @@ os.chdir(dname)
 from utils.optimize_main import optimize_main
 from utils.evaluate_main import evaluate_main
 from utils.partnership_summary import partnerships_summary
-from utils.import_demand import initial_BLP_estimation, import_BLP_estimation
+from utils.import_demand import initial_BLP_estimation, import_BLP_estimation, demand_check
 
 def main():
 
@@ -32,30 +32,21 @@ def main():
     
     '''
 
-    for capacity in [8000, 12000, 15000, 20000]:
-        initial_BLP_estimation(Chain_type='Dollar', capacity=capacity)
+    ############################################################################################################
 
-    # optimize_main(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # evaluate_main(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='MaxVaxHPIDistBLP')
+    # for capacity in [8000, 12000, 15000, 20000]:
+    #     initial_BLP_estimation(Chain_type='Dollar', capacity=capacity)
+    # demand_check(Chain_type='Dollar', capacity=100000)
 
-    # optimize_main(Model_list = ['MaxVaxHPIDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # evaluate_main(Model_list = ['MaxVaxHPIDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # partnerships_summary(Model_list = ['MaxVaxHPIDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='MaxVaxHPIDistLogLin')
+    ############################################################################################################
 
-    # optimize_main(Model_list = ['MaxVaxDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # evaluate_main(Model_list = ['MaxVaxDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # partnerships_summary(Model_list = ['MaxVaxDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='MaxVaxDistBLP')
+    # optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxHPIDistLogLin', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxHPIDistLogLin', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxHPIDistLogLin', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'all')
 
-    # optimize_main(Model_list = ['MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # evaluate_main(Model_list = ['MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # partnerships_summary(Model_list = ['MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename='MinDist')
+    ############################################################################################################
 
-
-    # optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxHPIDistLogLin', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'noIntFocus')
-
+    
 
 if __name__ == "__main__":
     main()

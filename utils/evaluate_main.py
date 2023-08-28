@@ -12,7 +12,7 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.evaluate_chain import evaluate_chain
+from utils.evaluate_chain import evaluate_chain_MIP, evaluate_chain_random_fcfs
 
 
 def evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
@@ -37,13 +37,6 @@ def evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPID
     
     ''' 
 
-
-    # TODO: UPDATE THE COEF
-
-    Demand_parameter = [[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]] # v2
-    # Demand_parameter = [[1.227, -0.452], [2.028, -0.120, -1.357, -1.197, -0.925, -0.254, -0.218, -0.114]] # v3
-
-
     for Model in Model_list: 
         for K in K_list:
             for M in M_list:
@@ -52,7 +45,13 @@ def evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPID
                         
                     chain_path = f'/export/storage_covidvaccine/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
 
-                    evaluate_chain(Chain_type, Model, M = M, K = K, Demand_parameter = Demand_parameter, expdirpath = chain_path)
+                    # evaluate the chain with facility location MIP
+                    # Demand_parameter = [[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]] # v2
+                    # evaluate_chain(Chain_type, Model, M = M, K = K, Demand_parameter = Demand_parameter, expdirpath = chain_path) 
+
+                    # evalute the chain with random order deferred acceptance
+                    evaluate_chain_random_fcfs(Chain_type, Model, M = M, K = K, expdirpath = chain_path)
+
 
 
     pass

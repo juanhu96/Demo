@@ -3,6 +3,8 @@
 """
 Created on Jul, 2022
 Import BLP demand estimation and compute F
+
+Check demand estimation (tract/zip level)
 """
 
 import time
@@ -23,7 +25,8 @@ def initial_BLP_estimation(Chain_type, capacity, datadir='/export/storage_covidv
     '''
     
     print(f'Start initializing BLP matrices from estimation for {Chain_type} under capacity {str(capacity)}... (only need to do this once)')
-
+    
+    ### Tract-block
     tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int})
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
     block.sort_values(by=['blkid'], inplace=True)
@@ -36,6 +39,24 @@ def initial_BLP_estimation(Chain_type, capacity, datadir='/export/storage_covidv
 
     C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type=Chain_type, M=20)
     construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain)
+
+
+def demand_check(Chain_type, capacity, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+
+    ### Tract-block
+    tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int})
+    block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
+    block.sort_values(by=['blkid'], inplace=True)
+    blk_tract = pd.read_csv(f'{datadir}/Intermediate/blk_tract.csv', usecols=['tract', 'blkid']) 
+    block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_3q.csv', delimiter = ",") 
+
+    ### Distance pairs
+    distdf = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
+    C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type=Chain_type, M=20)
+    
+    zip_demand_checks(capacity, block, block_utils, distdf)
+    tract_demand_check(capacity, num_tracts, tract, block, blk_tract, block_utils, distdf)
+    
 
 
 
@@ -62,7 +83,7 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data"):
 
 
 
-def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=10, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=10, resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
     M here doesn't matter, because we have C_closest in the optimization constraint
@@ -81,7 +102,7 @@ def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_store
 
         for i in range(num_tracts):
 
-            print(i)
+            # print(i)
 
             tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
             blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
@@ -227,3 +248,92 @@ def import_BLP_estimation(Chain_type, capacity, resultdir='/export/storage_covid
     # print(np.max(F_current), np.max(F_total))
 
     return F_current, F_total, F_current, F_total
+
+
+
+
+def tract_demand_check(capacity, num_tracts, tract, block, blk_tract, block_utils, distdf, resultdir='/export/storage_covidvaccine/Result/'):
+    
+    print('Start tract-level demand check...\n')
+
+    Tract_summary = []
+    for i in range(num_tracts):
+
+        tract_site_willingess = 0
+
+        tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
+        blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
+        block_id = block[block.blkid.isin(blk_tract_id)].blkid.to_list()
+        block_utils_id = block_utils[block_utils.blkid.isin(blk_tract_id)].blkid.to_list()
+
+
+        if len(blk_tract_id) != len(block_id) or len(block_id) != len(block_utils_id) or len(block_utils_id) != len(blk_tract_id):
+            print(i, len(blk_tract_id), len(block_id), len(block_utils_id))
+            common_blocks_id = set(blk_tract_id) & set(block_id) & set(block_utils_id)
+        else:
+            common_blocks_id = blk_tract_id
+
+
+        blocks_pop = block[block.blkid.isin(common_blocks_id)].population.to_numpy()
+        blocks_abd = block_utils[block_utils.blkid.isin(common_blocks_id)].abd.to_numpy()
+        blocks_distcoef = block_utils[block_utils.blkid.isin(common_blocks_id)].distcoef.to_numpy()
+        tract_pop = np.sum(blocks_pop)
+
+        # print(common_blocks_id)
+        block_distdf = distdf[distdf.blkid.isin(common_blocks_id)]
+        # print('****************************\n')
+        # print(block_distdf)
+        # print('****************************\n')
+        logdists = block_distdf.groupby(['blkid'])['logdist'].min() # group by block, find min logdist
+        # print(logdists)
+
+
+        blocks_utility = blocks_abd + blocks_distcoef * logdists
+        tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+        
+        Tract_summary.append({'Tract': i, 'GEOID': tract_id, 'Num blocks': len(common_blocks_id), 'Estimated': tract_site_willingess})
+        
+    Tract_summary = pd.DataFrame(Tract_summary)
+    Tract_summary.to_csv(f'{resultdir}/Tract_demand_check_{str(capacity)}.csv', encoding='utf-8', index=False, header=True)
+    
+
+
+
+
+def zip_demand_checks(capacity, block, block_utils, distdf, resultdir='/export/storage_covidvaccine/Result/'):
+    
+    print('Start zip-level demand check...\n')
+    
+    zips = block.zip.unique()
+    Zip_summary = []
+    for zip in zips:
+
+        zip_site_willingess = 0
+
+        block_zip_id = block[block.zip == zip].blkid.unique()
+        block_id = block[block.blkid.isin(block_zip_id)].blkid.to_list()
+        block_utils_id = block_utils[block_utils.blkid.isin(block_zip_id)].blkid.to_list()
+
+        if len(block_zip_id) != len(block_id) or len(block_id) != len(block_utils_id) or len(block_utils_id) != len(block_zip_id):
+            common_blocks_id = set(block_zip_id) & set(block_id) & set(block_utils_id)
+        else:
+            common_blocks_id = block_zip_id
+
+
+        blocks_pop = block[block.blkid.isin(common_blocks_id)].population.to_numpy()
+        blocks_abd = block_utils[block_utils.blkid.isin(common_blocks_id)].abd.to_numpy()
+        blocks_distcoef = block_utils[block_utils.blkid.isin(common_blocks_id)].distcoef.to_numpy()
+        zip_pop = np.sum(blocks_pop)
+
+        block_distdf = distdf[distdf.blkid.isin(common_blocks_id)]   
+        logdists = block_distdf.groupby(['blkid'])['logdist'].min()
+
+        blocks_utility = blocks_abd + blocks_distcoef * logdists
+        zip_site_willingess = np.sum((blocks_pop / zip_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+
+        Zip_summary.append({'Zip': zip, 'Num blocks': len(common_blocks_id), 'Estimated': zip_site_willingess})
+
+    Zip_summary = pd.DataFrame(Zip_summary)
+    Zip_summary.to_csv(f'{resultdir}/Zip_demand_check_{str(capacity)}.csv', encoding='utf-8', index=False, header=True)
+
+
