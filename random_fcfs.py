@@ -26,12 +26,14 @@ except:
 
 datadir='/export/storage_covidvaccine/Data/'
 resultdir='/export/storage_covidvaccine/Result/'
-testing = True
-raw_capacity = 10000 #capacity per location. lower when testing 
-max_rank = 5 #maximum rank to offer
+testing = False
+raw_capacity = 10000 # capacity per location. lower when testing 
+max_rank = 5 # max rank to offer
+nsplits = 3 # 3 quartiles
 
 ####################################################################################
 ### Block basic info
+block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv')
 block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv', usecols=["blkid", "market_ids", "population"]) 
 blocks_unique = np.unique(block.blkid.values)
 markets_unique = np.unique(block.market_ids.values)
@@ -60,49 +62,50 @@ distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
 block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{raw_capacity}_200_3q.csv', delimiter = ",") 
 block_utils = block_utils.loc[block_utils.blkid.isin(blocks_tokeep), :]
 
+### Keep markets in both
+df = pd.read_csv(f"{datadir}Analysis/Demand/demest_data.csv")
+df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=False, add_dist=False)
+df = df.loc[df.market_ids.isin(markets_unique), :]
+mkts_in_both = set(df['market_ids'].tolist()).intersection(set(block['market_ids'].tolist()))
+print("Number of markets:", len(mkts_in_both))
+
+### Subset blocks
+block = block.loc[block.market_ids.isin(mkts_in_both), :]
+df = df.loc[df.market_ids.isin(mkts_in_both), :]
+distdf = distdf.loc[distdf.blkid.isin(block.blkid.unique()), :]
+
+print(df.head())
+block = block.merge(df[['market_ids', 'hpi_quantile']], on='market_ids', how='left')
+print(block.head())
+'''
+### Estimation results
 distcoefs = block_utils.distcoef.values
 abd = block_utils.abd.values
-print(len(distcoefs), len(abd))
+
 ####################################################################################
-
-
-# Create Economy object
+### Create Economy object
 print("Start creating economy...")
-# create economy
 dist_grp = distdf.groupby('blkid')
 locs = dist_grp.locid.apply(np.array).values # list of lists of location IDs, corresponding to dists
 dists = dist_grp.logdist.apply(np.array).values # list of lists of distances, sorted ascending
 geog_pops = block.population.values
 
-# print(locs, dists)
-# print(len(locs))
-economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank)
-print(economy.n_geogs)
+economy = vaxclass.Economy(locs, dists, geog_pops, max_rank)
 
-# RUN FIXED POINT
+af.random_fcfs_eval(economy, distcoefs, abd, capacity)
+af.assignment_stats_eval(economy, max_rank)
+
+print(economy.assignments)
+
+####################################################################################
+### Report results
+
+# TODO: compute vaccination rates at block-level now
+
+
+### Vaccination rates by quartile
+
+## find the HPI quartile of each block
+
+
 '''
-print("Entering fixed point loop...\nTime:", round(time.time()-time_entered, 2), "seconds")
-sys.stdout.flush()
-
-agent_results, results = fp.run_fp(
-    economy=economy,
-    capacity=capacity,
-    agent_data_full=agent_data_full,
-    cw_pop=block,
-    df=df,
-    product_formulations=product_formulations,
-    agent_formulation=agent_formulation,
-    coefsavepath=coefsavepath,
-    micro_computation_chunks=1 if max_rank <= 50 else 10
-)
-
-print("Done with fixed point loop at time:", round(time.time()-time_entered, 2), "seconds")
-sys.stdout.flush()
-'''
-
-### TODO: currently random_fcfs assures everyone to their last if the previous full, we want to directly drop these
-### TODO: this is not done in random_fcfs but in assignment_stats
-
-# a0 = copy.deepcopy(economy.assignments) # initial assignments?
-af.random_fcfs(economy, distcoefs, abd, capacity)
-af.assignment_stats(economy, max_rank)
