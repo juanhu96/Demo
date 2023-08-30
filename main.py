@@ -34,8 +34,9 @@ def main():
 
     ############################################################################################################
 
-    for capacity in [10000]:
-        initial_BLP_estimation(Chain_type='Dollar', capacity=capacity, heterogeneity=False)
+    # for capacity in [10000]:
+        # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity) # with HPI
+        # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity, heterogeneity=False) # without
     # demand_check(Chain_type='Dollar', capacity=100000)
 
     ############################################################################################################

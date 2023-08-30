@@ -28,15 +28,15 @@ except:
     from Demand.demand_utils import assignment_funcs as af
     from Demand.demand_utils import demest_funcs as de
 
-'''
-def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
+
+def partnerships_summary_old(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
                         Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
                         M_list = [5, 10], K_list = [8000, 10000, 12000],
                         Vaccination_estimation = 'BLP', constraint_list = ['assigned', 'vaccinated'], 
                         export_tract_table = False, filename = ''):
     
 
-    '''
+
     '''
     Summary for each (Model, Chain, M, K, opt_constr, eval_constr) pair
 
@@ -62,7 +62,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
     filename : string
         Filename
     '''
-    '''
+
 
     
     chain_summary_table = []
@@ -243,7 +243,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
                         
     chain_summary = pd.DataFrame(chain_summary_table)
     chain_summary.to_csv(f'{maindir}Result/sensitivity_results_{filename}.csv', encoding='utf-8', index=False, header=True)
-'''
+
                 
 
 
