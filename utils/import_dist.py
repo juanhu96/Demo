@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 
 
-def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data", MAXDIST = 500000, scale_factor = 10000):
+def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data", MAXDIST = 100000, scale_factor = 10000):
 
     ### Census Tract 
     Population = np.genfromtxt(f'{datadir}/CA_demand_over_5.csv', delimiter = ",", dtype = int)
@@ -74,4 +74,5 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data", MAXD
     pc_total = p_total * C_total
 
     return Population, Quartile, p_current, p_total, pc_current, pc_total, C_total_mat, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores
+
 

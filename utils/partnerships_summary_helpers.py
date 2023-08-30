@@ -48,7 +48,85 @@ def import_solution(scenario, path, eval_constr, num_tracts, num_current_stores,
 
 
 
+def create_row(Scenario, Model, Chain_type, M, K, opt_constr, block, locs, dists, assignment, nsplits=3):
 
+
+    population = sum(block.population)
+    population_1 = sum(block[block.hpi_quantile == 1].population)
+    population_2 = sum(block[block.hpi_quantile == 2].population)
+    population_3 = sum(block[block.hpi_quantile == 3].population)
+    total_population = np.round(np.array([population, population_1, population_2, population_3]) / 1000000, 2)
+
+    dists_1 = dists[block.hpi_quantile == 1]
+    dists_2 = dists[block.hpi_quantile == 2]
+    dists_3 = dists[block.hpi_quantile == 3]
+    assignment_1 = assignment[block.hpi_quantile == 1]
+    assignment_2 = assignment[block.hpi_quantile == 2]
+    assignment_3 = assignment[block.hpi_quantile == 3]
+
+
+    vaccination = np.sum(assignment)
+    vaccination_1 = np.sum(assignment_1)
+    vaccination_2 = np.sum(assignment_2)
+    vaccination_3 = np.sum(assignment_3)
+    total_vaccination = np.round(np.array([vaccination, vaccination_1, vaccination_2, vaccination_3]) / 1000000, 2)
+
+    rate = vaccination / population
+    rate_1 = vaccination_1 / population_1
+    rate_2 = vaccination_2 / population_3
+    rate_3 = vaccination_3 / population_3
+    total_rate = np.round(np.array([rate, rate_1, rate_2, rate_3]) * 100, 2)
+
+
+    # walkable (< 1.6km)
+    dists_walkable = np.where(np.exp(dists) < 1.6, 1, 0)
+    assignment_walkable = assignment * dists_walkable
+    assignment_walkable_1 = assignment_walkable[block.hpi_quantile == 1]
+    assignment_walkable_2 = assignment_walkable[block.hpi_quantile == 2]
+    assignment_walkable_3 = assignment_walkable[block.hpi_quantile == 3]
+
+    vaccination_walkable = np.sum(assignment_walkable)
+    vaccination_walkable_1 = np.sum(assignment_walkable_1)
+    vaccination_walkable_2 = np.sum(assignment_walkable_2)
+    vaccination_walkable_3 = np.sum(assignment_walkable_3)
+    total_vaccination_walkable = np.round(np.array([vaccination_walkable, vaccination_walkable_1, vaccination_walkable_2, vaccination_walkable_3]) / 1000000, 2)
+
+    rate_walkable = vaccination_walkable / population
+    rate_walkable_1 = vaccination_walkable_1 / population_1
+    rate_walkable_2 = vaccination_walkable_2 / population_3
+    rate_walkable_3 = vaccination_walkable_3 / population_3
+    total_rate_walkable = np.round(np.array([rate_walkable, rate_walkable_1, rate_walkable_2, rate_walkable_3]) * 100, 2)
+
+
+    # dists is the log dist (km)
+    avg_dist = np.sum(assignment * np.exp(dists)) / population
+    avg_dist_1 = np.sum(assignment_1 * np.exp(dists_1)) / population_1
+    avg_dist_2 = np.sum(assignment_2 * np.exp(dists_2)) / population_2
+    avg_dist_3 = np.sum(assignment_3 * np.exp(dists_3)) / population_3
+    total_avg_dist = np.round(np.array([avg_dist, avg_dist_1, avg_dist_2, avg_dist_3]), 2)
+
+    chain_summary = {'Model': Model, 'Chain': Scenario,
+                     'Opt Constr': opt_constr,
+                     'M': M, 'K': K,
+                     'Vaccination': total_vaccination[0], 
+                     'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 
+                     'Vaccination HPI3': total_vaccination[3],
+                     'Rate': total_rate[0],
+                     'Rate HPI1': total_rate[1], 'Rate HPI2': total_rate[2], 
+                     'Rate HPI3': total_rate[3],
+                     'Vaccination Walkable': total_vaccination_walkable[0], 
+                     'Vaccination Walkable HPI1': total_vaccination_walkable[1], 'Vaccination Walkable HPI2': total_vaccination_walkable[2], 
+                     'Vaccination Walkable HPI3': total_vaccination_walkable[3],
+                     'Vaccination Walkable rate HPI1': total_rate_walkable[1], 'Vaccination Walkable rate HPI2': total_rate_walkable[2],
+                     'Vaccination Walkable rate HPI3': total_rate_walkable[3],
+                     'Average distance': total_avg_dist[0],
+                     'Average distance HPI1': total_avg_dist[1], 'Average distance HPI2': total_avg_dist[2],
+                     'Average distance HPI3': total_avg_dist[3]}
+    
+    return chain_summary
+
+
+'''
 def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH, C, C_walkable):
 
     
@@ -284,8 +362,221 @@ def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quart
 
 
     return chain_summary
+'''
+
+
+'''
+def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH, C, C_walkable):
+
+    
+    maindir = '/export/storage_covidvaccine/'
+    Quartile = np.genfromtxt(f'{maindir}/Data/HPIQuantile3_TRACT.csv', delimiter = ",", dtype = int)  
+
+    total_population = sum(Population)
+    CA_TRACT = pd.DataFrame(data = {'Population': Population, 'HPIQuartile': Quartile})
+    
+    population1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Population'].values)
+    population2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Population'].values)
+    population3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Population'].values)
+    population_vec = [total_population, population1, population2, population3]
+
+    
+    ########################################################################### 
+    
+    ## Assigned within M
+    assigned_within = np.sum(mat_y_hpi_closest, axis = 1)
+    CA_TRACT['Assigned_Rate_WithinM'] = assigned_within
+    CA_TRACT['Assigned_Population_WithinM'] = CA_TRACT['Assigned_Rate_WithinM'] * CA_TRACT['Population']
+    assigned_within_hpi = sum(CA_TRACT['Assigned_Population_WithinM'].values) / total_population
+    assigned_within_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Assigned_Population_WithinM'].values) / population1
+    assigned_within_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Assigned_Population_WithinM'].values) / population2
+    assigned_within_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Assigned_Population_WithinM'].values) / population3
+    
+    assigned_within_rate = np.array([[assigned_within_hpi, assigned_within_hpi1, assigned_within_hpi2, assigned_within_hpi3]])
+    assigned_within_population = np.round(assigned_within_rate * population_vec / 1000000,4)[0]
+    assigned_within_rate = np.round(assigned_within_rate * 100)[0]
+
+
+    ## Assigned away M
+    assigned_away = np.sum(mat_y_hpi_farthest, axis = 1)
+    CA_TRACT['Assigned_Rate_AwayM'] = assigned_away
+    CA_TRACT['Assigned_Population_AwayM'] = CA_TRACT['Assigned_Rate_AwayM'] * CA_TRACT['Population']
+    assigned_away_hpi = sum(CA_TRACT['Assigned_Population_AwayM'].values) / total_population
+    assigned_away_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Assigned_Population_AwayM'].values) / population1
+    assigned_away_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Assigned_Population_AwayM'].values) / population2
+    assigned_away_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Assigned_Population_AwayM'].values) / population3
+    
+    assigned_away_rate = np.array([[assigned_away_hpi, assigned_away_hpi1, assigned_away_hpi2, assigned_away_hpi3]])
+    assigned_away_population = np.round(assigned_away_rate * population_vec / 1000000,4)[0]
+    assigned_away_rate = np.round(assigned_away_rate * 100)[0]
+
+
+    ## Total vaccination
+    total_rate_hpi = np.sum(np.multiply(F_DH, mat_y_hpi), axis = 1)
+    CA_TRACT['Rate_HPI'] = total_rate_hpi
+    CA_TRACT['Vaccinated_Population_HPI'] = CA_TRACT['Rate_HPI'] * CA_TRACT['Population']
+    
+    total_rate_hpi = sum(CA_TRACT['Vaccinated_Population_HPI'].values) / total_population
+    total_rate_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Vaccinated_Population_HPI'].values) / population1
+    total_rate_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Vaccinated_Population_HPI'].values) / population2
+    total_rate_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Vaccinated_Population_HPI'].values) / population3
+
+    total_rate = np.array([[total_rate_hpi, total_rate_hpi1, total_rate_hpi2, total_rate_hpi3]])
+    total_vaccination = np.round(total_rate * population_vec / 1000000,4)[0]
+    total_proportion = np.round(total_rate * 100)[0]
+
+
+    ## Vaccination within M
+    rate_hpi = np.sum(np.multiply(F_DH, mat_y_hpi_closest), axis = 1)
+    CA_TRACT['Rate_HPI'] = rate_hpi
+    CA_TRACT['Vaccinated_Population_HPI'] = CA_TRACT['Rate_HPI'] * CA_TRACT['Population']
+    
+    rate_hpi = sum(CA_TRACT['Vaccinated_Population_HPI'].values) / total_population
+    rate_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Vaccinated_Population_HPI'].values) / population1
+    rate_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Vaccinated_Population_HPI'].values) / population2
+    rate_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Vaccinated_Population_HPI'].values) / population3
+    
+    rate = np.array([[rate_hpi, rate_hpi1, rate_hpi2, rate_hpi3]])
+    vaccination = np.round(rate * population_vec / 1000000,4)[0]
+    proportion = np.round(rate * 100)[0]
     
 
+    ## Vaccination away M
+    drop_hpi = np.sum(np.multiply(F_DH, mat_y_hpi_farthest), axis = 1)
+    CA_TRACT['Drop_HPI'] = drop_hpi
+    CA_TRACT['Drop_Vaccination_HPI'] = CA_TRACT['Drop_HPI'] * CA_TRACT['Population']
+    
+    drop_hpi = sum(CA_TRACT['Drop_Vaccination_HPI'].values) / total_population
+    drop_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Drop_Vaccination_HPI'].values) / population1
+    drop_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Drop_Vaccination_HPI'].values) / population2
+    drop_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Drop_Vaccination_HPI'].values) / population3
+    
+    drop = np.array([[drop_hpi, drop_hpi1, drop_hpi2, drop_hpi3]])
+    drop_vaccination = np.round(drop * population_vec / 1000000,4)[0]
+    drop_proportion = np.round(drop * 100)[0]
+    
+    
+    ## Assigned within Walkable
+    assigned_walkable_hpi = np.sum(np.multiply(C_walkable, mat_y_hpi), axis=1) 
+    CA_TRACT['Assigned_Walkable_HPI'] = assigned_walkable_hpi
+    CA_TRACT['Assigned_Walkable_Population_HPI'] = CA_TRACT['Assigned_Walkable_HPI'] * CA_TRACT['Population']    
+
+    assigned_walkable_hpi = sum(CA_TRACT['Assigned_Walkable_Population_HPI'].values)
+    assigned_walkable_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Assigned_Walkable_Population_HPI'].values)
+    assigned_walkable_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Assigned_Walkable_Population_HPI'].values)
+    assigned_walkable_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Assigned_Walkable_Population_HPI'].values)
+
+    assigned_walkable_list = np.array([[assigned_walkable_hpi, assigned_walkable_hpi1, assigned_walkable_hpi2, assigned_walkable_hpi3]])
+    assigned_walkable = np.round(assigned_walkable_list / 1000000, 4)[0]
+    assigned_walkable_proportion = np.round(assigned_walkable_list[0] / population_vec * 100)
+
+
+    ## Vaccination within Walkable
+    rate_walkable_hpi = np.sum(np.multiply(C_walkable, np.multiply(F_DH, mat_y_hpi)), axis =1) 
+    CA_TRACT['Vaccinate_Walkable_HPI'] = rate_walkable_hpi
+    CA_TRACT['Vaccination_Walkable_HPI'] = CA_TRACT['Vaccinate_Walkable_HPI'] * CA_TRACT['Population']    
+
+    rate_walkable_hpi = sum(CA_TRACT['Vaccination_Walkable_HPI'].values)
+    rate_walkable_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Vaccination_Walkable_HPI'].values)
+    rate_walkable_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Vaccination_Walkable_HPI'].values)
+    rate_walkable_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Vaccination_Walkable_HPI'].values)
+    
+    rate_walkable_list = np.array([[rate_walkable_hpi, rate_walkable_hpi1, rate_walkable_hpi2, rate_walkable_hpi3]])
+    vaccination_walkable = np.round(rate_walkable_list / 1000000, 4)[0]
+    rate_walkable = np.round(rate_walkable_list[0] / population_vec * 100)
+
+
+    ## Distance among assigned
+    assigned_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, mat_y_hpi), axis = 1) / np.sum(mat_y_hpi, axis = 1), posinf=0)
+    CA_TRACT['Dist_HPI_Assigned'] = assigned_dist_hpi
+    CA_TRACT['Assigned_Population_HPI'] = CA_TRACT['Population'] * np.sum(mat_y_hpi, axis = 1)
+    CA_TRACT['Dist_HPI_weighted'] = CA_TRACT['Dist_HPI_Assigned'] * CA_TRACT['Assigned_Population_HPI']
+    
+    assigned_dist_hpi = sum(CA_TRACT['Dist_HPI_weighted'].values) / sum(CA_TRACT['Assigned_Population_HPI'].values)
+    assigned_dist_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Assigned_Population_HPI'])
+    assigned_dist_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Assigned_Population_HPI'])
+    assigned_dist_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Assigned_Population_HPI'])
+    
+    assigned_dist_actual = np.array([[assigned_dist_hpi, assigned_dist_hpi1, assigned_dist_hpi2, assigned_dist_hpi3]])
+    assigned_dist_actual = np.round(assigned_dist_actual/1000, 4)[0]
+    
+
+    ## Distance among assigned within M
+    closest_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, mat_y_hpi_closest), axis = 1) / np.sum(mat_y_hpi_closest, axis = 1), posinf=0)
+    CA_TRACT['Dist_HPI_Closest'] = closest_dist_hpi
+    CA_TRACT['Closest_Population_HPI'] = np.sum(mat_y_hpi_closest, axis = 1) * CA_TRACT['Population']
+    CA_TRACT['Dist_HPI_weighted'] = CA_TRACT['Dist_HPI_Closest'] * CA_TRACT['Closest_Population_HPI']
+
+    closest_dist_hpi = sum(CA_TRACT['Dist_HPI_weighted'].values) / sum(CA_TRACT['Closest_Population_HPI'].values)
+    closest_dist_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Closest_Population_HPI'])
+    closest_dist_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Closest_Population_HPI'])
+    closest_dist_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Closest_Population_HPI'])
+
+    closest_dist_actual = np.array([[closest_dist_hpi, closest_dist_hpi1, closest_dist_hpi2, closest_dist_hpi3]])
+    closest_dist_actual = np.round(closest_dist_actual/1000, 4)[0]
+    
+
+    ## Distance among assigned away M
+    farthest_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, mat_y_hpi_farthest), axis = 1) / np.sum(mat_y_hpi_farthest, axis = 1), posinf=0)
+    CA_TRACT['Dist_HPI_Farthest'] = farthest_dist_hpi
+    CA_TRACT['Farthest_Population_HPI'] = np.sum(mat_y_hpi_farthest, axis = 1) * CA_TRACT['Population']
+    CA_TRACT['Dist_HPI_weighted'] = CA_TRACT['Dist_HPI_Farthest'] * CA_TRACT['Farthest_Population_HPI']
+
+    farthest_dist_hpi = sum(CA_TRACT['Dist_HPI_weighted'].values) / sum(CA_TRACT['Farthest_Population_HPI'].values)
+    farthest_dist_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Farthest_Population_HPI'])
+    farthest_dist_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Farthest_Population_HPI'])
+    farthest_dist_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Farthest_Population_HPI'])
+
+    farthest_dist_actual = np.array([[farthest_dist_hpi, farthest_dist_hpi1, farthest_dist_hpi2, farthest_dist_hpi3]])
+    farthest_dist_actual = np.round(farthest_dist_actual/1000, 4)[0]
+    
+
+    ###########################################################################
+
+    chain_summary = {'Model': Model, 'Chain': Scenario,
+                     'Opt Constr': opt_constr, 'Eval Constr': eval_constr,
+                     'M': M, 'K': K,
+                     'R': R,
+                     'Vaccination': total_vaccination[0], 
+                     'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 
+                     'Vaccination HPI3': total_vaccination[3],
+                     'Rate': total_proportion[0],
+                     'Rate HPI1': total_proportion[1], 'Rate HPI2': total_proportion[2], 
+                     'Rate HPI3': total_proportion[3],
+                     'Vaccination Within M': vaccination[0], 
+                     'Vaccination Within M HPI1': vaccination[1], 'Vaccination Within M HPI2': vaccination[2], 
+                     'Vaccination Within M HPI3': vaccination[3],
+                     'Rate Within M': proportion[0],
+                     'Rate Within M HPI1': proportion[1], 'Rate Within M HPI2': proportion[2], 
+                     'Rate Within M HPI3': proportion[3],
+                     'Assigned Within M': assigned_within_population[0], 
+                     'Assigned Within M HPI1': assigned_within_population[1], 'Assigned Within M HPI2': assigned_within_population[2], 
+                     'Assigned Within M HPI3': assigned_within_population[3],
+                     'Assigned Rate Within M': assigned_within_rate[0], 
+                     'Assigned Rate Within M HPI1': assigned_within_rate[1], 'Assigned Rate Within M HPI2': assigned_within_rate[2], 
+                     'Assigned Rate Within M HPI3': assigned_within_rate[3],
+                     'Assigned Walkable': assigned_walkable[0], 
+                     'Assigned Walkable HPI1': assigned_walkable[1], 'Assigned Walkable HPI2': assigned_walkable[2], 
+                     'Assigned Walkable HPI3': assigned_walkable[3],
+                     'Assigned Walkable rate': assigned_walkable_proportion[0], 
+                     'Assigned Walkable rate HPI1': assigned_walkable_proportion[1], 'Assigned Walkable rate HPI2': assigned_walkable_proportion[2],
+                     'Assigned Walkable rate HPI3': assigned_walkable_proportion[3],
+                     'Vaccination Walkable': vaccination_walkable[0], 
+                     'Vaccination Walkable HPI1': vaccination_walkable[1], 'Vaccination Walkable HPI2': vaccination_walkable[2], 
+                     'Vaccination Walkable HPI3': vaccination_walkable[3],
+                     'Vaccination Walkable rate': rate_walkable[0], 
+                     'Vaccination Walkable rate HPI1': rate_walkable[1], 'Vaccination Walkable rate HPI2': rate_walkable[2],
+                     'Vaccination Walkable rate HPI3': rate_walkable[3],
+                     'Average distance': assigned_dist_actual[0],
+                     'Average distance HPI1': assigned_dist_actual[1], 'Average distance HPI2': assigned_dist_actual[2],
+                     'Average distance HPI3': assigned_dist_actual[3],
+                    }                   
+
+
+
+    return chain_summary
+   
+'''
 
 ###########################################################################
 ###########################################################################

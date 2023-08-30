@@ -5,6 +5,13 @@ import numpy as np
 
 def construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile):
 
+    '''
+    Old version of BLP, need version requires block-level estimates
+    See utils/import_demand.py
+    '''
+
+    print("Warning: this should not be in use unless for dummy matricies! \n")
+
     Deltahat = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
     F_D_total = np.exp(Deltahat) / (1+np.exp(Deltahat))
     F_D_current = F_D_total[:,0:num_current_stores]
@@ -39,8 +46,6 @@ def construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_st
 
 
 
-
-
 def construct_F_LogLin(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile):
 
     F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
@@ -68,3 +73,7 @@ def construct_F_LogLin(Model, Demand_parameter, C_total, num_tracts, num_current
     F_DH_current = F_DH_total[:,0:num_current_stores]
 
     return F_D_current, F_D_total, F_DH_current, F_DH_total
+
+
+
+

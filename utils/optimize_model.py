@@ -71,7 +71,7 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     env.start()
 
     m = gp.Model("Vaccination")
-    m.Params.IntegralityFocus = 1
+    # m.Params.IntegralityFocus = 1
     m.Params.MIPGap = MIPGap
     
 
@@ -141,7 +141,7 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
 
 def optimize_dist(scenario, pc, ncp, p, K,
                   num_current_stores, num_total_stores, num_tracts,
-                  scale_factor, path, MIPGap = 3e-2):
+                  scale_factor, path, MIPGap = 5e-2):
     
     '''
     See optimize_rate()
@@ -153,7 +153,7 @@ def optimize_dist(scenario, pc, ncp, p, K,
     env.start()
 
     m = gp.Model("Vaccination")
-    m.Params.IntegralityFocus = 1
+    # m.Params.IntegralityFocus = 1
     m.Params.MIPGap = MIPGap
     
 

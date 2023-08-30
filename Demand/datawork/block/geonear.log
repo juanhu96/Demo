@@ -1,0 +1,119 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /mnt/phd/jihu/VaxDemandDistance/Demand/datawork/block/geonear.log
+  log type:  text
+ opened on:  29 Aug 2023, 04:07:42
+
+. 
+. *Pass in parameters.
+. local baselocs "`1'"
+
+. local nborlocs "`2'"
+
+. local outpath "`3'"
+
+. local within "`4'"
+
+. local limit "`5'"
+
+. 
+. if "`within'" == "" local within 200 //max distance in km to search for neigh
+> bors
+
+. if "`limit'" == "" local limit 300 //max number of neighbors to return
+
+. 
+. di "baselocs: `baselocs'"
+baselocs: /export/storage_covidvaccine/Data/Intermediate/blk_coords.dta
+
+. di "nborlocs: `nborlocs'"
+nborlocs: /export/storage_covidvaccine/Data/Intermediate/ca_Dollar_locations.dt
+> a
+
+. di "outpath: `outpath'"
+outpath: /export/storage_covidvaccine/Data/Intermediate/ca_blk_Dollar_dist.csv
+
+. di "within: `within'"
+within: 500
+
+. di "limit: `limit'"
+limit: 50
+
+. 
+. use "`baselocs'", clear
+
+. 
+. ds
+latitude   longitude  blkid
+
+. 
+. geonear blkid latitude longitude using "`nborlocs'", neighbors(id latitude lo
+> ngitude) long within(`within') limit(`limit')
+
+current   base    nbor      ops in       cumul   cumul %     remaining
+ region   locs    locs      region     ops (M)    % done    (hh:mm:ss)
+  1712       2     917       1,834         7.6       3.3      00:04:54
+  3394       7     864       6,048        16.2       6.2      00:05:01
+  5256       7     516       3,612        24.2      11.0      00:04:04
+  7166       5     576       2,880        32.7      14.9      00:03:48
+  8899       7     565       3,955        40.3      18.6      00:03:39
+ 10675       3     615       1,845        48.2      22.1      00:03:32
+ 12472       6     619       3,714        56.2      25.5      00:03:25
+ 14272       5     571       2,855        64.4      28.8      00:03:18
+ 15960       9     604       5,436        72.0      32.3      00:03:09
+ 17732       8     625       5,000        80.0      35.9      00:02:59
+ 19187      11     598       6,578        86.9      38.5      00:02:56
+ 20834       8     648       5,184        94.0      41.5      00:02:49
+ 22465       6     662       3,972       101.1      44.3      00:02:43
+ 24185       2     698       1,396       109.7      47.3      00:02:36
+ 26002       7     682       4,774       118.3      50.6      00:02:27
+ 27785       9     760       6,840       127.0      53.8      00:02:18
+ 29489       9     709       6,381       136.0      56.9      00:02:09
+ 31092       6     698       4,188       143.8      59.8      00:02:01
+ 32955       7     692       4,844       153.2      63.3      00:01:50
+ 34680       9     589       5,301       161.1      66.4      00:01:41
+ 36505       5     645       3,225       169.0      69.9      00:01:31
+ 38514       6     589       3,534       178.2      73.6      00:01:19
+ 39852       9     950       8,550       186.5      76.0      00:01:13
+ 41206       6     968       5,808       195.0      78.4      00:01:06
+ 42723       6     944       5,664       204.4      81.0      00:00:59
+ 44353       5     835       4,175       214.4      83.8      00:00:50
+ 46150       8     955       7,640       223.9      86.9      00:00:41
+ 47709       7     808       5,656       232.8      89.6      00:00:32
+ 49420       7     763       5,341       242.2      92.8      00:00:22
+ 51074       8     835       6,680       251.0      95.8      00:00:13
+ 52540       8     750       6,000       259.4      98.3      00:00:05
+
+-------------------------------------------------------------------------------
+Unique base locations   = 377,591        Unique neighbor locations = 1,016     
+Bases * Neighbors  (M)  = 383.6          Number of regions         = 53,460    
+Computed distances (M)  = 264.08         Total run time (seconds)  = 320.199
+-------------------------------------------------------------------------------
+
+. 
+. rename id locid
+
+. rename km_to_id dist
+
+. 
+. gen logdist = log(dist)
+
+. drop dist
+
+. 
+. count
+  18,879,550
+
+. ds
+blkid    locid    logdist
+
+. 
+. gsort blkid logdist //this is important as future code assumes this
+
+. 
+. export delim "`outpath'", replace
+file /export/storage_covidvaccine/Data/Intermediate/ca_blk_Dollar_dist.csv save
+> d
+
+. 
+. cap log close

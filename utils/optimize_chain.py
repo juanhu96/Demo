@@ -16,6 +16,7 @@ os.chdir(dname)
 from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix
 from utils.construct_F import construct_F_BLP, construct_F_LogLin
 from utils.import_dist import import_dist
+from utils.import_demand import import_BLP_estimation
 
 scale_factor = 10000
 
@@ -25,20 +26,18 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
     print(f'Chain type: {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
     
     Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type, M)
-
-    # TODO: do matching between tract & zip, and also include demographics
     
     BLP_models = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP']
     LogLin_models = ['MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin']
-    
+
+
     if Model in BLP_models: 
-        #Demand_parameter = [[1.227, -0.452], [2.028, -0.120, -1.357, -1.197, -0.925, -0.254, -0.218, -0.114]] # v3
-        Demand_parameter = [[1.227, -0.452], [1.729, -0.031, -0.998, -0.699, -0.614, -0.363, -0.363, -0.249]] # v2
-        F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
+        F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K)
 
     if Model in LogLin_models: 
         Demand_parameter = [[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, 0.053, 0.047, 0.039]]
         F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_LogLin(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
+
 
     ###########################################################################
 
@@ -69,17 +68,17 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
             print(expdirpath + constraint + '/')
 
-            if Chain_type == 'Dollar':
-                optimize_rate(scenario='current', constraint=constraint,
-                            pc=pc_current, 
-                            pf=pfdh_current, 
-                            ncp=p_current, p=Population,
-                            closest=Closest_current, K=K, 
-                            num_current_stores=num_current_stores,
-                            num_total_stores=num_total_stores, 
-                            num_tracts=num_tracts,
-                            scale_factor=scale_factor,
-                            path = expdirpath + constraint + '/')
+            # if Chain_type == 'Dollar':
+            #     optimize_rate(scenario='current', constraint=constraint,
+            #                 pc=pc_current, 
+            #                 pf=pfdh_current, 
+            #                 ncp=p_current, p=Population,
+            #                 closest=Closest_current, K=K, 
+            #                 num_current_stores=num_current_stores,
+            #                 num_total_stores=num_total_stores, 
+            #                 num_tracts=num_tracts,
+            #                 scale_factor=scale_factor,
+            #                 path = expdirpath + constraint + '/')
 
             optimize_rate(scenario='total', constraint=constraint,
                         pc=pc_total,
@@ -101,17 +100,17 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
             print(expdirpath + constraint + '/')
 
-            if Chain_type == 'Dollar':
-                optimize_rate(scenario = 'current', constraint=constraint,
-                            pc=pc_current, 
-                            pf=pfd_current, 
-                            ncp=p_current, p=Population,
-                            closest=Closest_current, K=K, 
-                            num_current_stores=num_current_stores, 
-                            num_total_stores=num_total_stores, 
-                            num_tracts=num_tracts,
-                            scale_factor=scale_factor, 
-                            path = expdirpath + constraint + '/')
+            # if Chain_type == 'Dollar':
+            #     optimize_rate(scenario = 'current', constraint=constraint,
+            #                 pc=pc_current, 
+            #                 pf=pfd_current, 
+            #                 ncp=p_current, p=Population,
+            #                 closest=Closest_current, K=K, 
+            #                 num_current_stores=num_current_stores, 
+            #                 num_total_stores=num_total_stores, 
+            #                 num_tracts=num_tracts,
+            #                 scale_factor=scale_factor, 
+            #                 path = expdirpath + constraint + '/')
                 
             optimize_rate(scenario = 'total', constraint = constraint,
                         pc = pc_total, 
@@ -134,14 +133,14 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
 
         print(expdirpath)
 
-        if Chain_type == 'Dollar':
-            optimize_dist(scenario = 'current',
-                        pc = pc_currentMinDist,  ncp = p_current, p = Population, K=K, 
-                        num_current_stores=num_current_stores,
-                        num_total_stores=num_total_stores, 
-                        num_tracts=num_tracts, 
-                        scale_factor=scale_factor,
-                        path = expdirpath)
+        # if Chain_type == 'Dollar':
+        #     optimize_dist(scenario = 'current',
+        #                 pc = pc_currentMinDist, ncp = p_current, p = Population, K=K, 
+        #                 num_current_stores=num_current_stores,
+        #                 num_total_stores=num_total_stores, 
+        #                 num_tracts=num_tracts, 
+        #                 scale_factor=scale_factor,
+        #                 path = expdirpath)
        
         optimize_dist(scenario = 'total',
                     pc = pc_totalMinDist, ncp = p_total, p = Population, K=K,
@@ -166,16 +165,16 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
             print(expdirpath + constraint + '/')
 
-            if Chain_type == 'Dollar':
+            # if Chain_type == 'Dollar':
 
-                optimize_rate_fix(scenario = 'current', constraint = constraint,
-                                ncp = p_current, pv = pv_current, p = Population,
-                                closest = Closest_current, K=K, 
-                                num_current_stores=num_current_stores,
-                                num_total_stores=num_total_stores,
-                                num_tracts=num_tracts, 
-                                scale_factor=scale_factor,
-                                path = expdirpath + constraint + '/')
+            #     optimize_rate_fix(scenario = 'current', constraint = constraint,
+            #                     ncp = p_current, pv = pv_current, p = Population,
+            #                     closest = Closest_current, K=K, 
+            #                     num_current_stores=num_current_stores,
+            #                     num_total_stores=num_total_stores,
+            #                     num_tracts=num_tracts, 
+            #                     scale_factor=scale_factor,
+            #                     path = expdirpath + constraint + '/')
 
             optimize_rate_fix(scenario = 'total', constraint = constraint,
                             ncp = p_total, pv = pv_total, p = Population, 
