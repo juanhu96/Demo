@@ -73,7 +73,9 @@ def estimate_demand(
     """
     Simple wrapper for estimating demand using BLP - this is not very flexible and is meant to be run in the fixed point.
     """
+    print("Estimating demand...")
     pyblp.options.verbose = verbose
+    pyblp.options.flush_output = True
     
     agent_vars = str(agent_formulation).split(' + ')
 
@@ -94,6 +96,7 @@ def estimate_demand(
         pi_init = 0.01*np.ones((1,len(agent_vars)))
 
     if poolnum==1:
+        print("Solving with one core...")
         results = problem.solve(
             pi=pi_init,
             sigma = 0, 
@@ -146,7 +149,7 @@ def compute_abd(
             if verbose:
                 print(f"{vv} is a distance term, omitting from ABD and adding to coefficients instead")
             if vv=='logdist':
-                deltas_df = deltas_df.assign(distcoef = agent_data[vv])
+                agent_utils.loc[:, 'distcoef'] += coef
             elif vv.startswith('logdistXhpi_quantile'):
                 qq = int(vv[-1]) #last character is the quantile number
                 agent_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef

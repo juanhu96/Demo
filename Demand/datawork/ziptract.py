@@ -29,6 +29,10 @@ for col in ['tract', 'zip']:
     tractzip[f"frac_of_{col}_area"] = tractzip['area'] / tractzip[col].map(col_area)
 
 
-tractzip_out = tractzip.drop(columns=['geometry']).sort_values(by=['zip', 'tract'])
+# save as geopandas dataframe
+tractzip.to_file(f"{datadir}/Intermediate/tract_zip_crosswalk.shp")
 
+# save as csv
+tractzip_out = tractzip.drop(columns=['geometry']).sort_values(by=['zip', 'tract'])
 tractzip_out.to_csv(f"{datadir}/Intermediate/tract_zip_crosswalk.csv", index=False)
+

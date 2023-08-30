@@ -40,13 +40,19 @@ outdir = "/export/storage_covidvaccine/Result/Demand"
 testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
 testing = False  #TODO:
 capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
-max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 50 #maximum rank to offer
+max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 200 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 3 #number of HPI quantiles
 
 # in rundemest_assm.sh we have, e.g.:
 # nohup python3 /users/facsupport/zhli/VaxDemandDistance/Demand/demest_assm.py 10000 10 > demest_assm_10000_10.out &
 
+only_constant = False #if True, only estimate constant term in demand. default to False
+no_dist_heterogeneity = False #if True, no distance heterogeneity in demand. default to False
+
 setting_tag = f"{capacity}_{max_rank}_{nsplits}q"
+setting_tag += "_const" if only_constant else ""
+setting_tag += "_nodisthet" if no_dist_heterogeneity else ""
+
 coefsavepath = f"{outdir}/coefs/{setting_tag}_coefs" if not testing else None
 
 
@@ -110,13 +116,19 @@ for qq in range(1, nsplits):
 for vv in controls:
     formulation1_str += " + " + vv
 
-agent_formulation_str = '0 +'
-for qq in range(1, nsplits):
-    agent_formulation_str += f' logdistXhpi_quantile{qq} +'
-if ref_lastq:
-    agent_formulation_str += ' logdist'
+if only_constant:
+    formulation1_str = "1 + prices"
+
+if no_dist_heterogeneity:
+    agent_formulation_str = '0 + logdist'
 else:
-    agent_formulation_str += f' logdistXhpi_quantile{nsplits}'
+    agent_formulation_str = '0 +'
+    for qq in range(1, nsplits):
+        agent_formulation_str += f' logdistXhpi_quantile{qq} +'
+    if ref_lastq:
+        agent_formulation_str += ' logdist'
+    else:
+        agent_formulation_str += f' logdistXhpi_quantile{nsplits}'
 
 formulation1 = pyblp.Formulation(formulation1_str)
 formulation2 = pyblp.Formulation('1')
@@ -216,6 +228,10 @@ if not testing:
         results.to_pickle(f"/export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
         print(f"Saved results to /export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
 
+# read in agent_results
+# setting_tag = "10000_200_3q"
+# agent_results = pd.read_csv(f"{outdir}/agent_results_{setting_tag}.csv")
+# 
 
 
 # #=================================================================
@@ -240,3 +256,5 @@ if not testing:
 #     from Demand.demand_utils import assignment_funcs as af
 #     from Demand.demand_utils import demest_funcs as de
 #     from Demand.demand_utils import fixed_point as fp
+
+
