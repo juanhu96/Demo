@@ -13,7 +13,7 @@ import pandas as pd
 
 
 
-def initial_BLP_estimation(Chain_type, capacity, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+def initial_BLP_estimation(Chain_type, capacity, heterogeneity, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
     tract_centroids.csv : tract info
@@ -31,24 +31,33 @@ def initial_BLP_estimation(Chain_type, capacity, datadir='/export/storage_covidv
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
     block.sort_values(by=['blkid'], inplace=True)
     blk_tract = pd.read_csv(f'{datadir}/Intermediate/blk_tract.csv', usecols=['tract', 'blkid']) 
-    block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_3q.csv', delimiter = ",") 
+    
+    if heterogeneity:
+        block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_3q.csv', delimiter = ",") 
+    else:
+        block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_3q_const_nodisthet.csv', delimiter = ",") 
+    
 
     ### Distance pairs
     distdf = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
     distdf_chain = pd.read_csv(f'{datadir}Intermediate/ca_blk_{Chain_type}_dist.csv', dtype={'locid': int, 'blkid': int}) # 
 
     C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type=Chain_type, M=20)
-    construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain)
+    construct_F_BLP(Chain_type, capacity, heterogeneity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain)
 
 
-def demand_check(Chain_type, capacity, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+def demand_check(Chain_type, capacity, heterogeneity, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
 
     ### Tract-block
     tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int})
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
     block.sort_values(by=['blkid'], inplace=True)
     blk_tract = pd.read_csv(f'{datadir}/Intermediate/blk_tract.csv', usecols=['tract', 'blkid']) 
-    block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_3q.csv', delimiter = ",") 
+
+    if heterogeneity:
+        block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_3q.csv', delimiter = ",") 
+    else:
+        block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_3q_const_nodisthet.csv', delimiter = ",")
 
     ### Distance pairs
     distdf = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
@@ -83,7 +92,7 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data"):
 
 
 
-def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=10, resultdir='/export/storage_covidvaccine/Result/'):
+def construct_F_BLP(Chain_type, capacity, heterogeneity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=10, resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
     M here doesn't matter, because we have C_closest in the optimization constraint
@@ -167,7 +176,10 @@ def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_store
 
         print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')
         F_current_df = pd.DataFrame(F_current)
-        F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}.csv', header=False, index=False)
+        if heterogeneity:
+            F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}.csv', header=False, index=False)
+        else:
+            F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_nodisthet.csv', header=False, index=False)
 
     ######################################################################
 
@@ -234,20 +246,24 @@ def construct_F_BLP(Chain_type, capacity, C_total, num_tracts, num_current_store
 
     print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')    
     F_chains_df = pd.DataFrame(F_chains)
-    F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}.csv', header=False, index=False)
+    if heterogeneity:
+        F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}.csv', header=False, index=False)
+    else:
+        F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_nodisthet.csv', header=False, index=False)
 
 
 
 def import_BLP_estimation(Chain_type, capacity, resultdir='/export/storage_covidvaccine/Result/'):
 
-    F_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}.csv', delimiter = ",", dtype = float) 
-    F_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}.csv', delimiter = ",", dtype = float)
-    F_total = np.concatenate((F_current, F_chain), axis = 1)
+    F_D_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_nodisthet.csv', delimiter = ",", dtype = float) 
+    F_D_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_nodisthet.csv', delimiter = ",", dtype = float)
+    F_D_total = np.concatenate((F_D_current, F_D_chain), axis = 1)
 
-    # print(F_current.shape, F_total.shape)
-    # print(np.max(F_current), np.max(F_total))
+    F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}.csv', delimiter = ",", dtype = float) 
+    F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}.csv', delimiter = ",", dtype = float)
+    F_DH_total = np.concatenate((F_DH_current, F_DH_chain), axis = 1)
 
-    return F_current, F_total, F_current, F_total
+    return F_D_current, F_D_total, F_DH_current, F_DH_total
 
 
 

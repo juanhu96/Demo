@@ -12,7 +12,7 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.evaluate_chain import evaluate_chain_MIP, evaluate_chain_random_fcfs
+from utils.evaluate_chain import evaluate_chain_MIP, evaluate_chain_RandomFCFS
 
 
 def evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
@@ -50,7 +50,7 @@ def evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPID
                     # evaluate_chain(Chain_type, Model, M = M, K = K, Demand_parameter = Demand_parameter, expdirpath = chain_path) 
 
                     # evalute the chain with random order deferred acceptance
-                    evaluate_chain_random_fcfs(Chain_type, Model, M = M, K = K, expdirpath = chain_path)
+                    evaluate_chain_RandomFCFS(Chain_type, Model, M = M, K = K, expdirpath = chain_path)
 
 
 

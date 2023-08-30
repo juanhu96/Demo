@@ -48,6 +48,84 @@ def import_solution(scenario, path, eval_constr, num_tracts, num_current_stores,
 
 
 
+def create_row(Scenario, Model, Chain_type, M, K, opt_constr, block, locs, dists, assignment, nsplits=3):
+
+
+    population = sum(block.population)
+    population_1 = sum(block[block.hpi_quantile == 1].population)
+    population_2 = sum(block[block.hpi_quantile == 2].population)
+    population_3 = sum(block[block.hpi_quantile == 3].population)
+    total_population = np.round(np.array([population, population_1, population_2, population_3]) / 1000000, 2)
+
+    dists_1 = dists[block.hpi_quantile == 1]
+    dists_2 = dists[block.hpi_quantile == 2]
+    dists_3 = dists[block.hpi_quantile == 3]
+    assignment_1 = assignment[block.hpi_quantile == 1]
+    assignment_2 = assignment[block.hpi_quantile == 2]
+    assignment_3 = assignment[block.hpi_quantile == 3]
+
+
+    vaccination = np.sum(assignment)
+    vaccination_1 = np.sum(assignment_1)
+    vaccination_2 = np.sum(assignment_2)
+    vaccination_3 = np.sum(assignment_3)
+    total_vaccination = np.round(np.array([vaccination, vaccination_1, vaccination_2, vaccination_3]) / 1000000, 2)
+
+    rate = vaccination / population
+    rate_1 = vaccination_1 / population_1
+    rate_2 = vaccination_2 / population_3
+    rate_3 = vaccination_3 / population_3
+    total_rate = np.round(np.array([rate, rate_1, rate_2, rate_3]) * 100, 2)
+
+
+    # walkable (< 1.6km)
+    dists_walkable = np.where(np.exp(dists) < 1.6, 1, 0)
+    assignment_walkable = assignment * dists_walkable
+    assignment_walkable_1 = assignment_walkable[block.hpi_quantile == 1]
+    assignment_walkable_2 = assignment_walkable[block.hpi_quantile == 2]
+    assignment_walkable_3 = assignment_walkable[block.hpi_quantile == 3]
+
+    vaccination_walkable = np.sum(assignment_walkable)
+    vaccination_walkable_1 = np.sum(assignment_walkable_1)
+    vaccination_walkable_2 = np.sum(assignment_walkable_2)
+    vaccination_walkable_3 = np.sum(assignment_walkable_3)
+    total_vaccination_walkable = np.round(np.array([vaccination_walkable, vaccination_walkable_1, vaccination_walkable_2, vaccination_walkable_3]) / 1000000, 2)
+
+    rate_walkable = vaccination_walkable / population
+    rate_walkable_1 = vaccination_walkable_1 / population_1
+    rate_walkable_2 = vaccination_walkable_2 / population_3
+    rate_walkable_3 = vaccination_walkable_3 / population_3
+    total_rate_walkable = np.round(np.array([rate_walkable, rate_walkable_1, rate_walkable_2, rate_walkable_3]) * 100, 2)
+
+
+    # dists is the log dist (km)
+    avg_dist = np.sum(assignment * np.exp(dists)) / population
+    avg_dist_1 = np.sum(assignment_1 * np.exp(dists_1)) / population_1
+    avg_dist_2 = np.sum(assignment_2 * np.exp(dists_2)) / population_2
+    avg_dist_3 = np.sum(assignment_3 * np.exp(dists_3)) / population_3
+    total_avg_dist = np.round(np.array([avg_dist, avg_dist_1, avg_dist_2, avg_dist_3]), 2)
+
+    chain_summary = {'Model': Model, 'Chain': Scenario,
+                     'Opt Constr': opt_constr,
+                     'M': M, 'K': K,
+                     'Vaccination': total_vaccination[0], 
+                     'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 
+                     'Vaccination HPI3': total_vaccination[3],
+                     'Rate': total_rate[0],
+                     'Rate HPI1': total_rate[1], 'Rate HPI2': total_rate[2], 
+                     'Rate HPI3': total_rate[3],
+                     'Vaccination Walkable': total_vaccination_walkable[0], 
+                     'Vaccination Walkable HPI1': total_vaccination_walkable[1], 'Vaccination Walkable HPI2': total_vaccination_walkable[2], 
+                     'Vaccination Walkable HPI3': total_vaccination_walkable[3],
+                     'Vaccination Walkable rate HPI1': total_rate_walkable[1], 'Vaccination Walkable rate HPI2': total_rate_walkable[2],
+                     'Vaccination Walkable rate HPI3': total_rate_walkable[3],
+                     'Average distance': total_avg_dist[0],
+                     'Average distance HPI1': total_avg_dist[1], 'Average distance HPI2': total_avg_dist[2],
+                     'Average distance HPI3': total_avg_dist[3]}
+    
+    return chain_summary
+
+
 '''
 def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH, C, C_walkable):
 
@@ -287,11 +365,9 @@ def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quart
 '''
 
 
+'''
 def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH, C, C_walkable):
 
-    '''
-    3 quartiles
-    '''
     
     maindir = '/export/storage_covidvaccine/'
     Quartile = np.genfromtxt(f'{maindir}/Data/HPIQuantile3_TRACT.csv', delimiter = ",", dtype = int)  
@@ -500,7 +576,7 @@ def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quart
 
     return chain_summary
    
-
+'''
 
 ###########################################################################
 ###########################################################################
