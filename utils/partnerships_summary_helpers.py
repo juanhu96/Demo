@@ -48,7 +48,7 @@ def import_solution(scenario, path, eval_constr, num_tracts, num_current_stores,
 
 
 
-def create_row(Scenario, Model, Chain_type, M, K, opt_constr, block, locs, dists, assignment, nsplits=3):
+def create_row(Scenario, Model, Chain_type, M, K, opt_constr, R, block, locs, dists, assignment, nsplits=3):
 
 
     population = sum(block.population)
@@ -107,7 +107,7 @@ def create_row(Scenario, Model, Chain_type, M, K, opt_constr, block, locs, dists
 
     chain_summary = {'Model': Model, 'Chain': Scenario,
                      'Opt Constr': opt_constr,
-                     'M': M, 'K': K,
+                     'M': M, 'K': K, 'R': R,
                      'Vaccination': total_vaccination[0], 
                      'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 
                      'Vaccination HPI3': total_vaccination[3],

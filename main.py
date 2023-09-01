@@ -38,12 +38,13 @@ def main():
         # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity) # with HPI
         # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity, heterogeneity=False) # without
     # demand_check(Chain_type='Dollar', capacity=100000)
+    demand_check(Chain_type='Dollar', capacity=100000, heterogeneity=False)
 
     ############################################################################################################
 
-    optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'new')
+    # optimize_main(Model_list = ['MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # evaluate_main(Model_list = ['MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'main')
 
 
 if __name__ == "__main__":

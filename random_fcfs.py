@@ -4,7 +4,7 @@
 Created on Aug, 2023
 @Author: Jingyuan Hu 
 
-Temp file for random order fcfs
+Temp file for random order fcfs and other tests
 """
 
 import pyblp
@@ -35,7 +35,7 @@ expdirpath = '/export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K10000/Dol
 opt_constr = 'assigned'
 chain_name = 'Dollar'
 
-
+'''
 ####################################################################################
 ### Block basic info
 block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv', usecols=["blkid", "market_ids", "population"]) 
@@ -82,6 +82,7 @@ block = block.loc[block.market_ids.isin(mkts_in_both), :]
 df = df.loc[df.market_ids.isin(mkts_in_both), :]
 distdf = distdf.loc[distdf.blkid.isin(block.blkid.unique()), :]
 block = block.merge(df[['market_ids', 'hpi_quantile']], on='market_ids', how='left')
+'''
 
 '''
 ### Estimation results
@@ -109,7 +110,7 @@ np.savetxt(f'{expdirpath}{opt_constr}/assignment_{raw_capacity}_{chain_name}.csv
 '''
 ####################################################################################
 ### Report results
-
+'''
 # TODO: compute vaccination rates at block-level now
 ### Vaccination rates by quartile
 
@@ -134,5 +135,15 @@ for quantile in range(1, nsplits+1):
     rate_quantile = np.round(total_assignment_quantile / total_pop_quantile * 100, 2)
 
     print(total_assignment_quantile, rate_quantile)
-
+'''
     
+# ====================================================================================
+
+block_utils_nodisthet = pd.read_csv(f'{resultdir}Demand/agent_results_10000_200_3q_const_nodisthet.csv', delimiter = ",")
+print(block_utils_nodisthet.head())
+
+block_utils_nodisthet.head(100).to_csv(f'{resultdir}BLP_matrix/test_submatrix.csv', header=True, index=False)
+
+
+# block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_10000_200_3q.csv', delimiter = ",") 
+# print(block_utils.head())

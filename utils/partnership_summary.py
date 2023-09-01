@@ -250,9 +250,10 @@ def partnerships_summary_old(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 
 
 def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
                         Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
-                        M_list = [5, 10], K_list = [8000, 10000, 12000], nsplits = 3,
+                        M_list = [5, 10], K_list = [8000, 10000, 12000],
                         Vaccination_estimation = 'BLP', constraint_list = ['assigned', 'vaccinated'], 
-                        export_tract_table = False, filename = '', datadir='/export/storage_covidvaccine/Data/'):
+                        export_tract_table = False, filename = '', datadir='/export/storage_covidvaccine/Data/',
+                        nsplits = 3, num_current_stores = 4035):
 
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv', usecols=["blkid", "market_ids", "population"]) 
     blocks_unique = np.unique(block.blkid.values)
@@ -285,11 +286,14 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
                             path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/{opt_constr}/'
                             print(path)
 
+                            z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
+                            R = num_current_stores - sum(z[0 : num_current_stores])
+
                             locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
                             dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}.csv', delimiter = "")
                             assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}.csv', delimiter = "")
 
-                            chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, block, locs, dists, assignment)
+                            chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, R, block, locs, dists, assignment)
                             chain_summary_table.append(chain_summary)
 
                             if Chain_type == 'Dollar':
@@ -302,18 +306,21 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
                                     dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
                                     assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
 
-                                    chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", block, locs, dists, assignment)
+                                    chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", 0, block, locs, dists, assignment)
                                     chain_summary_table.append(chain_summary)
 
                     else: # MinDist
 
                         path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
+
+                        z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
+                        R = num_current_stores - sum(z[0 : num_current_stores])
                         
                         locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
                         dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}.csv', delimiter = "")
                         assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}.csv', delimiter = "")
 
-                        chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, block, locs, dists, assignment)
+                        chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, R, block, locs, dists, assignment)
                         chain_summary_table.append(chain_summary)
 
                         if Chain_type == 'Dollar':
@@ -322,7 +329,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
                             dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
                             assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
 
-                            chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", block, locs, dists, assignment)
+                            chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", 0, block, locs, dists, assignment)
                             chain_summary_table.append(chain_summary)
 
 
