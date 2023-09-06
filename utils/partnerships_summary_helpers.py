@@ -48,7 +48,7 @@ def import_solution(scenario, path, eval_constr, num_tracts, num_current_stores,
 
 
 
-def create_row(Scenario, Model, Chain_type, M, K, opt_constr, R, block, locs, dists, assignment, nsplits=3):
+def create_row(Scenario, Model, Chain_type, M, K, opt_constr, R, block, locs, dists, assignment):
 
 
     population = sum(block.population)

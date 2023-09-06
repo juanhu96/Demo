@@ -302,7 +302,6 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
                                     
                                     path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
 
-                                    locs = np.genfromtxt(f'{path}locs_{K}_Pharmacy.csv', delimiter = "")
                                     dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
                                     assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
 

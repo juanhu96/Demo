@@ -32,19 +32,21 @@ def main():
     
     '''
 
-    ############################################################################################################
+    # ==============================================================================================================
 
     # for capacity in [10000]:
-        # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity) # with HPI
-        # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity, heterogeneity=False) # without
+    #     initial_BLP_estimation(Chain_type='Dollar', capacity=capacity) # with HPI
+    #     initial_BLP_estimation(Chain_type='Dollar', capacity=capacity, heterogeneity=False) # without
     # demand_check(Chain_type='Dollar', capacity=100000)
-    demand_check(Chain_type='Dollar', capacity=100000, heterogeneity=False)
+    # demand_check(Chain_type='Dollar', capacity=100000, heterogeneity=False)
 
-    ############################################################################################################
+    # ==============================================================================================================
 
-    # optimize_main(Model_list = ['MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # evaluate_main(Model_list = ['MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'main')
+    optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5])
+    evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5])
+    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5], filename = '8000')
+
+    # ==============================================================================================================
 
 
 if __name__ == "__main__":
