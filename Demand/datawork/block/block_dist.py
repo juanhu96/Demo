@@ -5,7 +5,8 @@ import numpy as np
 import geopandas as gpd
 import subprocess
 datadir = "/export/storage_covidvaccine/Data"
-codedir = "/mnt/staff/zhli/VaxDemandDistance" #TODO: change
+# codedir = "/mnt/staff/zhli/VaxDemandDistance" #TODO: change
+codedir = "/mnt/phd/jihu/VaxDemandDistance"
 
 # read pharmacy locations
 pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID'])
@@ -37,8 +38,8 @@ print("Entering Stata...")
 
 # pharmacy distances
 outpath = f"{datadir}/Intermediate/ca_blk_pharm_dist.csv"
-within = 200 # km
-limit = 500 # number of pharmacies to consider
+within = 2000 # km
+limit = 100 # number of pharmacies to consider
 output = subprocess.run(["stata-mp", "-b", "do", f"{codedir}/Demand/datawork/geonear_pharmacies.do", baselocpath, pharmlocpath, outpath, str(within), str(limit)], capture_output=True, text=True)
 
 print(output.stdout)

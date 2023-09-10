@@ -1,0 +1,6 @@
+/export/storage_covidvaccine//Result/MaxVaxHPIDistBLP/M5_K12000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxHPIDistBLP/M5_K12000/Dollar/vaccinated/
+/export/storage_covidvaccine//Result/MaxVaxDistBLP/M5_K12000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxDistBLP/M5_K12000/Dollar/vaccinated/
+/export/storage_covidvaccine//Result/MaxVaxFixV/M5_K12000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxFixV/M5_K12000/Dollar/vaccinated/

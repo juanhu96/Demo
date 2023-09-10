@@ -121,7 +121,8 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
                         num_total_stores=num_total_stores,
                         num_tracts=num_tracts,
                         scale_factor=scale_factor,
-                        path = expdirpath + constraint + '/')
+                        path = expdirpath + constraint + '/',
+                        MIPGap = 5e-3)
         
   
     ###########################################################################

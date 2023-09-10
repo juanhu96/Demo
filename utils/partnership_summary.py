@@ -298,7 +298,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'Max
 
                             if Chain_type == 'Dollar':
 
-                                if opt_constr == 'assigned': # 'vaccinated' would be same
+                                if Model == 'MaxVaxHPIDistBLP' and opt_constr == 'assigned': # 'vaccinated' would be same
                                     
                                     path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
 
