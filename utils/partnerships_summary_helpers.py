@@ -9,46 +9,42 @@ import pandas as pd
 import numpy as np
 
 
-def import_solution(scenario, path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest, Farthest):
-
-
-    if scenario == "total":
-        y_hpi = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
-        z_hpi = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
-        num_stores = num_total_stores
-        R = num_current_stores - sum(z_hpi[0 : num_current_stores])
+def import_solution(path, Chain_type, K):
     
-    elif scenario == "firstround_total":
-        y_hpi = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
-        z_hpi = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
-        num_stores = num_total_stores
-        R = num_current_stores - sum(z_hpi[0 : num_current_stores])
-    
-    elif scenario == "current":
-        y_hpi = np.genfromtxt(f'{path}y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
-        num_stores = num_current_stores
-        R = 0
+    z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
+    # y = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
 
-    elif scenario == "firstround_current":
-        y_hpi = np.genfromtxt(f'{path}y_current.csv', delimiter = ",", dtype = float)
-        num_stores = num_current_stores
-        R = 0
-    
-    else:
-        print("Warning: scenario undefined in import_solution().")
+    # locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
+    dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}.csv', delimiter = "")
+    assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}.csv', delimiter = "")
 
-    y_hpi_closest = y_hpi * Closest
-    y_hpi_farthest = y_hpi * Farthest
-
-    mat_y_hpi = np.reshape(y_hpi, (num_tracts, num_stores))
-    mat_y_hpi_closest = np.reshape(y_hpi_closest, (num_tracts, num_stores))
-    mat_y_hpi_farthest = np.reshape(y_hpi_farthest, (num_tracts, num_stores))
-
-    return mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R
+    return z, dists, assignment
 
 
 
-def create_row(Scenario, Model, Chain_type, M, K, opt_constr, R, block, locs, dists, assignment):
+def import_locations(df, Chain_type='01_DollarStores', datadir='/export/storage_covidvaccine/Data/'):
+
+    df.rename(columns = {"zip": "zip_code"}, inplace = True)
+    df['zip_code']=df['zip_code'].astype("string")
+
+    pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'zip_code', 'StateID'])
+    pharmacy_locations = pharmacy_locations.loc[pharmacy_locations['StateID'] == 6, :]
+    pharmacy_locations.drop(columns=['StateID'], inplace=True)
+    pharmacy_locations['zip_code'] = pharmacy_locations['zip_code'].astype("string")
+    pharmacy_locations = pharmacy_locations.merge(df[['zip_code', 'hpi_quantile']], on='zip_code', how='left')
+
+    chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_type}.csv", usecols=['Latitude', 'Longitude', 'Zip_Code', 'State'])
+    chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude', 'Zip_Code': 'zip_code'}, inplace=True)
+    chain_locations = chain_locations.loc[chain_locations['State'] == 'CA', :]
+    chain_locations.drop(columns=['State'], inplace=True)
+    chain_locations['zip_code'] = chain_locations['zip_code'].astype("string")
+    chain_locations = chain_locations.merge(df[['zip_code', 'hpi_quantile']], on='zip_code', how='left')
+
+    return pharmacy_locations, chain_locations
+
+
+
+def create_row(Scenario, Model, Chain_type, M, K, opt_constr, z, block, dists, assignment, pharmacy_locations, chain_locations, num_current_stores=4035):
 
 
     population = sum(block.population)
@@ -105,9 +101,36 @@ def create_row(Scenario, Model, Chain_type, M, K, opt_constr, R, block, locs, di
     avg_dist_3 = np.sum(assignment_3 * np.exp(dists_3)) / population_3
     total_avg_dist = np.round(np.array([avg_dist, avg_dist_1, avg_dist_2, avg_dist_3]), 2)
 
+
+    # stores breakdown
+    if opt_constr != 'none':
+        R = num_current_stores - sum(z[0 : num_current_stores])
+        closed_pharmacy = pharmacy_locations[z[0:num_current_stores] != 1]
+        selected_chains = chain_locations[z[num_current_stores:] == 1]
+
+        # print(closed_pharmacy.shape[0], selected_chains.shape[0]) # equals R, but some of the quantiles != 1,2,3
+
+        pharmacy_1 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 1].index)
+        pharmacy_2 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 2].index)
+        pharmacy_3 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 3].index)
+
+        chains_1 = selected_chains[selected_chains.hpi_quantile == 1].shape[0]
+        chains_2 = selected_chains[selected_chains.hpi_quantile == 2].shape[0]
+        chains_3 = selected_chains[selected_chains.hpi_quantile == 3].shape[0]
+
+    else:
+        R = 0
+        pharmacy_1, pharmacy_2, pharmacy_3 = 0, 0, 0
+        chains_1, chains_2, chains_3 = 0, 0, 0
+    
+
     chain_summary = {'Model': Model, 'Chain': Scenario,
                      'Opt Constr': opt_constr,
-                     'M': M, 'K': K, 'R': R,
+                     'M': M, 'K': K, 'Pharmacies replaced': R,
+                     'Pharmacies replaced HPI 1': pharmacy_1, 'Pharmacies replaced HPI 2': pharmacy_2, 
+                     'Pharmacies replaced HPI 3': pharmacy_3,
+                     'Stores opened HPI 1': chains_1, 'Stores opened HPI 2': chains_2, 
+                     'Stores opened HPI 3': chains_3,
                      'Vaccination': total_vaccination[0], 
                      'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 
                      'Vaccination HPI3': total_vaccination[3],
@@ -126,7 +149,57 @@ def create_row(Scenario, Model, Chain_type, M, K, opt_constr, R, block, locs, di
     return chain_summary
 
 
+
+
+# ====================================================================================
+# ====================================================================================
+# ====================================================================================
+
+
+
+
 '''
+
+def import_solution(scenario, path, eval_constr, num_tracts, num_current_stores, num_total_stores, Closest, Farthest):
+
+
+    if scenario == "total":
+        y_hpi = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+        z_hpi = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
+        num_stores = num_total_stores
+        R = num_current_stores - sum(z_hpi[0 : num_current_stores])
+    
+    elif scenario == "firstround_total":
+        y_hpi = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
+        z_hpi = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
+        num_stores = num_total_stores
+        R = num_current_stores - sum(z_hpi[0 : num_current_stores])
+    
+    elif scenario == "current":
+        y_hpi = np.genfromtxt(f'{path}y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+        num_stores = num_current_stores
+        R = 0
+
+    elif scenario == "firstround_current":
+        y_hpi = np.genfromtxt(f'{path}y_current.csv', delimiter = ",", dtype = float)
+        num_stores = num_current_stores
+        R = 0
+    
+    else:
+        print("Warning: scenario undefined in import_solution().")
+
+    y_hpi_closest = y_hpi * Closest
+    y_hpi_farthest = y_hpi * Farthest
+
+    mat_y_hpi = np.reshape(y_hpi, (num_tracts, num_stores))
+    mat_y_hpi_closest = np.reshape(y_hpi_closest, (num_tracts, num_stores))
+    mat_y_hpi_farthest = np.reshape(y_hpi_farthest, (num_tracts, num_stores))
+
+    return mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R
+
+
+
+
 def create_row(Scenario, Model, Chain_type, M, K, opt_constr, eval_constr, Quartile, Population, mat_y_hpi, mat_y_hpi_closest, mat_y_hpi_farthest, R, F_DH, C, C_walkable):
 
     

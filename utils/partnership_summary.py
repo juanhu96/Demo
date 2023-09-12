@@ -15,7 +15,7 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 maindir = '/export/storage_covidvaccine/'
 
-from utils.partnerships_summary_helpers import import_solution, create_row, tract_summary
+from utils.partnerships_summary_helpers import import_solution, import_locations, create_row, tract_summary
 from utils.construct_F import construct_F_BLP, construct_F_LogLin
 from utils.import_demand import import_BLP_estimation
 
@@ -27,6 +27,101 @@ except:
     from Demand.demand_utils import vax_entities as vaxclass
     from Demand.demand_utils import assignment_funcs as af
     from Demand.demand_utils import demest_funcs as de
+
+
+
+def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
+                        Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
+                        M_list = [5, 10], K_list = [8000, 10000, 12000],
+                        Vaccination_estimation = 'BLP', constraint_list = ['assigned', 'vaccinated'], 
+                        export_tract_table = False, filename = '', datadir='/export/storage_covidvaccine/Data/',
+                        nsplits = 3, num_current_stores = 4035):
+
+    block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv', usecols=["blkid", "market_ids", "population"]) 
+    blocks_unique = np.unique(block.blkid.values)
+    markets_unique = np.unique(block.market_ids.values)
+    block = block.loc[block.blkid.isin(blocks_unique), :]
+    block.sort_values(by=['blkid'], inplace=True)
+
+    ### Keep markets in both
+    df = pd.read_csv(f"{datadir}Analysis/Demand/demest_data.csv")
+    df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=False, add_dist=False)
+    df_temp = df.copy()
+    df = df.loc[df.market_ids.isin(markets_unique), :]
+    mkts_in_both = set(df['market_ids'].tolist()).intersection(set(block['market_ids'].tolist()))
+
+    ### Subset blocks and add HPI
+    block = block.loc[block.market_ids.isin(mkts_in_both), :]
+    df = df.loc[df.market_ids.isin(mkts_in_both), :]
+    block = block.merge(df[['market_ids', 'hpi_quantile']], on='market_ids', how='left')
+
+    chain_summary_table = []
+
+    for Model in Model_list:
+        for Chain_type in Chain_list:
+
+            pharmacy_locations, chain_locations = import_locations(df_temp)
+
+            for M in M_list:
+                for K in K_list:
+                    
+                    if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
+
+                        for opt_constr in constraint_list:
+
+                            path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/{opt_constr}/'
+                            print(path)
+
+                            z, dists, assignment = import_solution(path, Chain_type, K)
+
+                            chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, z, block, dists, assignment, pharmacy_locations, chain_locations)
+                            chain_summary_table.append(chain_summary)
+
+                            if Chain_type == 'Dollar':
+
+                                if Model == 'MaxVaxHPIDistBLP' and opt_constr == 'assigned': # 'vaccinated' would be same
+                                    
+                                    path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
+
+                                    dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
+                                    assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
+
+                                    chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", z, block, dists, assignment, pharmacy_locations, chain_locations)
+                                    chain_summary_table.append(chain_summary)
+
+                    else: # MinDist
+
+                        path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
+
+                        z, dists, assignment = import_solution(path, Chain_type, K)
+
+                        chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, z, block, dists, assignment, pharmacy_locations, chain_locations)
+                        chain_summary_table.append(chain_summary)
+
+                        if Chain_type == 'Dollar':
+                            
+                            dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
+                            assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
+
+                            chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", z, block, dists, assignment, pharmacy_locations, chain_locations)
+                            chain_summary_table.append(chain_summary)
+
+
+    chain_summary = pd.DataFrame(chain_summary_table)
+    chain_summary.to_csv(f'{maindir}Result/sensitivity_results_{filename}.csv', encoding='utf-8', index=False, header=True)
+
+
+
+
+if __name__ == "__main__":
+    main()    
+
+
+
+# ==========================================================================================
+# ==========================================================================================
+# ==========================================================================================
+
 
 
 def partnerships_summary_old(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
@@ -107,13 +202,9 @@ def partnerships_summary_old(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 
 
             ## Demand matrix for chain
             if Vaccination_estimation == 'BLP': 
-
-                # F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
-                
-                ## TODO: F_D undefined, this is dummy only
+            
                 ## TODO: also K = 10000 is temp, now F is K depend and need to be imported inside the loop
-                F_D_current, F_D_total, _, _  = construct_F_BLP(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile) 
-                _, _, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, 10000)
+                F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, 10000)
 
             if Vaccination_estimation == 'linear': F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_LogLin(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
 
@@ -242,103 +333,4 @@ def partnerships_summary_old(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 
 
                         
     chain_summary = pd.DataFrame(chain_summary_table)
-    chain_summary.to_csv(f'{maindir}Result/sensitivity_results_{filename}.csv', encoding='utf-8', index=False, header=True)
-
-                
-
-
-
-def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
-                        Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
-                        M_list = [5, 10], K_list = [8000, 10000, 12000],
-                        Vaccination_estimation = 'BLP', constraint_list = ['assigned', 'vaccinated'], 
-                        export_tract_table = False, filename = '', datadir='/export/storage_covidvaccine/Data/',
-                        nsplits = 3, num_current_stores = 4035):
-
-    block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv', usecols=["blkid", "market_ids", "population"]) 
-    blocks_unique = np.unique(block.blkid.values)
-    markets_unique = np.unique(block.market_ids.values)
-    block = block.loc[block.blkid.isin(blocks_unique), :]
-    block.sort_values(by=['blkid'], inplace=True)
-
-    ### Keep markets in both
-    df = pd.read_csv(f"{datadir}Analysis/Demand/demest_data.csv")
-    df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=False, add_dist=False)
-    df = df.loc[df.market_ids.isin(markets_unique), :]
-    mkts_in_both = set(df['market_ids'].tolist()).intersection(set(block['market_ids'].tolist()))
-
-    ### Subset blocks and add HPI
-    block = block.loc[block.market_ids.isin(mkts_in_both), :]
-    df = df.loc[df.market_ids.isin(mkts_in_both), :]
-    block = block.merge(df[['market_ids', 'hpi_quantile']], on='market_ids', how='left')
-
-    chain_summary_table = []
-
-    for Model in Model_list:
-        for Chain_type in Chain_list:
-            for M in M_list:
-                for K in K_list:
-                    
-                    if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
-
-                        for opt_constr in constraint_list:
-
-                            path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/{opt_constr}/'
-                            print(path)
-
-                            z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
-                            R = num_current_stores - sum(z[0 : num_current_stores])
-
-                            locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
-                            dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}.csv', delimiter = "")
-                            assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}.csv', delimiter = "")
-
-                            chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, R, block, locs, dists, assignment)
-                            chain_summary_table.append(chain_summary)
-
-                            if Chain_type == 'Dollar':
-
-                                if Model == 'MaxVaxHPIDistBLP' and opt_constr == 'assigned': # 'vaccinated' would be same
-                                    
-                                    path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
-
-                                    dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
-                                    assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
-
-                                    chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", 0, block, locs, dists, assignment)
-                                    chain_summary_table.append(chain_summary)
-
-                    else: # MinDist
-
-                        path = f'{maindir}/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
-
-                        z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
-                        R = num_current_stores - sum(z[0 : num_current_stores])
-                        
-                        locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
-                        dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}.csv', delimiter = "")
-                        assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}.csv', delimiter = "")
-
-                        chain_summary = create_row('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, R, block, locs, dists, assignment)
-                        chain_summary_table.append(chain_summary)
-
-                        if Chain_type == 'Dollar':
-                            
-                            locs = np.genfromtxt(f'{path}locs_{K}_Pharmacy.csv', delimiter = "")
-                            dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
-                            assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
-
-                            chain_summary = create_row('Pharmacy-only', Model, Chain_type, M, K, "none", 0, block, locs, dists, assignment)
-                            chain_summary_table.append(chain_summary)
-
-
-    chain_summary = pd.DataFrame(chain_summary_table)
-    chain_summary.to_csv(f'{maindir}Result/sensitivity_results_{filename}.csv', encoding='utf-8', index=False, header=True)
-
-
-
-
-
-
-if __name__ == "__main__":
-    main()    
+    chain_summary.to_csv(f'{maindir}Result/sensitivity_results_{filename}_old.csv', encoding='utf-8', index=False, header=True)

@@ -14,7 +14,7 @@ os.chdir(dname)
 
 from utils.optimize_main import optimize_main
 from utils.evaluate_main import evaluate_main
-from utils.partnership_summary import partnerships_summary
+from utils.partnership_summary import partnerships_summary, partnerships_summary_old
 from utils.import_demand import initial_BLP_estimation, import_BLP_estimation, demand_check
 
 def main():
@@ -41,18 +41,10 @@ def main():
     # demand_check(Chain_type='Dollar', capacity=100000, heterogeneity=False)
 
     # ==============================================================================================================
-
-    # optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5])
-    # evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5])
-    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5], filename = '8000')
-
-    optimize_main(Model_list = ['MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5])
-    evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5])
-    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [5], filename = '8000')
-
-
-    # ==============================================================================================================
-
+    
+    optimize_main(Model_list = ['MaxVaxHPIDistBLP','MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [10])
+    evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [10])
+    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [10], filename = '10_8000')
 
 if __name__ == "__main__":
     main()
