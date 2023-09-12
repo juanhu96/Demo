@@ -24,8 +24,10 @@ M, K = 5, 10000
 Chain_type = 'Dollar'
 opt_constr = 'assigned'
 num_current_stores = 4035 # just being lazy
+nsplits = 3 # number of HPI groups
 
 
+'''
 path_one = f'{maindir}/Result/MaxVaxHPIDistBLP/M{str(M)}_K{str(K)}/{Chain_type}/{opt_constr}/'
 path_two = f'{maindir}/Result/MaxVaxDistBLP/M{str(M)}_K{str(K)}/{Chain_type}/{opt_constr}/'
 z_one = np.genfromtxt(f'{path_one}z_total.csv', delimiter = ",", dtype = float)
@@ -50,7 +52,6 @@ all_locations = pd.concat([pharmacy_locations, chain_locations])
 
 
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv", usecols=['zip', 'hpi'])
-nsplits = 3 # number of HPI groups
 df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=True, add_dist=False)
 df.rename(columns = {"zip": "zip_code"}, inplace = True)
 df['zip_code']=df['zip_code'].astype("string")
@@ -66,9 +67,23 @@ print(selected_locations_one['hpi_quantile'].value_counts(), selected_locations_
 selected_locations_one = chain_locations[z_one[num_current_stores:] == 1]
 selected_locations_two = chain_locations[z_two[num_current_stores:] == 1]
 print(selected_locations_one['hpi_quantile'].value_counts(), selected_locations_two['hpi_quantile'].value_counts())
-
+'''
 
 # ====================================================================================
+
+
+tract_hpi = pd.read_csv(f"{datadir}/Intermediate/tract_hpi_nnimpute.csv") #from prep_tracts.py
+splits = np.linspace(0, 1, nsplits+1)
+tract_hpi['hpi_quantile'] = pd.cut(tract_hpi['hpi'], splits, labels=False, include_lowest=True) + 1
+print(tract_hpi.head())
+
+# blk_tract_cw = pd.read_csv(f"{datadir}/Intermediate/blk_tract.csv", usecols=['tract', 'blkid']) #from block_cw.py
+
+
+
+# agent_data_read = agent_data_read.merge(blk_tract_cw, on='blkid', how='left')
+
+# agent_data_read = agent_data_read.merge(tract_hpi[['tract', 'hpi_quantile']], on='tract', how='left')
 
 
 
