@@ -23,7 +23,7 @@ scale_factor = 10000
 
 def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assigned', 'vaccinated']):
 
-    print(f'Chain type: {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
+    print(f'Start optimization with {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
     
     Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type, M)
     
@@ -35,11 +35,13 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
         F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K)
 
     if Model in LogLin_models: 
-        Demand_parameter = [[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, 0.053, 0.047, 0.039]]
+        # TODO: import demand parameter from other directories
+        Demand_parameter = [[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, 0.053, 0.047, 0.039]] 
         F_D_current, F_D_total, F_DH_current, F_DH_total  = construct_F_LogLin(Model, Demand_parameter, C_total, num_tracts, num_current_stores, Quartile)
 
 
-    ###########################################################################
+    # ================================================================================
+
 
     if Model in BLP_models or Model in LogLin_models:
         
@@ -59,14 +61,13 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
         pfdh_total = p_total * f_dh_total
 
     
-    ###########################################################################
+    # ================================================================================
 
     if Model == 'MaxVaxHPIDistBLP' or Model == 'MaxVaxHPIDistLogLin':
 
         for constraint in constraint_list:
 
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
-            print(expdirpath + constraint + '/')
 
             # if Chain_type == 'Dollar':
             #     optimize_rate(scenario='current', constraint=constraint,
@@ -91,14 +92,13 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
                         scale_factor=scale_factor,
                         path = expdirpath + constraint + '/')
 
-    ###########################################################################
+    # ================================================================================
     
     if Model == 'MaxVaxDistBLP' or Model == 'MaxVaxDistLogLin':
         
         for constraint in constraint_list:
 
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
-            print(expdirpath + constraint + '/')
 
             # if Chain_type == 'Dollar':
             #     optimize_rate(scenario = 'current', constraint=constraint,
@@ -121,18 +121,14 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
                         num_total_stores=num_total_stores,
                         num_tracts=num_tracts,
                         scale_factor=scale_factor,
-                        path = expdirpath + constraint + '/',
-                        MIPGap = 5e-3)
-        
+                        path = expdirpath + constraint + '/') 
   
-    ###########################################################################
+    # ================================================================================
 
     if Model == 'MinDist':
 
         pc_currentMinDist = p_current * c_currentMinDist
         pc_totalMinDist = p_total * c_totalMinDist
-
-        print(expdirpath)
 
         # if Chain_type == 'Dollar':
         #     optimize_dist(scenario = 'current',
@@ -152,7 +148,7 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
                     path = expdirpath,
                     MIPGap = 5e-2)   
         
-    ###########################################################################
+    # ================================================================================
     
     if Model == 'MaxVaxFixV':
         
@@ -184,4 +180,6 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
                             num_total_stores=num_total_stores, 
                             num_tracts=num_tracts, 
                             scale_factor=scale_factor, 
-                            path = expdirpath + constraint + '/')  
+                            path = expdirpath + constraint + '/') 
+
+    return 

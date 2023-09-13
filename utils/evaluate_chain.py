@@ -36,7 +36,7 @@ except:
 def evaluate_chain_MIP(Chain_type, Model, M, K, Demand_parameter, expdirpath, constraint_list = ['assigned', 'vaccinated']):
     
     # TODO: not in used
-
+    print('Warning: THIS SHOULD NOT BE CALLED!\n')
     print(f'Evaluating Chain type: {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
     
     Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type, M)
@@ -133,17 +133,16 @@ def evaluate_chain_RandomFCFS(Chain_type, Model, M, K, expdirpath, constraint_li
             # TODO: if distdf computed, no need to recompute
             compute_distdf(chain_type=temp_dict[Chain_type], chain_name=Chain_type, opt_constr=opt_constr, z=z_total, expdirpath=expdirpath)
 
-            if Chain_type == 'Dollar':
+            if Chain_type == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and opt_constr == 'assigned': # only once
 
                 block, block_utils, distdf = construct_blocks(Chain_type, M, K, opt_constr, expdirpath)
                 run_assignment(Chain_type, M, K, opt_constr, block, block_utils, distdf, expdirpath)
 
-                if Model == 'MaxVaxHPIDistBLP' and opt_constr == 'assigned': # only once
-
-                    block, block_utils, distdf = construct_blocks(Chain_type, M, K, opt_constr, expdirpath, Pharmacy=True)
-                    run_assignment(Chain_type, M, K, opt_constr, block, block_utils, distdf, expdirpath, Pharmacy=True)
+                block, block_utils, distdf = construct_blocks(Chain_type, M, K, opt_constr, expdirpath, Pharmacy=True)
+                run_assignment(Chain_type, M, K, opt_constr, block, block_utils, distdf, expdirpath, Pharmacy=True)
                 
             else:
+
                 block, block_utils, distdf = construct_blocks(Chain_type, M, K, opt_constr, expdirpath)
                 run_assignment(Chain_type, M, K, opt_constr, block, block_utils, distdf, expdirpath)
             
@@ -152,18 +151,8 @@ def evaluate_chain_RandomFCFS(Chain_type, Model, M, K, expdirpath, constraint_li
         z_total = np.genfromtxt(f'{expdirpath}z_total.csv', delimiter = ",", dtype = float)
         compute_distdf(chain_type=temp_dict[Chain_type], chain_name=Chain_type, opt_constr='None', z=z_total, expdirpath=expdirpath)
 
-        if Chain_type == 'Dollar':
-
-            block, block_utils, distdf = construct_blocks(Chain_type, M, K, 'None', expdirpath)
-            run_assignment(Chain_type, M, K, 'None', block, block_utils, distdf, expdirpath)
-
-            ## Redundant
-            # block, block_utils, distdf = construct_blocks(Chain_type, M, K, 'None', expdirpath, Pharmacy=True)
-            # run_assignment(Chain_type, M, K, 'None', block, block_utils, distdf, expdirpath, Pharmacy=True)
-                
-        else:
-            block, block_utils, distdf = construct_blocks(Chain_type, M, K, 'None', expdirpath)
-            run_assignment(Chain_type, M, K, 'None', block, block_utils, distdf, expdirpath)
+        block, block_utils, distdf = construct_blocks(Chain_type, M, K, 'None', expdirpath)
+        run_assignment(Chain_type, M, K, 'None', block, block_utils, distdf, expdirpath)
 
 
     return
@@ -274,45 +263,17 @@ def run_assignment(Chain_type, M, K, opt_constr, block, block_utils, distdf, exp
     dists = dist_grp.logdist.apply(np.array).values # list of lists of distances, sorted ascending
     geog_pops = block.population.values
 
-    # economy = vaxclass.Economy(locs=locs, dists=dists, geog_pops=geog_pops, max_rank=M, seed=918) # TODO: seed subject to changes
     economy = vaxclass.Economy(locs, dists, geog_pops, M)
     af.random_fcfs_eval(economy, distcoefs, abd, K)
     af.assignment_stats_eval(economy, M)
 
-    print('Start exporting ...\n')
-
-    ### resize arrays s.t. all has length = M (padding function element-wise)
-    
-    # for i in range(len(locs)):
-    #     if len(locs[i]) != M:
-    #         print(i, locs[i])
-    
-    # filled_locs = np.vstack([np.pad(loc, (0, M - len(loc)), 'constant') for loc in locs]) 
-    # filled_dists = np.vstack([np.pad(dists, (0, M - len(dist)), 'constant') for dist in dists]) 
-    # filled_assignments = np.vstack([np.pad(economy.assignments, (0, M - len(assignment)), 'constant') for assignment in economy.assignments]) 
-
     if Pharmacy:
-
-        # np.savetxt(f'{expdirpath}locs_{K}_Pharmacy.csv', filled_locs, fmt='%s')
-        # np.savetxt(f'{expdirpath}dists_{K}_Pharmacy.csv', filled_dists)
-        # np.savetxt(f'{expdirpath}assignment_{K}_Pharmacy.csv', np.array(economy.assignments), fmt='%s')
-
         np.savetxt(f'{expdirpath}locs_{K}_Pharmacy.csv', np.stack(locs, axis=0), fmt='%s')
         np.savetxt(f'{expdirpath}dists_{K}_Pharmacy.csv', np.stack(dists, axis=0))
         np.savetxt(f'{expdirpath}assignment_{K}_Pharmacy.csv', np.array(economy.assignments), fmt='%s')
     
     else:
-
-        # np.savetxt(f'{path}locs_{K}_{Chain_type}.csv', filled_locs, fmt='%s')
-        # np.savetxt(f'{path}dists_{K}_{Chain_type}.csv', filled_dists)
-        # np.savetxt(f'{path}assignment_{K}_{Chain_type}.csv', filled_assignments, fmt='%s')
-
         np.savetxt(f'{path}locs_{K}_{Chain_type}.csv', np.stack(locs, axis=0), fmt='%s')
         np.savetxt(f'{path}dists_{K}_{Chain_type}.csv', np.stack(dists, axis=0))
         np.savetxt(f'{path}assignment_{K}_{Chain_type}.csv', np.array(economy.assignments), fmt='%s')
         
-
-
-### Helper for pad array
-def pad_array(arr, max_length):
-    return np.pad(arr, (0, max_length - len(arr)), 'constant')

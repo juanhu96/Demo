@@ -40,11 +40,12 @@ def main():
 
     # ==============================================================================================================
     
-    # optimize_main(Model_list = ['MaxVaxHPIDistBLP','MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [10])
-    # evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [10])
-    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [10], filename = '10_8000')
+    # optimize_main(Model_list = ['MaxVaxDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # evaluate_main(Model_list = ['MaxVaxDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
 
-    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'test')
+    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'M5_K10000')
+
+
 
 if __name__ == "__main__":
     main()
