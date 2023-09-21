@@ -30,8 +30,7 @@ blocks.sort_values(by=['zip', 'weights'], inplace=True)
 # miscellaneous variables
 blocks = blocks.assign(
     market_ids = blocks['zip'],
-    nodes = 1,
-    logdist = np.log(blocks['dist'])
+    nodes = 1
 )
 
 # save
