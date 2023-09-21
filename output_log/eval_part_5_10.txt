@@ -1,0 +1,308 @@
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:191: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:191: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:191: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:191: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:191: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:191: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+Evaluating random order first-come-first served with Chain type: Dollar; Model: MaxVaxHPIDistBLP; M = 10, K = 10000. Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M10_K10000/Dollar/
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.48 seconds.
+Assigning individuals...
+Assigned individuals in: 175.64 seconds
+Offers:
+% Rank 0 offers: 83.32103973165731
+% Rank 1 offers: 8.016756623268682
+% Rank 2 offers: 2.829422502023403
+% Rank 3 offers: 1.415680265156724
+% Rank 4 offers: 0.8987333857774766
+% Rank 5 offers: 0.5948100159734065
+% Rank 6 offers: 0.48126689187990973
+% Rank 7 offers: 0.34327927762870863
+% Rank 8 offers: 0.2672300341792189
+% Rank 9 offers: 0.23259126187884674
+% Offered: 98.40080998942369
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 60.80184007806023
+% Rank 1 assignments: 6.1995599637099765
+% Rank 2 assignments: 2.2496303052701094
+% Rank 3 assignments: 1.1396037018417704
+% Rank 4 assignments: 0.7270418128716897
+% Rank 5 assignments: 0.48576362418687685
+% Rank 6 assignments: 0.3946838946657051
+% Rank 7 assignments: 0.2842948166128697
+% Rank 8 assignments: 0.2222145770735864
+% Rank 9 assignments: 0.19495804586758153
+% Assigned: 72.6995908201604
+Start exporting ...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.43 seconds.
+Assigning individuals...
+Assigned individuals in: 168.31 seconds
+Offers:
+% Rank 0 offers: 79.66842894661347
+% Rank 1 offers: 8.071132883683747
+% Rank 2 offers: 3.0987248331192974
+% Rank 3 offers: 1.6931577822552002
+% Rank 4 offers: 1.1091069900044355
+% Rank 5 offers: 0.779822049989071
+% Rank 6 offers: 0.5954281583299699
+% Rank 7 offers: 0.49435174955060546
+% Rank 8 offers: 0.4367783757995443
+% Rank 9 offers: 0.376823633953526
+% Offered: 96.32375540329888
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 58.09797140878798
+% Rank 1 assignments: 5.983823214528737
+% Rank 2 assignments: 2.3451586330622862
+% Rank 3 assignments: 1.294387561273361
+% Rank 4 assignments: 0.8589544051104361
+% Rank 5 assignments: 0.6033221402277216
+% Rank 6 assignments: 0.46748789074323716
+% Rank 7 assignments: 0.39185918676583564
+% Rank 8 assignments: 0.34411022309162986
+% Rank 9 assignments: 0.29913276654070414
+% Assigned: 70.68620743013193
+Start exporting ...
+
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.4 seconds.
+Assigning individuals...
+Assigned individuals in: 157.55 seconds
+Offers:
+% Rank 0 offers: 83.2315154915088
+% Rank 1 offers: 7.810107073402986
+% Rank 2 offers: 2.8888123022894474
+% Rank 3 offers: 1.4737501794892867
+% Rank 4 offers: 0.955574615507854
+% Rank 5 offers: 0.623890573805336
+% Rank 6 offers: 0.48793978928641746
+% Rank 7 offers: 0.35603733052892617
+% Rank 8 offers: 0.2734595917808144
+% Rank 9 offers: 0.2256396937378227
+% Offered: 98.32672664133769
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 60.75369337524676
+% Rank 1 assignments: 6.039633362541404
+% Rank 2 assignments: 2.288266735925633
+% Rank 3 assignments: 1.180132560121691
+% Rank 4 assignments: 0.7657593113772546
+% Rank 5 assignments: 0.507461940924439
+% Rank 6 assignments: 0.3978100736329149
+% Rank 7 assignments: 0.29435989686953457
+% Rank 8 assignments: 0.22862653733777435
+% Rank 9 assignments: 0.18856888593621765
+% Assigned: 72.64431267991363
+Start exporting ...
+
+Evaluating random order first-come-first served with Chain type: Dollar; Model: MaxVaxDistBLP; M = 10, K = 10000. Results stored at /export/storage_covidvaccine/Result/MaxVaxDistBLP/M10_K10000/Dollar/
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.32 seconds.
+Assigning individuals...
+Assigned individuals in: 155.46 seconds
+Offers:
+% Rank 0 offers: 85.73509083703264
+% Rank 1 offers: 6.911887961799208
+% Rank 2 offers: 2.3190750523115637
+% Rank 3 offers: 1.2188196581834903
+% Rank 4 offers: 0.7438937921989827
+% Rank 5 offers: 0.4796506016197154
+% Rank 6 offers: 0.3952412361347376
+% Rank 7 offers: 0.28444681883169676
+% Rank 8 offers: 0.2255256920737024
+% Rank 9 offers: 0.18917942818183967
+% Offered: 98.50281107836759
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 62.66660583200087
+% Rank 1 assignments: 5.34655644546662
+% Rank 2 assignments: 1.8383604351600586
+% Rank 3 assignments: 0.9845310381944081
+% Rank 4 assignments: 0.6002086281120808
+% Rank 5 assignments: 0.39203905605811434
+% Rank 6 assignments: 0.3241751320924615
+% Rank 7 assignments: 0.237437599289116
+% Rank 8 assignments: 0.1887816890425755
+% Rank 9 assignments: 0.1585433809772466
+% Assigned: 72.73723923639355
+Start exporting ...
+
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.31 seconds.
+Assigning individuals...
+Assigned individuals in: 167.69 seconds
+Offers:
+% Rank 0 offers: 85.59202381530231
+% Rank 1 offers: 6.975663026078413
+% Rank 2 offers: 2.300102642031633
+% Rank 3 offers: 1.2270733786657995
+% Rank 4 offers: 0.7491758693032228
+% Rank 5 offers: 0.506276323617588
+% Rank 6 offers: 0.4066338024358254
+% Rank 7 offers: 0.2896351612343269
+% Rank 8 offers: 0.23838761315678514
+% Rank 9 offers: 0.1893440972522356
+% Offered: 98.47431572907813
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 62.58140352160767
+% Rank 1 assignments: 5.388091051761113
+% Rank 2 assignments: 1.821016981991892
+% Rank 3 assignments: 0.9903527231754845
+% Rank 4 assignments: 0.6005151659200487
+% Rank 5 assignments: 0.41111786789122357
+% Rank 6 assignments: 0.33085562960991066
+% Rank 7 assignments: 0.2392641592853545
+% Rank 8 assignments: 0.19875810133825794
+% Rank 9 assignments: 0.15825964350210275
+% Assigned: 72.71963484608305
+Start exporting ...
+
+Evaluating random order first-come-first served with Chain type: Dollar; Model: MaxVaxFixV; M = 10, K = 10000. Results stored at /export/storage_covidvaccine/Result/MaxVaxFixV/M10_K10000/Dollar/
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.31 seconds.
+Assigning individuals...
+Assigned individuals in: 165.37 seconds
+Offers:
+% Rank 0 offers: 82.03317053220131
+% Rank 1 offers: 8.515506303684017
+% Rank 2 offers: 3.1216898350137514
+% Rank 3 offers: 1.6515699751841177
+% Rank 4 offers: 1.0152836204334355
+% Rank 5 offers: 0.6709175269401133
+% Rank 6 offers: 0.5089363624470614
+% Rank 7 offers: 0.33627704208140896
+% Rank 8 offers: 0.29399002480372205
+% Rank 9 offers: 0.21913399877202472
+% Offered: 98.36647522156096
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 59.85744269237679
+% Rank 1 assignments: 6.459212687280667
+% Rank 2 assignments: 2.4179524956585636
+% Rank 3 assignments: 1.3063349356731677
+% Rank 4 assignments: 0.8033443933525579
+% Rank 5 assignments: 0.5375862473256476
+% Rank 6 assignments: 0.414905256510331
+% Rank 7 assignments: 0.2777789881658166
+% Rank 8 assignments: 0.24335301897180228
+% Rank 9 assignments: 0.18243812977685972
+% Assigned: 72.5003488450922
+Start exporting ...
+
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.3 seconds.
+Assigning individuals...
+Assigned individuals in: 167.02 seconds
+Offers:
+% Rank 0 offers: 78.54307038604611
+% Rank 1 offers: 8.537311021974759
+% Rank 2 offers: 3.5376160397605374
+% Rank 3 offers: 2.100133589683386
+% Rank 4 offers: 1.4135471673525175
+% Rank 5 offers: 1.0270384586893944
+% Rank 6 offers: 0.7395262617780186
+% Rank 7 offers: 0.5908098242479412
+% Rank 8 offers: 0.44758826692846176
+% Rank 9 offers: 0.3746525355946129
+% Offered: 97.31129355205574
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 57.177628374233926
+% Rank 1 assignments: 6.527231146835461
+% Rank 2 assignments: 2.7428268379576295
+% Rank 3 assignments: 1.6391133933512405
+% Rank 4 assignments: 1.101633547578772
+% Rank 5 assignments: 0.8038358671934319
+% Rank 6 assignments: 0.5825637038765733
+% Rank 7 assignments: 0.470882606963708
+% Rank 8 assignments: 0.35452744182191076
+% Rank 9 assignments: 0.29882622873273623
+% Assigned: 71.69906914854538
+Start exporting ...
+
+/export/storage_covidvaccine//Result/MaxVaxHPIDistBLP/M5_K10000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxHPIDistBLP/M5_K10000/Dollar/vaccinated/
+/export/storage_covidvaccine//Result/MaxVaxHPIDistBLP/M10_K10000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxHPIDistBLP/M10_K10000/Dollar/vaccinated/
+/export/storage_covidvaccine//Result/MaxVaxDistBLP/M5_K10000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxDistBLP/M5_K10000/Dollar/vaccinated/
+/export/storage_covidvaccine//Result/MaxVaxDistBLP/M10_K10000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxDistBLP/M10_K10000/Dollar/vaccinated/
+/export/storage_covidvaccine//Result/MaxVaxFixV/M5_K10000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxFixV/M5_K10000/Dollar/vaccinated/
+/export/storage_covidvaccine//Result/MaxVaxFixV/M10_K10000/Dollar/assigned/
+/export/storage_covidvaccine//Result/MaxVaxFixV/M10_K10000/Dollar/vaccinated/

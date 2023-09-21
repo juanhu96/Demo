@@ -63,8 +63,8 @@ def demand_check(Chain_type, capacity, heterogeneity, datadir='/export/storage_c
     distdf = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
     C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type=Chain_type, M=20)
     
-    zip_demand_checks(capacity, block, block_utils, distdf)
-    tract_demand_check(capacity, num_tracts, tract, block, blk_tract, block_utils, distdf)
+    zip_demand_checks(capacity, heterogeneity, block, block_utils, distdf)
+    # tract_demand_check(capacity, heterogeneity, num_tracts, tract, block, blk_tract, block_utils, distdf)
     
 
 
@@ -268,7 +268,7 @@ def import_BLP_estimation(Chain_type, capacity, resultdir='/export/storage_covid
 
 
 
-def tract_demand_check(capacity, num_tracts, tract, block, blk_tract, block_utils, distdf, resultdir='/export/storage_covidvaccine/Result/'):
+def tract_demand_check(capacity, heterogeneity, num_tracts, tract, block, blk_tract, block_utils, distdf, resultdir='/export/storage_covidvaccine/Result/'):
     
     print('Start tract-level demand check...\n')
 
@@ -310,13 +310,15 @@ def tract_demand_check(capacity, num_tracts, tract, block, blk_tract, block_util
         Tract_summary.append({'Tract': i, 'GEOID': tract_id, 'Num blocks': len(common_blocks_id), 'Estimated': tract_site_willingess})
         
     Tract_summary = pd.DataFrame(Tract_summary)
-    Tract_summary.to_csv(f'{resultdir}/Tract_demand_check_{str(capacity)}.csv', encoding='utf-8', index=False, header=True)
+    if heterogeneity: Tract_summary.to_csv(f'{resultdir}/Tract_demand_check_{str(capacity)}.csv', encoding='utf-8', index=False, header=True)
+    else: Tract_summary.to_csv(f'{resultdir}/Tract_demand_check_{str(capacity)}_nodisthet.csv', encoding='utf-8', index=False, header=True)
+    
     
 
 
 
 
-def zip_demand_checks(capacity, block, block_utils, distdf, resultdir='/export/storage_covidvaccine/Result/'):
+def zip_demand_checks(capacity, heterogeneity, block, block_utils, distdf, resultdir='/export/storage_covidvaccine/Result/'):
     
     print('Start zip-level demand check...\n')
     
@@ -350,6 +352,9 @@ def zip_demand_checks(capacity, block, block_utils, distdf, resultdir='/export/s
         Zip_summary.append({'Zip': zip, 'Num blocks': len(common_blocks_id), 'Estimated': zip_site_willingess})
 
     Zip_summary = pd.DataFrame(Zip_summary)
-    Zip_summary.to_csv(f'{resultdir}/Zip_demand_check_{str(capacity)}.csv', encoding='utf-8', index=False, header=True)
+
+    if heterogeneity: Zip_summary.to_csv(f'{resultdir}/Zip_demand_check_{str(capacity)}.csv', encoding='utf-8', index=False, header=True)
+    else: Zip_summary.to_csv(f'{resultdir}/Zip_demand_check_{str(capacity)}_nodisthet.csv', encoding='utf-8', index=False, header=True)
+
 
 

@@ -123,10 +123,9 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     
     ### Summary ###
     result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
-    np.savetxt(path + 'z_' + scenario + '.csv', z_soln, delimiter=",")
-    np.savetxt(path + 'y_' + scenario + '.csv', y_soln, delimiter=",")
-    result_df.to_csv(path + 'result_' + scenario + '.csv') 
-
+    np.savetxt(f'{path}z_{scenario}.csv', z_soln, delimiter=",")
+    np.savetxt(f'{path}y_{scenario}.csv', y_soln, delimiter=",")
+    result_df.to_csv(f'{path}result_{scenario}.csv') 
  
     ### Finished all ###
     m.dispose()
@@ -197,9 +196,9 @@ def optimize_dist(scenario, pc, ncp, p, K,
     
     ### Summary ###
     result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
-    np.savetxt(path + 'z_' + scenario + '.csv', z_soln, delimiter=",")
-    np.savetxt(path + 'y_' + scenario + '.csv', y_soln, delimiter=",")
-    result_df.to_csv(path + 'result_' + scenario + '.csv')
+    np.savetxt(f'{path}z_{scenario}.csv', z_soln, delimiter=",")
+    np.savetxt(f'{path}y_{scenario}.csv', y_soln, delimiter=",")
+    result_df.to_csv(f'{path}result_{scenario}.csv') 
             
      
     ### Finished all ###
@@ -293,10 +292,9 @@ def optimize_rate_fix(scenario, constraint, ncp, pv, p, closest, K,
     
     ### Summary ###
     result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
-    np.savetxt(path + 'z_' + scenario + '.csv', z_soln, delimiter=",")
-    np.savetxt(path + 'y_' + scenario + '.csv', y_soln, delimiter=",")
-    result_df.to_csv(path + 'result_' + scenario + '.csv') 
- 
+    np.savetxt(f'{path}z_{scenario}.csv', z_soln, delimiter=",")
+    np.savetxt(f'{path}y_{scenario}.csv', y_soln, delimiter=",")
+    result_df.to_csv(f'{path}result_{scenario}.csv') 
 
     ### Finished all ###
     m.dispose()    

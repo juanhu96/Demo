@@ -6,8 +6,6 @@ Created on Jul, 2022
 """
 
 import os
-import numpy as np
-import pandas as pd # temp
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
@@ -32,18 +30,21 @@ def main():
     
     '''
 
-    ############################################################################################################
+    # ==============================================================================================================
 
-    # for capacity in [10000]:
+    # for capacity in [8000]:
         # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity) # with HPI
         # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity, heterogeneity=False) # without
     # demand_check(Chain_type='Dollar', capacity=100000)
+    # demand_check(Chain_type='Dollar', capacity=100000, heterogeneity=False)
 
-    ############################################################################################################
+    # ==============================================================================================================
+    
+    # optimize_main(Model_list = ['MaxVaxDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
+    # evaluate_main(Model_list = ['MaxVaxDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
 
-    optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MinDist'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'new')
+    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'M5_K10000')
+
 
 
 if __name__ == "__main__":

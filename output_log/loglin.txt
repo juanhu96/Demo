@@ -1,0 +1,193 @@
+Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000. Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000/Dollar/
+/export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000/Dollar/assigned/
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709016 rows, 40700958 columns and 121931140 nonzeros
+Model fingerprint: 0x54c787f7
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+04]
+  Objective range  [3e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.208142e+07
+Presolve removed 0 rows and 0 columns (presolve time = 5s) ...
+Presolve removed 40695943 rows and 166683 columns (presolve time = 11s) ...
+Presolve removed 40695943 rows and 40655787 columns (presolve time = 15s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 23s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 25s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 30s) ...
+Presolve removed 40695943 rows and 40655789 columns
+Presolve time: 33.65s
+Presolved: 13073 rows, 45169 columns, 90337 nonzeros
+Variable types: 40120 continuous, 5049 integer (5048 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.6238842e+07   2.789494e+05   0.000000e+00     41s
+    9208    2.5807215e+07   0.000000e+00   0.000000e+00     42s
+
+Root relaxation: objective 2.580721e+07, 9208 iterations, 0.75 seconds (0.99 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.5807e+07    0  676 2.2081e+07 2.5807e+07  16.9%     -   42s
+H    0     0                    2.565668e+07 2.5807e+07  0.59%     -   42s
+H    0     0                    2.575117e+07 2.5807e+07  0.22%     -   42s
+H    0     0                    2.575707e+07 2.5807e+07  0.19%     -   43s
+H    0     0                    2.576086e+07 2.5807e+07  0.18%     -   43s
+     0     0 2.5807e+07    0  775 2.5761e+07 2.5807e+07  0.18%     -   43s
+H    0     0                    2.576114e+07 2.5807e+07  0.18%     -   44s
+     0     0 2.5807e+07    0  775 2.5761e+07 2.5807e+07  0.18%     -   44s
+     0     0 2.5807e+07    0  732 2.5761e+07 2.5807e+07  0.18%     -   46s
+     0     0 2.5807e+07    0  733 2.5761e+07 2.5807e+07  0.18%     -   46s
+H    0     0                    2.576202e+07 2.5807e+07  0.17%     -   47s
+     0     0 2.5807e+07    0  620 2.5762e+07 2.5807e+07  0.17%     -   47s
+     0     0 2.5807e+07    0  550 2.5762e+07 2.5807e+07  0.17%     -   48s
+     0     0 2.5807e+07    0  551 2.5762e+07 2.5807e+07  0.17%     -   48s
+     0     0 2.5807e+07    0  547 2.5762e+07 2.5807e+07  0.17%     -   48s
+H    0     0                    2.576247e+07 2.5807e+07  0.17%     -   48s
+H    0     0                    2.578174e+07 2.5806e+07  0.09%     -   48s
+     0     0 2.5806e+07    0  466 2.5782e+07 2.5806e+07  0.09%     -   48s
+
+Cutting planes:
+  Gomory: 73
+  Implied bound: 1948
+  MIR: 2
+  Flow cover: 573
+  Relax-and-lift: 377
+
+Explored 1 nodes (27412 simplex iterations) in 50.89 seconds (71.56 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 10: 2.57819e+07 2.57817e+07 2.57625e+07 ... 2.20814e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 2.578189689987e+07, best bound 2.580582546720e+07, gap 0.0928%
+/export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000/Dollar/vaccinated/
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709016 rows, 40700958 columns and 121931140 nonzeros
+Model fingerprint: 0x798c7bd1
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [3e-01, 2e+04]
+  Objective range  [3e-01, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.397649e+07
+Presolve removed 0 rows and 166683 columns (presolve time = 6s) ...
+Presolve removed 40695940 rows and 166683 columns (presolve time = 11s) ...
+Presolve removed 40695940 rows and 40655787 columns (presolve time = 15s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 23s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 25s) ...
+Presolve removed 40695943 rows and 40655789 columns (presolve time = 30s) ...
+Presolve removed 40695943 rows and 40655789 columns
+Presolve time: 33.74s
+Presolved: 13073 rows, 45169 columns, 90337 nonzeros
+Variable types: 40120 continuous, 5049 integer (5048 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.6238842e+07   2.133859e+05   0.000000e+00     41s
+    7928    2.6163343e+07   0.000000e+00   0.000000e+00     42s
+
+Root relaxation: objective 2.616334e+07, 7928 iterations, 1.57 seconds (2.17 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.6163e+07    0   84 2.3976e+07 2.6163e+07  9.12%     -   42s
+H    0     0                    2.615793e+07 2.6163e+07  0.02%     -   42s
+
+Explored 1 nodes (8872 simplex iterations) in 45.00 seconds (69.23 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 2: 2.61579e+07 2.39765e+07 
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 2.615792664266e+07, best bound 2.616334257288e+07, gap 0.0207%
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:191: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:191: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+All problems solved!
+Evaluating random order first-come-first served with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000. Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000/Dollar/
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.29 seconds.
+Assigning individuals...
+Assigned individuals in: 157.35 seconds
+Offers:
+% Rank 0 offers: 85.90656200672113
+% Rank 1 offers: 7.066963158816883
+% Rank 2 offers: 2.406438327582414
+% Rank 3 offers: 1.3109963370505306
+% Rank 4 offers: 0.8009528917763455
+% Offered: 97.4919127219473
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 62.798989631117976
+% Rank 1 assignments: 5.486550489006338
+% Rank 2 assignments: 1.920968574351936
+% Rank 3 assignments: 1.0665235684000358
+% Rank 4 assignments: 0.6511420382707133
+% Assigned: 71.924174301147
+Start exporting ...
+
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.32 seconds.
+Assigning individuals...
+Assigned individuals in: 156.43 seconds
+Offers:
+% Rank 0 offers: 85.76449059952411
+% Rank 1 offers: 6.943575357684022
+% Rank 2 offers: 2.389644615772338
+% Rank 3 offers: 1.2908256426121805
+% Rank 4 offers: 0.8081375299862378
+% Offered: 97.19667374557889
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 62.70075313046036
+% Rank 1 assignments: 5.37792717006221
+% Rank 2 assignments: 1.8956880719906828
+% Rank 3 assignments: 1.0458132660848494
+% Rank 4 assignments: 0.6525252584620395
+% Assigned: 71.67270689706015
+Start exporting ...
+
