@@ -104,7 +104,8 @@ def run_fp(
         maxiter:int = 100,
         tol = 0.001,
         dampener = 0, #dampener>0 to reduce step size
-        coefsavepath:str = None
+        coefsavepath:str = None,
+        verbose:bool = False
         ):
     """
     Run fixed point algorithm. 
@@ -130,7 +131,7 @@ def run_fp(
         agent_loc_data['weights'] = offer_weights/agent_loc_data['population']
 
         pi_init = results.pi if iter > 0 else 0.001*np.ones((1, len(str(agent_formulation).split('+')))) #initialize pi to last result, unless first iteration
-        results = de.estimate_demand(df, agent_loc_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=False)
+        results = de.estimate_demand(df, agent_loc_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=verbose)
 
         coefs = results.pi.flatten() if iter==0 else coefs*dampener + results.pi.flatten()*(1-dampener)
         agent_results = de.compute_abd(results, df, agent_unique_data, coefs=coefs)

@@ -39,7 +39,7 @@ outdir = "/export/storage_covidvaccine/Result/Demand"
 #=================================================================
 testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
 testing = False  #TODO:
-capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
+capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 8000 #capacity per location. lower when testing
 max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 200 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 3 #number of HPI quantiles
 
@@ -186,12 +186,17 @@ dist_grp = distdf.groupby('blkid')
 locs = dist_grp.locid.apply(np.array).values
 dists = dist_grp.logdist.apply(np.array).values
 geog_pops = cw_pop.population.values
+# round to integers 
+geog_pops = [np.round(ll).astype(int) for ll in geog_pops]
 economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank)
 
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 
 #=================================================================
 #=================================================================
+
+ivcols = [cc for cc in df.columns if cc.startswith('demand_instruments')]
+ivcols
 #=================================================================
 
 # RUN FIXED POINT
@@ -208,7 +213,8 @@ agent_results, results = fp.run_fp(
     product_formulations=product_formulations,
     agent_formulation=agent_formulation,
     coefsavepath=coefsavepath,
-    micro_computation_chunks=1 if max_rank <= 50 else 10
+    micro_computation_chunks=1 if max_rank <= 50 else 10,
+    verbose=testing
 )
 
 print("Done with fixed point loop at time:", round(time.time()-time_entered, 2), "seconds")
@@ -231,7 +237,6 @@ if not testing:
 # read in agent_results
 # setting_tag = "10000_200_3q"
 # agent_results = pd.read_csv(f"{outdir}/agent_results_{setting_tag}.csv")
-# 
 
 
 # #=================================================================
@@ -239,22 +244,22 @@ if not testing:
 # #=================================================================
 # #=================================================================
 # #=====REFRESH MODULES=====
-# import importlib
-# import copy
+import importlib
+import copy
 
-# importlib.reload(vaxclass)
-# importlib.reload(af)
-# importlib.reload(de)
-# importlib.reload(fp)
-# try:
-#     from demand_utils import vax_entities as vaxclass
-#     from demand_utils import assignment_funcs as af
-#     from demand_utils import demest_funcs as de
-#     from demand_utils import fixed_point as fp
-# except:
-#     from Demand.demand_utils import vax_entities as vaxclass
-#     from Demand.demand_utils import assignment_funcs as af
-#     from Demand.demand_utils import demest_funcs as de
-#     from Demand.demand_utils import fixed_point as fp
+importlib.reload(vaxclass)
+importlib.reload(af)
+importlib.reload(de)
+importlib.reload(fp)
+try:
+    from demand_utils import vax_entities as vaxclass
+    from demand_utils import assignment_funcs as af
+    from demand_utils import demest_funcs as de
+    from demand_utils import fixed_point as fp
+except:
+    from Demand.demand_utils import vax_entities as vaxclass
+    from Demand.demand_utils import assignment_funcs as af
+    from Demand.demand_utils import demest_funcs as de
+    from Demand.demand_utils import fixed_point as fp
 
 
