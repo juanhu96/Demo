@@ -33,11 +33,9 @@ except:
 
 
 
-def evaluate_chain_MIP(Chain_type, Model, M, K, Demand_parameter, expdirpath, constraint_list = ['assigned', 'vaccinated']):
+def evaluate_chain_MIP(Chain_type, Model, M, K, expdirpath, constraint_list = ['assigned', 'vaccinated']):
     
-    # TODO: not in used
-    print('Warning: THIS SHOULD NOT BE CALLED!\n')
-    print(f'Evaluating Chain type: {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
+    print(f'Evaluating using MIP with Chain type: {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
     
     Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type, M)
     
@@ -58,7 +56,6 @@ def evaluate_chain_MIP(Chain_type, Model, M, K, Demand_parameter, expdirpath, co
             z_current = np.genfromtxt(f'{expdirpath}{opt_constr}/z_current.csv', delimiter = ",", dtype = float)
 
             eval_constr = opt_constr
-            # for eval_constr in constraint_list:
 
             if Chain_type == 'Dollar':
                 evaluate_rate(scenario = 'current', constraint = eval_constr, z = z_current,
@@ -199,7 +196,7 @@ def compute_distdf(chain_type, chain_name, opt_constr, z, expdirpath, datadir='/
 
 
 
-def construct_blocks(Chain_type, M, K, opt_constr, expdirpath, nsplits = 3, Pharmacy=False, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+def construct_blocks(Chain_type, M, K, opt_constr, expdirpath, num_current_stores = 4035, nsplits = 3, Pharmacy=False, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
 
     print('Start constructing blocks...\n')
 
@@ -219,7 +216,15 @@ def construct_blocks(Chain_type, M, K, opt_constr, expdirpath, nsplits = 3, Phar
     if Pharmacy:
         distdf = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
     else:
-        distdf = pd.read_csv(f'{path}/ca_blk_{Chain_type}_dist_total.csv', dtype={'locid': int, 'blkid': int})
+        distdf = pd.read_csv(f'{path}ca_blk_{Chain_type}_dist_total.csv', dtype={'locid': int, 'blkid': int})
+
+        # this should be independent of model
+        # distdf = pd.read_csv(f'{resultdir}MaxVaxHPIDistBLP/M{M}_K{K}/{Chain_type}/{opt_constr}/ca_blk_{Chain_type}_dist_total.csv', dtype={'locid': int, 'blkid': int})
+        
+        # distdf_pharmacy = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
+        # distdf_chain = pd.read_csv(f'{datadir}/Intermediate/ca_blk_{Chain_type}_dist.csv', dtype={'locid': int, 'blkid': int})
+        # distdf_chain.locid = distdf_chain.locid + num_current_stores
+        # distdf = pd.concat([distdf_pharmacy, distdf_chain])
 
     distdf = distdf.groupby('blkid').head(M).reset_index(drop=True)
     distdf = distdf.loc[distdf.blkid.isin(blocks_unique), :]
@@ -262,6 +267,7 @@ def run_assignment(Chain_type, M, K, opt_constr, block, block_utils, distdf, exp
     locs = dist_grp.locid.apply(np.array).values # list of lists of location IDs, corresponding to dists
     dists = dist_grp.logdist.apply(np.array).values # list of lists of distances, sorted ascending
     geog_pops = block.population.values
+    geog_pops = np.array(geog_pops).astype(int).tolist() # updated: float to int
 
     economy = vaxclass.Economy(locs, dists, geog_pops, M)
     af.random_fcfs_eval(economy, distcoefs, abd, K)

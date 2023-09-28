@@ -27,22 +27,15 @@ def main():
     K_list = [8000, 10000, 12000]
     M_list = [5, 10]
     Demand_estimation = 'BLP'
-    
     '''
 
-    # ==============================================================================================================
-
-    # for capacity in [10000, 12000]:
-    #     initial_BLP_estimation(Chain_type='Dollar', capacity=capacity) # with HPI
-    #     demand_check(Chain_type='Dollar', capacity=capacity, heterogeneity=True)
-        
-    # demand_check(Chain_type='Dollar', capacity=100000, heterogeneity=False)
 
     # ==============================================================================================================
-    
-    # optimize_main(Model_list = ['MaxVaxHPIDistBLP'], Chain_list = ['Dollar'], K_list = [10000, 12000], M_list = [5], constraint_list = ['vaccinated'])
-    # evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000, 12000], M_list = [5], constraint_list = ['vaccinated'])
-    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000, 12000], M_list = [5], constraint_list = ['vaccinated'], filename = 'sep27')
+
+    optimize_main(Model_list = ['MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000, 12000], M_list = [10], constraint_list = ['vaccinated'])
+    evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000, 10000, 12000], M_list = [10], constraint_list = ['vaccinated'])
+    # partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [8000], M_list = [10], constraint_list = ['vaccinated'], filename = 'M5_K8000_updated')
+
 
 
 if __name__ == "__main__":

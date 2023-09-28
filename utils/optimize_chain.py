@@ -32,7 +32,7 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
 
 
     if Model in BLP_models: 
-        F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K)
+        F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K) # F_D_current, F_D_total hasn't been updated
 
     if Model in LogLin_models: 
         # TODO: import demand parameter from other directories
@@ -69,17 +69,17 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
 
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
 
-            # if Chain_type == 'Dollar':
-            #     optimize_rate(scenario='current', constraint=constraint,
-            #                 pc=pc_current, 
-            #                 pf=pfdh_current, 
-            #                 ncp=p_current, p=Population,
-            #                 closest=Closest_current, K=K, 
-            #                 num_current_stores=num_current_stores,
-            #                 num_total_stores=num_total_stores, 
-            #                 num_tracts=num_tracts,
-            #                 scale_factor=scale_factor,
-            #                 path = expdirpath + constraint + '/')
+            if Chain_type == 'Dollar':
+                optimize_rate(scenario='current', constraint=constraint,
+                            pc=pc_current, 
+                            pf=pfdh_current, 
+                            ncp=p_current, p=Population,
+                            closest=Closest_current, K=K, 
+                            num_current_stores=num_current_stores,
+                            num_total_stores=num_total_stores, 
+                            num_tracts=num_tracts,
+                            scale_factor=scale_factor,
+                            path = expdirpath + constraint + '/')
 
             optimize_rate(scenario='total', constraint=constraint,
                         pc=pc_total,
@@ -100,17 +100,18 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
 
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
 
-            # if Chain_type == 'Dollar':
-            #     optimize_rate(scenario = 'current', constraint=constraint,
-            #                 pc=pc_current, 
-            #                 pf=pfd_current, 
-            #                 ncp=p_current, p=Population,
-            #                 closest=Closest_current, K=K, 
-            #                 num_current_stores=num_current_stores, 
-            #                 num_total_stores=num_total_stores, 
-            #                 num_tracts=num_tracts,
-            #                 scale_factor=scale_factor, 
-            #                 path = expdirpath + constraint + '/')
+            if Chain_type == 'Dollar':
+                optimize_rate(scenario = 'current', constraint=constraint,
+                            pc=pc_current, 
+                            pf=pfd_current, 
+                            ncp=p_current, p=Population,
+                            closest=Closest_current, K=K, 
+                            num_current_stores=num_current_stores, 
+                            num_total_stores=num_total_stores, 
+                            num_tracts=num_tracts,
+                            scale_factor=scale_factor, 
+                            path = expdirpath + constraint + '/',
+                            MIPGap = 3e-2)
                 
             optimize_rate(scenario = 'total', constraint = constraint,
                         pc = pc_total, 
@@ -121,7 +122,8 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
                         num_total_stores=num_total_stores,
                         num_tracts=num_tracts,
                         scale_factor=scale_factor,
-                        path = expdirpath + constraint + '/') 
+                        path = expdirpath + constraint + '/',
+                        MIPGap = 3e-2) 
   
     # ================================================================================
 
@@ -130,14 +132,14 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
         pc_currentMinDist = p_current * c_currentMinDist
         pc_totalMinDist = p_total * c_totalMinDist
 
-        # if Chain_type == 'Dollar':
-        #     optimize_dist(scenario = 'current',
-        #                 pc = pc_currentMinDist, ncp = p_current, p = Population, K=K, 
-        #                 num_current_stores=num_current_stores,
-        #                 num_total_stores=num_total_stores, 
-        #                 num_tracts=num_tracts, 
-        #                 scale_factor=scale_factor,
-        #                 path = expdirpath)
+        if Chain_type == 'Dollar':
+            optimize_dist(scenario = 'current',
+                        pc = pc_currentMinDist, ncp = p_current, p = Population, K=K, 
+                        num_current_stores=num_current_stores,
+                        num_total_stores=num_total_stores, 
+                        num_tracts=num_tracts, 
+                        scale_factor=scale_factor,
+                        path = expdirpath)
        
         optimize_dist(scenario = 'total',
                     pc = pc_totalMinDist, ncp = p_total, p = Population, K=K,
@@ -145,8 +147,7 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
                     num_total_stores=num_total_stores, 
                     num_tracts=num_tracts, 
                     scale_factor=scale_factor, 
-                    path = expdirpath,
-                    MIPGap = 5e-2)   
+                    path = expdirpath)   
         
     # ================================================================================
     
@@ -162,16 +163,16 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
             print(expdirpath + constraint + '/')
 
-            # if Chain_type == 'Dollar':
+            if Chain_type == 'Dollar':
 
-            #     optimize_rate_fix(scenario = 'current', constraint = constraint,
-            #                     ncp = p_current, pv = pv_current, p = Population,
-            #                     closest = Closest_current, K=K, 
-            #                     num_current_stores=num_current_stores,
-            #                     num_total_stores=num_total_stores,
-            #                     num_tracts=num_tracts, 
-            #                     scale_factor=scale_factor,
-            #                     path = expdirpath + constraint + '/')
+                optimize_rate_fix(scenario = 'current', constraint = constraint,
+                                ncp = p_current, pv = pv_current, p = Population,
+                                closest = Closest_current, K=K, 
+                                num_current_stores=num_current_stores,
+                                num_total_stores=num_total_stores,
+                                num_tracts=num_tracts, 
+                                scale_factor=scale_factor,
+                                path = expdirpath + constraint + '/')
 
             optimize_rate_fix(scenario = 'total', constraint = constraint,
                             ncp = p_total, pv = pv_total, p = Population, 

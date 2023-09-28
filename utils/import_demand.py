@@ -13,7 +13,7 @@ import pandas as pd
 
 
 
-def initial_BLP_estimation(Chain_type, capacity, heterogeneity, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+def initial_BLP_estimation(Chain_type, capacity, heterogeneity=True, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
     tract_centroids.csv : tract info
@@ -21,7 +21,7 @@ def initial_BLP_estimation(Chain_type, capacity, heterogeneity, datadir='/export
     blk_tract.csv : block-tract pairs
     agent_results_{capacity}_200_3q.csv : block-level demand estimates, based on capacity K = {8000, 10000, 12000, 15000}
     ca_blk_pharm_dist.csv : block-pharmacy
-    ca_blk_{Chain_type}_dist.csv : block-chain, need to be computed from block_dist_chain.py (with geonear in STATA)
+    ca_blk_{Chain_type}_dist.csv : block-chain, need to be precomputed from block_dist_chain.py (with geonear in STATA)
     '''
     
     print(f'Start initializing BLP matrices from estimation for {Chain_type} under capacity {str(capacity)}... (only need to do this once)')
@@ -92,7 +92,7 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data"):
 
 
 
-def construct_F_BLP(Chain_type, capacity, heterogeneity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=10, resultdir='/export/storage_covidvaccine/Result/'):
+def construct_F_BLP(Chain_type, capacity, heterogeneity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=12, resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
     M here doesn't matter, because we have C_closest in the optimization constraint
@@ -255,6 +255,8 @@ def construct_F_BLP(Chain_type, capacity, heterogeneity, C_total, num_tracts, nu
 
 def import_BLP_estimation(Chain_type, capacity, resultdir='/export/storage_covidvaccine/Result/'):
 
+    # NOTE: WITHOUT HETEROGENEITY HASN'T UPDATED TO 5+
+    # TODO THIS, RERUN INITIAL_BLP_ESTIMATION
     F_D_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_nodisthet.csv', delimiter = ",", dtype = float) 
     F_D_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_nodisthet.csv', delimiter = ",", dtype = float)
     F_D_total = np.concatenate((F_D_current, F_D_chain), axis = 1)

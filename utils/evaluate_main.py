@@ -12,13 +12,14 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.evaluate_chain import evaluate_chain_RandomFCFS
+from utils.evaluate_chain import evaluate_chain_MIP, evaluate_chain_RandomFCFS
 
 
 def evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
                   Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
                   K_list = [8000, 10000, 12000],
-                  M_list = [5, 10]):
+                  M_list = [5, 10],
+                  constraint_list = ['assigned', 'vaccinated']):
     
     '''
     Evaluate the optimal locations from the optimization model
@@ -43,7 +44,9 @@ def evaluate_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPID
                 for Chain_type in Chain_list:
                         
                     chain_path = f'/export/storage_covidvaccine/Result/{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'
-                    evaluate_chain_RandomFCFS(Chain_type, Model, M = M, K = K, expdirpath = chain_path)
+                    
+                    evaluate_chain_RandomFCFS(Chain_type, Model, M = M, K = K, constraint_list = constraint_list, expdirpath = chain_path)
+                    evaluate_chain_MIP(Chain_type, Model, M = M, K = K, constraint_list = constraint_list, expdirpath = chain_path)
 
 
 

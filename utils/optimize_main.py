@@ -18,7 +18,8 @@ from utils.optimize_chain import optimize_chain
 def optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
                   Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
                   K_list = [8000, 10000, 12000],
-                  M_list = [5, 10]):
+                  M_list = [5, 10],
+                  constraint_list = ['assigned', 'vaccinated']):
 
 
     '''
@@ -57,7 +58,7 @@ def optimize_main(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPID
                     chain_path = f'{parameter_path}{Chain_type}/'
                     if not os.path.exists(chain_path): os.mkdir(chain_path)
 
-                    optimize_chain(Chain_type, Model, M = M, K = K, expdirpath = chain_path)
+                    optimize_chain(Chain_type, Model, M = M, K = K, constraint_list = constraint_list, expdirpath = chain_path)
                     
     
     print('All problems solved!')
