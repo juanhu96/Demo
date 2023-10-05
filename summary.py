@@ -11,19 +11,11 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 import sys 
-Model = sys.argv[1] # Model
-Chain = sys.argv[2] # Chain
-K = int(sys.argv[3]) # K
-M = int(sys.argv[4]) # M
-R = int(sys.argv[5]) # R
+R = int(sys.argv[1])
 
+from utils.partnerships_summary import partnerships_summary
 
-from utils.optimize_main import optimize_main
-from utils.evaluate_main import evaluate_main
-from utils.partnership_summary import partnerships_summary
-from utils.import_demand import initial_BLP_estimation, import_BLP_estimation, demand_check
-
-def main(Model, Chain, K, M, R):
+def summary(R):
 
     '''
     BLP estimation:
@@ -35,19 +27,11 @@ def main(Model, Chain, K, M, R):
     K_list = [8000, 10000, 12000]
     M_list = [5, 10]
     Demand_estimation = 'BLP'
-    
     '''
 
-    optimize_main(Model, Chain, M, K, R)
-    evaluate_main(Model, Chain, M, K, R)
-
-
-def initialization(Chain, K):
-
-    initial_BLP_estimation(Chain, K) # with HPI
-    # demand_check(Chain_type='Coffee', capacity=8000, heterogeneity=True)
+    partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Coffee', 'HighSchools'], M_list=[5], K_list=[8000], R=R, constraint_list=['vaccinated'], filename='Oct4')
 
 
 
 if __name__ == "__main__":
-    main(Model, Chain, K, M, R)
+    summary(R)

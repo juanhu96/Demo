@@ -1,0 +1,119 @@
+Start optimization with Coffee; Model: MaxVaxHPIDistBLP; M = 5, K = 8000, R = 400. Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K8000/Coffee/
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.001
+==================================
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 58082065 rows, 58074006 columns and 116344551 nonzeros
+Model fingerprint: 0x2cfe2aef
+Variable types: 58066799 continuous, 7207 integer (7207 binary)
+Coefficient statistics:
+  Matrix range     [9e-01, 3e+04]
+  Objective range  [9e-01, 3e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.365876e+07
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 58066835 rows and 57874295 columns (presolve time = 10s) ...
+Presolve removed 58066949 rows and 58026806 columns (presolve time = 16s) ...
+Presolve removed 58066949 rows and 58026806 columns (presolve time = 20s) ...
+Presolve removed 58066949 rows and 58026806 columns (presolve time = 25s) ...
+Presolve removed 58066949 rows and 58026806 columns (presolve time = 32s) ...
+Presolve removed 58066949 rows and 58026806 columns
+Presolve time: 33.49s
+Presolved: 15116 rows, 47200 columns, 94398 nonzeros
+Variable types: 40100 continuous, 7100 integer (7098 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.9330400e+07   4.381426e+05   0.000000e+00     44s
+   19816    2.8654764e+07   0.000000e+00   0.000000e+00     45s
+
+Root relaxation: objective 2.865476e+07, 19816 iterations, 0.97 seconds (0.90 work units)
+Total elapsed time = 45.09s
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.8655e+07    0  248 2.3659e+07 2.8655e+07  21.1%     -   45s
+H    0     0                    2.854219e+07 2.8655e+07  0.39%     -   45s
+H    0     0                    2.855122e+07 2.8655e+07  0.36%     -   46s
+H    0     0                    2.855495e+07 2.8655e+07  0.35%     -   47s
+     0     0 2.8655e+07    0  360 2.8555e+07 2.8655e+07  0.35%     -   47s
+H    0     0                    2.855537e+07 2.8655e+07  0.35%     -   48s
+     0     0 2.8655e+07    0  365 2.8555e+07 2.8655e+07  0.35%     -   48s
+H    0     0                    2.857668e+07 2.8655e+07  0.27%     -   49s
+     0     0 2.8655e+07    0  219 2.8577e+07 2.8655e+07  0.27%     -   50s
+H    0     0                    2.858369e+07 2.8655e+07  0.25%     -   50s
+     0     0 2.8655e+07    0  234 2.8584e+07 2.8655e+07  0.25%     -   50s
+     0     0 2.8655e+07    0  233 2.8584e+07 2.8655e+07  0.25%     -   51s
+H    0     0                    2.858836e+07 2.8655e+07  0.23%     -   52s
+     0     0 2.8655e+07    0  246 2.8588e+07 2.8655e+07  0.23%     -   52s
+     0     0 2.8655e+07    0  238 2.8588e+07 2.8655e+07  0.23%     -   53s
+     0     0 2.8655e+07    0  227 2.8588e+07 2.8655e+07  0.23%     -   53s
+H    0     0                    2.859136e+07 2.8655e+07  0.22%     -   54s
+H    0     0                    2.859421e+07 2.8655e+07  0.21%     -   54s
+H    0     0                    2.860785e+07 2.8655e+07  0.16%     -   55s
+H    0     0                    2.861530e+07 2.8655e+07  0.14%     -   58s
+H    0     2                    2.862228e+07 2.8655e+07  0.11%     -   60s
+     0     2 2.8655e+07    0  225 2.8622e+07 2.8655e+07  0.11%     -   60s
+H   31    64                    2.862654e+07 2.8655e+07  0.10%   366   62s
+
+Cutting planes:
+  Gomory: 241
+  Implied bound: 1470
+  MIR: 11
+  Flow cover: 305
+  Relax-and-lift: 271
+
+Cleanup yields a better solution
+
+Explored 63 nodes (158734 simplex iterations) in 65.64 seconds (76.47 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 10: 2.86271e+07 2.86265e+07 2.86223e+07 ... 2.85767e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 2.862714253724e+07, best bound 2.865475327422e+07, gap 0.0964%
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:199: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+All problems solved!
+Evaluating random order first-come-first served with Chain type: Coffee; Model: MaxVaxHPIDistBLP; M = 5, K = 8000. Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K8000/Coffee/
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.27 seconds.
+Assigning individuals...
+Assigned individuals in: 153.82 seconds
+Offers:
+% Rank 0 offers: 75.51716981596685
+% Rank 1 offers: 11.104068623124382
+% Rank 2 offers: 4.567137201357441
+% Rank 3 offers: 2.5689413663601055
+% Rank 4 offers: 1.697201041276
+% Offered: 95.4545180480848
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 55.270446401129604
+% Rank 1 assignments: 8.279971265500553
+% Rank 2 assignments: 3.4467313797535275
+% Rank 3 assignments: 1.9416966102593187
+% Rank 4 assignments: 1.2867013157413396
+% Assigned: 70.22554697238434

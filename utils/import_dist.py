@@ -42,7 +42,6 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data/", MAX
     tract_hpi['HPIQuartile'] = pd.cut(tract_hpi['hpi'], splits, labels=False, include_lowest=True) + 1
 
     tract_hpi['Raw_Population'] = np.genfromtxt(f'{datadir}/CA_demand_over_5.csv', delimiter = ",", dtype = int)
-    # tract_hpi['Raw_Population'] = np.genfromtxt(f'{datadir}CA_demand.csv', delimiter = ",", dtype = int)
     blk_tract_cw = pd.read_csv(f"{datadir}/Intermediate/blk_tract.csv", usecols=['tract', 'blkid'])
     temp = block.merge(blk_tract_cw, on='blkid', how='left')
     blk_tract_pop = temp.groupby('tract')['population'].sum().reset_index() # only 8021
@@ -70,7 +69,6 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data/", MAX
     ### Total ###
     C_total_mat = np.concatenate((C_current_mat, C_chains_mat), axis = 1)
     num_total_stores = num_current_stores + num_chains_stores
-    
     ###########################################################################
     
     ### Travel to the closest M stores only

@@ -21,9 +21,9 @@ from utils.import_demand import import_BLP_estimation
 scale_factor = 10000
 
 
-def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assigned', 'vaccinated']):
+def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assigned', 'vaccinated'], R = None):
 
-    print(f'Start optimization with {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}. Results stored at {expdirpath}')
+    print(f'Start optimization with {Chain_type}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}. Results stored at {expdirpath}')
     
     Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type, M)
     
@@ -32,7 +32,7 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
 
 
     if Model in BLP_models: 
-        F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K) # F_D_current, F_D_total hasn't been updated
+        F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K) # F_D_current, F_D_total are just dummy
 
     if Model in LogLin_models: 
         # TODO: import demand parameter from other directories
@@ -69,28 +69,41 @@ def optimize_chain(Chain_type, Model, M, K, expdirpath, constraint_list = ['assi
 
             if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
 
-            if Chain_type == 'Dollar':
-                optimize_rate(scenario='current', constraint=constraint,
-                            pc=pc_current, 
-                            pf=pfdh_current, 
-                            ncp=p_current, p=Population,
-                            closest=Closest_current, K=K, 
+            # if Chain_type == 'Dollar':
+            #     optimize_rate(scenario='current', constraint=constraint,
+            #                 pc=pc_current, 
+            #                 pf=pfdh_current, 
+            #                 ncp=p_current, p=Population,
+            #                 closest=Closest_current, K=K, 
+            #                 num_current_stores=num_current_stores,
+            #                 num_total_stores=num_total_stores, 
+            #                 num_tracts=num_tracts,
+            #                 scale_factor=scale_factor,
+            #                 path = expdirpath + constraint + '/')
+
+            # optimize_rate(scenario='total', constraint=constraint,
+            #             pc=pc_total,
+            #             pf=pfdh_total,
+            #             ncp=p_total, p=Population, 
+            #             closest=Closest_total, K=K,
+            #             num_current_stores=num_current_stores,
+            #             num_total_stores=num_total_stores,
+            #             num_tracts=num_tracts,
+            #             scale_factor=scale_factor,
+            #             path = expdirpath + constraint + '/')
+            
+            if R is not None:
+                optimize_rate(scenario='total', constraint=constraint,
+                            pc=pc_total,
+                            pf=pfdh_total,
+                            ncp=p_total, p=Population, 
+                            closest=Closest_total, K=K,
                             num_current_stores=num_current_stores,
-                            num_total_stores=num_total_stores, 
+                            num_total_stores=num_total_stores,
                             num_tracts=num_tracts,
                             scale_factor=scale_factor,
-                            path = expdirpath + constraint + '/')
-
-            optimize_rate(scenario='total', constraint=constraint,
-                        pc=pc_total,
-                        pf=pfdh_total,
-                        ncp=p_total, p=Population, 
-                        closest=Closest_total, K=K,
-                        num_current_stores=num_current_stores,
-                        num_total_stores=num_total_stores,
-                        num_tracts=num_tracts,
-                        scale_factor=scale_factor,
-                        path = expdirpath + constraint + '/')
+                            path = expdirpath + constraint + '/',
+                            R = R)
 
     # ================================================================================
     

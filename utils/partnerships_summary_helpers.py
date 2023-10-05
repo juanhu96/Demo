@@ -21,6 +21,12 @@ except:
 
 def import_dataset(nsplits, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
 
+    '''
+    Import block, tract related dataset
+    '''
+
+    print('Importing dataset...\n')
+
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv', usecols=["blkid", "market_ids", "population"]) 
     blocks_unique = np.unique(block.blkid.values)
     markets_unique = np.unique(block.market_ids.values)
@@ -42,10 +48,6 @@ def import_dataset(nsplits, datadir='/export/storage_covidvaccine/Data/', result
     tract_hpi = pd.read_csv(f"{datadir}Intermediate/tract_hpi_nnimpute.csv") # 8057 tracts
     splits = np.linspace(0, 1, nsplits+1)
     tract_hpi['HPIQuartile'] = pd.cut(tract_hpi['hpi'], splits, labels=False, include_lowest=True) + 1
-
-    # Tract population does not perfectly match block population (partially because over 5, but with under 5 still 2 million gap)
-
-    # tract_hpi['Raw_Population'] = np.genfromtxt(f'{datadir}CA_demand.csv', delimiter = ",", dtype = int)
     tract_hpi['Raw_Population'] = np.genfromtxt(f'{datadir}/CA_demand_over_5.csv', delimiter = ",", dtype = int)
     
     blk_tract_cw = pd.read_csv(f"{datadir}/Intermediate/blk_tract.csv", usecols=['tract', 'blkid'])
@@ -63,29 +65,44 @@ def import_dataset(nsplits, datadir='/export/storage_covidvaccine/Data/', result
 
 
 
-def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_current_stores, eval_constr='vaccinated', Pharmacy=False):
+def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_current_stores, eval_constr='vaccinated', R=None, Pharmacy=False):
     
     '''
     z, y: results from first/second stage
     dists, assignment: results from second stage
     '''
+    
+    print('Importing solution...\n')
 
     if not Pharmacy:
 
-        locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
-        dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}.csv', delimiter = "")
-        assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}.csv', delimiter = "")
+        if R is not None:
+            locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}_fixR{str(R)}.csv', delimiter = "")
+            dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}_fixR{str(R)}.csv', delimiter = "")
+            assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}_fixR{str(R)}.csv', delimiter = "")
 
-        z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
-        y = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
-        y_eval = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
-        mat_y = np.reshape(y, (num_tracts, num_total_stores))
-        mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
+            z = np.genfromtxt(f'{path}z_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
+            y = np.genfromtxt(f'{path}y_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
+            # y_eval = np.genfromtxt(f'{path}y_total_eval_{eval_constr}_fixR.csv', delimiter = ",", dtype = float)
+            mat_y = np.reshape(y, (num_tracts, num_total_stores))
+            # mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
 
-        return z, mat_y, mat_y_eval, locs, dists, assignment 
+            return z, mat_y, locs, dists, assignment 
+        
+        else:
+            locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
+            dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}.csv', delimiter = "")
+            assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}.csv', delimiter = "")
+
+            z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
+            y = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
+            y_eval = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+            mat_y = np.reshape(y, (num_tracts, num_total_stores))
+            mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
+
+            return z, mat_y, mat_y_eval, locs, dists, assignment 
 
     else:
-        
         locs = np.genfromtxt(f'{path}locs_{K}_Pharmacy.csv', delimiter = "")
         dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
         assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
@@ -94,8 +111,8 @@ def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_curre
         y = np.genfromtxt(f'{path}{eval_constr}/y_current.csv', delimiter = ",", dtype = float)
         y_eval = np.genfromtxt(f'{path}{eval_constr}/y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
         mat_y = np.reshape(y, (num_tracts, num_current_stores))
-        mat_y_eval = np.reshape(y_eval, (num_tracts, num_current_stores))
-        
+        mat_y_eval = np.reshape(y_eval, (num_tracts, num_current_stores))       
+            
         return z, mat_y, mat_y_eval, locs, dists, assignment
 
 
@@ -104,23 +121,38 @@ def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_curre
 
 
 
-def import_locations(df, Chain_type, Chain_name='01_DollarStores', datadir='/export/storage_covidvaccine/Data/'):
+def import_locations(df, Chain_type, Chain_name_list={'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}, datadir='/export/storage_covidvaccine/Data/'):
 
     '''
-    Import pharmacies and chain locations
+    Import pharmacies/chain locations and distance matrices
     '''
 
     df.rename(columns = {"zip": "zip_code"}, inplace = True)
     df['zip_code'] = df['zip_code'].astype("string")
-
+    
     pharmacy_locations = pd.read_csv(f"{datadir}Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'zip_code', 'StateID'])
     pharmacy_locations = pharmacy_locations.loc[pharmacy_locations['StateID'] == 6, :]
     pharmacy_locations.drop(columns=['StateID'], inplace=True)
     pharmacy_locations['zip_code'] = pharmacy_locations['zip_code'].astype("string")
     pharmacy_locations = pharmacy_locations.merge(df[['zip_code', 'hpi_quantile']], on='zip_code', how='left')
 
-    chain_locations = pd.read_csv(f"{datadir}Raw/Location/{Chain_name}.csv", usecols=['Latitude', 'Longitude', 'Zip_Code', 'State'])
-    chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude', 'Zip_Code': 'zip_code'}, inplace=True)
+    Chain_name = Chain_name_list[Chain_type]
+
+    ## NOTE: TEMP 
+    if Chain_type == 'Dollar':
+        chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv", usecols=['Latitude', 'Longitude', 'Zip_Code', 'State'])
+        chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude', 'Zip_Code': 'zip_code'}, inplace=True)
+        
+    elif Chain_type == 'Coffee':
+        chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv", usecols=['latitude', 'longitude', 'postal_code', 'region'])
+        chain_locations.rename(columns={'postal_code': 'zip_code', 'region': 'State'}, inplace=True)
+
+    elif Chain_type == 'HighSchools':
+        chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv", usecols=['latitude', 'longitude', 'Zip', 'State'])
+        chain_locations.rename(columns={'Zip': 'zip_code'}, inplace=True)
+    else:
+        print('Warning: chain name undefined\n')
+
     chain_locations = chain_locations.loc[chain_locations['State'] == 'CA', :]
     chain_locations.drop(columns=['State'], inplace=True)
     chain_locations['zip_code'] = chain_locations['zip_code'].astype("string")
@@ -153,7 +185,7 @@ def import_locations(df, Chain_type, Chain_name='01_DollarStores', datadir='/exp
 
 
 
-def create_row_second_stage(Scenario, Model, Chain_type, M, K, opt_constr, stage, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
+def create_row_randomFCFS(Scenario, Model, Chain_type, M, K, opt_constr, stage, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
 
     # stores breakdown
     if opt_constr != 'none':
@@ -347,10 +379,10 @@ def create_row_second_stage(Scenario, Model, Chain_type, M, K, opt_constr, stage
 
 
 
-def create_row_first_stage(Scenario, Model, Chain_type, M, K, opt_constr, stage, CA_TRACT, mat_y_hpi, z, F_DH, C, C_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
+def create_row_MIP(Scenario, Model, Chain_type, M, K, opt_constr, stage, CA_TRACT, mat_y_hpi, z, F_DH, C, C_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
 
     '''
-    Computing summary statistics for results in the first stage, which are tract-level results
+    Computing summary statistics for results from optimization, which are tract-level results
     '''
 
     ## Population
@@ -532,6 +564,65 @@ def create_row_first_stage(Scenario, Model, Chain_type, M, K, opt_constr, stage,
                      'Average distance HPI3': total_avg_dist[3]}
 
     return chain_summary
+
+
+
+
+
+
+def compute_utilization_randomFCFS(Scenario, Model, Chain_type, M, K, opt_constr, stage, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
+
+    '''
+    Compute the average utilization rate per store
+    Import location file, export
+    '''
+
+    # for a loc, sum up all demand, divide by K 
+    pharmacy_locations['Selected'] = z[0:num_current_stores]
+    chain_locations['Selected'] = z[num_current_stores:num_total_stores]
+
+    return 
+
+
+
+def compute_utilization_MIP(Scenario, Model, Chain_type, M, K, opt_constr, stage, CA_TRACT, mat_y_hpi, z, F_DH, C, C_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
+
+    '''
+    Subject to modification
+    '''
+
+
+    ### Stores selected
+    Current['Selected_Current_Dist'] = z_current
+    Current['Selected_Current_DistHPI'] = z_current_hpi
+    Current['Selected_Total_Dist'] = z_total[0:num_current_stores]
+    Current['Selected_Total_DistHPI'] = z_total_hpi[0:num_current_stores]
+
+    Dollar['Selected_Total_Dist'] = z_total[num_current_stores:num_total_stores]
+    Dollar['Selected_Total_DistHPI'] = z_total_hpi[num_current_stores:num_total_stores]
+
+    # Population
+    pop1 = Population[CA_TRACT['HPIQuartile'] == 1]
+    pop2 = Population[CA_TRACT['HPIQuartile'] == 2]
+    pop3 = Population[CA_TRACT['HPIQuartile'] == 3]
+    pop4 = Population[CA_TRACT['HPIQuartile'] == 4]
+
+    # Dollar
+    Dollar['Utilization_HPI1_Total_Dist'] = np.multiply(F_DH_total, mat_y_total)[CA_TRACT['HPIQuartile'] == 1][:,num_current_stores:num_total_stores].T @ pop1 / gamma
+    Dollar['Utilization_HPI1_Total_DistHPI'] = np.multiply(F_DH_total, mat_y_total_hpi)[CA_TRACT['HPIQuartile'] == 1][:,num_current_stores:num_total_stores].T @ pop1 / gamma
+
+    Dollar['Utilization_HPI2_Total_Dist'] = np.multiply(F_DH_total, mat_y_total)[CA_TRACT['HPIQuartile'] == 2][:,num_current_stores:num_total_stores].T @ pop2 / gamma
+    Dollar['Utilization_HPI2_Total_DistHPI'] = np.multiply(F_DH_total, mat_y_total_hpi)[CA_TRACT['HPIQuartile'] == 2][:,num_current_stores:num_total_stores].T @ pop2 / gamma
+
+    Dollar['Utilization_HPI3_Total_Dist'] = np.multiply(F_DH_total, mat_y_total)[CA_TRACT['HPIQuartile'] == 3][:,num_current_stores:num_total_stores].T @ pop3 / gamma
+    Dollar['Utilization_HPI3_Total_DistHPI'] = np.multiply(F_DH_total, mat_y_total_hpi)[CA_TRACT['HPIQuartile'] == 3][:,num_current_stores:num_total_stores].T @ pop3 / gamma
+
+    Dollar['Utilization_HPI4_Total_Dist'] = np.multiply(F_DH_total, mat_y_total)[CA_TRACT['HPIQuartile'] == 4][:,num_current_stores:num_total_stores].T @ pop4 / gamma
+    Dollar['Utilization_HPI4_Total_DistHPI'] = np.multiply(F_DH_total, mat_y_total_hpi)[CA_TRACT['HPIQuartile'] == 4][:,num_current_stores:num_total_stores].T @ pop4 / gamma
+
+
+    return
+
 
 
 

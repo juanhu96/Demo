@@ -254,7 +254,7 @@ def construct_F_BLP(Chain_type, capacity, heterogeneity, C_total, num_tracts, nu
 
 
 def import_BLP_estimation(Chain_type, capacity, resultdir='/export/storage_covidvaccine/Result/'):
-
+    '''
     # NOTE: WITHOUT HETEROGENEITY HASN'T UPDATED TO 5+
     # TODO THIS, RERUN INITIAL_BLP_ESTIMATION
     F_D_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_nodisthet.csv', delimiter = ",", dtype = float) 
@@ -266,6 +266,13 @@ def import_BLP_estimation(Chain_type, capacity, resultdir='/export/storage_covid
     F_DH_total = np.concatenate((F_DH_current, F_DH_chain), axis = 1)
 
     return F_D_current, F_D_total, F_DH_current, F_DH_total
+    '''
+
+    F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}.csv', delimiter = ",", dtype = float) 
+    F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}.csv', delimiter = ",", dtype = float)
+    F_DH_total = np.concatenate((F_DH_current, F_DH_chain), axis = 1)
+
+    return F_DH_current, F_DH_total, F_DH_current, F_DH_total
 
 
 

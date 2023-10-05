@@ -1,0 +1,88 @@
+Start optimization with Dollar; Model: MaxVaxHPIDistBLP; M = 5, K = 8000, R = 400. Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K8000/Dollar/
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.001
+==================================
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709017 rows, 40700958 columns and 81598455 nonzeros
+Model fingerprint: 0x61e0b26a
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [8e-01, 3e+04]
+  Objective range  [8e-01, 3e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.463096e+07
+Presolve removed 0 rows and 40503403 columns (presolve time = 6s) ...
+Presolve removed 40695946 rows and 40655803 columns (presolve time = 10s) ...
+Presolve removed 40695946 rows and 40655803 columns (presolve time = 15s) ...
+Presolve removed 40695946 rows and 40655803 columns (presolve time = 21s) ...
+Presolve removed 40695946 rows and 40655803 columns
+Presolve time: 21.69s
+Presolved: 13071 rows, 45155 columns, 90308 nonzeros
+Variable types: 40105 continuous, 5050 integer (5049 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.9437147e+07   4.353112e+05   0.000000e+00     28s
+   14962    2.8179152e+07   0.000000e+00   0.000000e+00     29s
+
+Root relaxation: objective 2.817915e+07, 14962 iterations, 0.64 seconds (0.68 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.8179e+07    0  477 2.4631e+07 2.8179e+07  14.4%     -   29s
+H    0     0                    2.803965e+07 2.8179e+07  0.50%     -   29s
+H    0     0                    2.815090e+07 2.8179e+07  0.10%     -   29s
+H    0     0                    2.815187e+07 2.8179e+07  0.10%     -   30s
+
+Explored 1 nodes (16131 simplex iterations) in 31.98 seconds (48.05 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 4: 2.81519e+07 2.81509e+07 2.80397e+07 2.4631e+07 
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 2.815186929027e+07, best bound 2.817915181525e+07, gap 0.0969%
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:199: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+All problems solved!
+Evaluating random order first-come-first served with Chain type: Dollar; Model: MaxVaxHPIDistBLP; M = 5, K = 8000. Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K8000/Dollar/
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.4 seconds.
+Assigning individuals...
+Assigned individuals in: 160.29 seconds
+Offers:
+% Rank 0 offers: 74.65502083089073
+% Rank 1 offers: 10.162544079376774
+% Rank 2 offers: 4.278003647445243
+% Rank 3 offers: 2.5497054855675416
+% Rank 4 offers: 1.7123556624930574
+% Offered: 93.35762970577336
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 54.226102489826744
+% Rank 1 assignments: 7.643841979709324
+% Rank 2 assignments: 3.2777251793803517
+% Rank 3 assignments: 1.9801886388069567
+% Rank 4 assignments: 1.345751644385337
+% Assigned: 68.47360993210872

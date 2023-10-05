@@ -1,0 +1,98 @@
+Start optimization with Dollar; Model: MaxVaxHPIDistBLP; M = 5, K = 8000, R = 600. Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K8000/Dollar/
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.001
+==================================
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709017 rows, 40700958 columns and 81598455 nonzeros
+Model fingerprint: 0xd5824fb8
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [8e-01, 3e+04]
+  Objective range  [8e-01, 3e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.458286e+07
+Presolve removed 0 rows and 40503403 columns (presolve time = 6s) ...
+Presolve removed 40695946 rows and 40655803 columns (presolve time = 10s) ...
+Presolve removed 40695946 rows and 40655803 columns (presolve time = 15s) ...
+Presolve removed 40695946 rows and 40655803 columns (presolve time = 21s) ...
+Presolve removed 40695946 rows and 40655803 columns
+Presolve time: 21.85s
+Presolved: 13071 rows, 45155 columns, 90308 nonzeros
+Variable types: 40105 continuous, 5050 integer (5049 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.9437147e+07   4.353112e+05   0.000000e+00     29s
+   13747    2.8189485e+07   0.000000e+00   0.000000e+00     29s
+
+Root relaxation: objective 2.818948e+07, 13747 iterations, 0.71 seconds (0.82 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.8189e+07    0  683 2.4583e+07 2.8189e+07  14.7%     -   29s
+H    0     0                    2.800837e+07 2.8189e+07  0.65%     -   29s
+H    0     0                    2.814766e+07 2.8189e+07  0.15%     -   30s
+H    0     0                    2.814799e+07 2.8189e+07  0.15%     -   30s
+H    0     0                    2.815169e+07 2.8189e+07  0.13%     -   31s
+H    0     0                    2.815947e+07 2.8189e+07  0.11%     -   31s
+     0     0 2.8187e+07    0  598 2.8159e+07 2.8187e+07  0.10%     -   31s
+
+Cutting planes:
+  Gomory: 20
+  Implied bound: 729
+  MIR: 1
+  Flow cover: 79
+  Relax-and-lift: 85
+
+Explored 1 nodes (17512 simplex iterations) in 33.44 seconds (48.59 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 6: 2.81595e+07 2.81517e+07 2.8148e+07 ... 2.45829e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 2.815946549209e+07, best bound 2.818700127607e+07, gap 0.0978%
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_chain.py:199: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+All problems solved!
+Evaluating random order first-come-first served with Chain type: Dollar; Model: MaxVaxHPIDistBLP; M = 5, K = 8000. Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K8000/Dollar/
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.31 seconds.
+Assigning individuals...
+Assigned individuals in: 156.57 seconds
+Offers:
+% Rank 0 offers: 74.98856436640358
+% Rank 1 offers: 10.221422138839435
+% Rank 2 offers: 4.259294707677946
+% Rank 3 offers: 2.4502377669374296
+% Rank 4 offers: 1.6421230372840163
+% Offered: 93.5616420171424
+*********
+Warning: not all individuals are offered
+Assignments:
+% Rank 0 assignments: 54.488377251672205
+% Rank 1 assignments: 7.677406602996653
+% Rank 2 assignments: 3.26954999337777
+% Rank 3 assignments: 1.9144096786095486
+% Rank 4 assignments: 1.2983370855925507
+% Assigned: 68.64808061224872
