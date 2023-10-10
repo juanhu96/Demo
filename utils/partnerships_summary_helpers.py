@@ -19,7 +19,7 @@ except:
 
 
 
-def import_dataset(nsplits, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+def import_dataset(nsplits, datadir):
 
     '''
     Import block, tract related dataset
@@ -34,7 +34,7 @@ def import_dataset(nsplits, datadir='/export/storage_covidvaccine/Data/', result
     block.sort_values(by=['blkid'], inplace=True)
     
     ### Keep markets in both
-    df = pd.read_csv(f"{datadir}Analysis/Demand/demest_data.csv")
+    df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
     df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=False, add_dist=False)
     df_temp = df.copy()
     df = df.loc[df.market_ids.isin(markets_unique), :]
@@ -45,7 +45,7 @@ def import_dataset(nsplits, datadir='/export/storage_covidvaccine/Data/', result
     df = df.loc[df.market_ids.isin(mkts_in_both), :]
     block = block.merge(df[['market_ids', 'hpi_quantile']], on='market_ids', how='left')
 
-    tract_hpi = pd.read_csv(f"{datadir}Intermediate/tract_hpi_nnimpute.csv") # 8057 tracts
+    tract_hpi = pd.read_csv(f"{datadir}/Intermediate/tract_hpi_nnimpute.csv") # 8057 tracts
     splits = np.linspace(0, 1, nsplits+1)
     tract_hpi['HPIQuartile'] = pd.cut(tract_hpi['hpi'], splits, labels=False, include_lowest=True) + 1
     tract_hpi['Raw_Population'] = np.genfromtxt(f'{datadir}/CA_demand_over_5.csv', delimiter = ",", dtype = int)
@@ -83,6 +83,7 @@ def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_curre
 
             z = np.genfromtxt(f'{path}z_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
             y = np.genfromtxt(f'{path}y_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
+            # NOTE: we did not perform second-stage evalution on R scenarios yet
             # y_eval = np.genfromtxt(f'{path}y_total_eval_{eval_constr}_fixR.csv', delimiter = ",", dtype = float)
             mat_y = np.reshape(y, (num_tracts, num_total_stores))
             # mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
@@ -567,21 +568,39 @@ def create_row_MIP(Scenario, Model, Chain_type, M, K, opt_constr, stage, CA_TRAC
 
 
 
+# ====================================================================================
 
 
 
-def compute_utilization_randomFCFS(Scenario, Model, Chain_type, M, K, opt_constr, stage, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
+def compute_utilization_randomFCFS(K, R, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, path):
 
     '''
     Compute the average utilization rate per store
-    Import location file, export
+    Import location file, export a store level result
     '''
 
-    # for a loc, sum up all demand, divide by K 
-    pharmacy_locations['Selected'] = z[0:num_current_stores]
-    chain_locations['Selected'] = z[num_current_stores:num_total_stores]
+    all_locations = pd.concat([pharmacy_locations, chain_locations])
+    all_locations['Selected'] = z
+    all_locations['Store_ID'] = range(1, len(all_locations) + 1)
+
+    # vaccinations adminstrated
+    all_locations['Vaccinations'] = all_locations.apply(compute_assignment_sum, axis=1, args=(locs, assignment))
+    all_locations['Utilization'] = np.round(all_locations['Vaccinations'] / K, 2)
+
+    # export
+    if R is not None: all_locations.to_csv(f'{path}/Store_Results_R{R}.csv', encoding='utf-8', index=False, header=True)
+    else: all_locations.to_csv(f'{path}/Store_Results.csv', encoding='utf-8', index=False, header=True)
+    print('Store Results exported\n')
+
 
     return 
+
+
+
+def compute_assignment_sum(row, locs, assignment):
+    # remember that locs does not match
+    return np.sum(assignment[locs == row['Store_ID']])
+
 
 
 
@@ -629,7 +648,7 @@ def compute_utilization_MIP(Scenario, Model, Chain_type, M, K, opt_constr, stage
 
 
 
-def export_dist(path, z, block, locs, dists, assignment, chain_locations, num_current_stores, num_total_stores, num_copies = 5):
+def export_dist(path, Model, Chain, M, K, R, z, block, locs, dists, assignment, chain_locations, num_current_stores, num_total_stores, num_copies = 5):
 
     '''
     Export distance for visualization
@@ -654,9 +673,9 @@ def export_dist(path, z, block, locs, dists, assignment, chain_locations, num_cu
 
     data = {'HPI': hpi_quantile_flatten, 'Pharmacy': locs_phar_dollar_flatten, 'Distance': np.exp(dists_flatten), 'Assignment': assignment_flatten}
     df = pd.DataFrame(data)
-    print(df.head)
-    df.to_csv(f'{path}Distance_HPI.csv', encoding='utf-8', index=False, header=True)
-    print(path)
+    if R is not None: df.to_csv(f'{path}/Distance_HPI_R{R}.csv', encoding='utf-8', index=False, header=True)
+    else: df.to_csv(f'{path}/Distance_HPI.csv', encoding='utf-8', index=False, header=True)
+
     return 
 
 

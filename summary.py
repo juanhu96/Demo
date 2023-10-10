@@ -11,11 +11,13 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 import sys 
-R = int(sys.argv[1])
+# R = int(sys.argv[1])
+groups = int(sys.argv[1])
+capcoef = sys.argv[2]
 
 from utils.partnerships_summary import partnerships_summary
 
-def summary(R):
+def summary(groups, capcoef, R=None):
 
     '''
     BLP estimation:
@@ -26,12 +28,12 @@ def summary(R):
     Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries']
     K_list = [8000, 10000, 12000]
     M_list = [5, 10]
-    Demand_estimation = 'BLP'
     '''
 
-    partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Coffee', 'HighSchools'], M_list=[5], K_list=[8000], R=R, constraint_list=['vaccinated'], filename='Oct4')
+    partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Dollar'], M_list=[5], K_list=[8000, 10000], groups=groups, capcoef=capcoef, constraint_list=['vaccinated'], filename='34q_capcoef')
+
 
 
 
 if __name__ == "__main__":
-    summary(R)
+    summary(groups, capcoef)

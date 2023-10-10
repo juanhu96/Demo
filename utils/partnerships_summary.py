@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 from tabulate import tabulate
 
-from utils.partnerships_summary_helpers import import_dataset, import_solution, import_locations, create_row_MIP, create_row_randomFCFS, export_dist
+from utils.partnerships_summary_helpers import import_dataset, import_solution, import_locations, create_row_MIP, create_row_randomFCFS, compute_utilization_randomFCFS, export_dist
 from utils.import_demand import import_BLP_estimation
 
 
@@ -18,11 +18,15 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                         Chain_list=['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
                         M_list=[5, 10], 
                         K_list=[8000, 10000, 12000], 
-                        R = None,
+                        groups=3,
+                        capcoef=True,
+                        R=None,
                         constraint_list=['assigned', 'vaccinated'], 
                         nsplits=3,
-                        resultdir='/export/storage_covidvaccine/Result/', 
-                        datadir='/export/storage_covidvaccine/Data/', 
+                        second_stage_MIP=False,
+                        export_dist=False,
+                        resultdir='/export/storage_covidvaccine/Result', 
+                        datadir='/export/storage_covidvaccine/Data', 
                         filename=''):
 
     '''
@@ -54,50 +58,70 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
     chain_summary_table = []
 
     for Model in Model_list:
-        for Chain_type in Chain_list:
+        for Chain in Chain_list:
 
-            pharmacy_locations, chain_locations, num_tracts, num_current_stores, num_total_stores, C_current, C_total, C_current_walkable, C_total_walkable = import_locations(df_temp, Chain_type)
+            pharmacy_locations, chain_locations, num_tracts, num_current_stores, num_total_stores, C_current, C_total, C_current_walkable, C_total_walkable = import_locations(df_temp, Chain)
 
             for M in M_list:
                 for K in K_list:
                     
-                    F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain_type, K)
+                    F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, K)
 
                     if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
 
                         for opt_constr in constraint_list:
                             
-                            print(f'{Model}, M{M}_K{K}, {Chain_type}\n')
-                            path = f'{resultdir}{Model}/M{str(M)}_K{str(K)}/{Chain_type}/{opt_constr}/'
+                            print(f'{Model}, M{M}_K{K}, {Chain}\n')
 
-                            # FixReplace
-                            # z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_current_stores, opt_constr)
-                            z, mat_y, locs, dists, assignment = import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_current_stores, opt_constr, R)
+                            if capcoef: path = f'{resultdir}/M{str(M)}_K{str(K)}_{groups}q_capcoef/{Chain}/{opt_constr}/'
+                            else: path = f'{resultdir}/M{str(M)}_K{str(K)}_{groups}q/{Chain}/{opt_constr}/'
+
+                            # path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}/{Chain}/{opt_constr}/'
+
+                            if R is not None: z, mat_y, locs, dists, assignment = import_solution(path, Chain, K, num_tracts, num_total_stores, num_current_stores, opt_constr, R)
+                            else: z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Chain, K, num_tracts, num_total_stores, num_current_stores, opt_constr)
+                            
+
+                            # =================================================================================
+                            
+                            # compute_utilization_randomFCFS(K, R, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, path)
+
+                            # return 
+                            # =================================================================================
+
+
 
                             # first stage MIP
-                            chain_summary_first_stage = create_row_MIP('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, 'first stage', tract_hpi, mat_y, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                            chain_summary_first_stage = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, opt_constr, 'first stage', tract_hpi, mat_y, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
                             chain_summary_table.append(chain_summary_first_stage)
 
-                            # second stage FCFS
-                            chain_summary_second_stage_randomFCFS = create_row_randomFCFS('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, 'second stage randomFCFS', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                            chain_summary_table.append(chain_summary_second_stage_randomFCFS)
-                            # export_dist(path, z, block, locs, dists, assignment, chain_locations, num_current_stores, num_total_stores)
-
                             # second stage MIP
-                            # chain_summary_second_stage_MIP = create_row_MIP('Pharmacy + ' + Chain_type, Model, Chain_type, M, K, opt_constr, 'second stage MIP', tract_hpi, mat_y_eval, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                            # chain_summary_table.append(chain_summary_second_stage_MIP)
+                            if second_stage_MIP:
+                                chain_summary_second_stage_MIP = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, opt_constr, 'second stage MIP', tract_hpi, mat_y_eval, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                                chain_summary_table.append(chain_summary_second_stage_MIP)
 
+                            # second stage FCFS
+                            chain_summary_second_stage_randomFCFS = create_row_randomFCFS('Pharmacy + ' + Chain, Model, Chain, M, K, opt_constr, 'second stage randomFCFS', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                            chain_summary_table.append(chain_summary_second_stage_randomFCFS)
 
-                            if Chain_type == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and opt_constr == 'vaccinated': # Pharmacy-only
+                            # other results
+                            if export_dist: export_dist(path, Model, Chain, M, K, R, z, block, locs, dists, assignment, chain_locations, num_current_stores, num_total_stores)
+                            if export_utilization: compute_utilization()
+
+                            if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and opt_constr == 'vaccinated': # Pharmacy-only
                                 
-                                path = f'{resultdir}{Model}/M{str(M)}_K{str(K)}/{Chain_type}/'    
-                                # path = f'{resultdir}{Model}/M{str(M)}_K{str(K)}/{Chain_type}/{opt_constr}/'
-                                z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path=path, Chain_type=Chain_type, K=K, num_tracts=num_tracts, num_total_stores=num_total_stores, num_current_stores=num_current_stores, eval_constr='vaccinated', R=R, Pharmacy=True)
+                                # TODO: NEED TO LOOK INTO THIS AND MAKE SURE DIRECTORIES ARE CORRECT
+                                # path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}/{Chain}/'    
+                                # path = f'{resultdir}{Model}/M{str(M)}_K{str(K)}/{Chain}/{opt_constr}/'
+                                if capcoef: path = f'{resultdir}/M{str(M)}_K{str(K)}_{groups}q_capcoef/{Chain}/{opt_constr}/'
+                                else: path = f'{resultdir}/M{str(M)}_K{str(K)}_{groups}q/{Chain}/{opt_constr}/'
+                                
+                                z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path=path, Chain=Chain, K=K, num_tracts=num_tracts, num_total_stores=num_total_stores, num_current_stores=num_current_stores, eval_constr='vaccinated', R=R, Pharmacy=True)
 
-                                chain_summary_first_stage = create_row_MIP('Pharmacy-only', Model, Chain_type, M, K, 'none', 'first stage', tract_hpi, mat_y, z, F_DH_current, C_current, C_current_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                                chain_summary_first_stage = create_row_MIP('Pharmacy-only', Model, Chain, M, K, 'none', 'first stage', tract_hpi, mat_y, z, F_DH_current, C_current, C_current_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
                                 chain_summary_table.append(chain_summary_first_stage)
 
-                                chain_summary = create_row_randomFCFS('Pharmacy-only', Model, Chain_type, M, K, 'none', 'second stage randomFCFS', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                                chain_summary = create_row_randomFCFS('Pharmacy-only', Model, Chain, M, K, 'none', 'second stage randomFCFS', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
                                 chain_summary_table.append(chain_summary)
                     
                     else:
@@ -105,5 +129,5 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
 
 
     chain_summary = pd.DataFrame(chain_summary_table)
-    chain_summary.to_csv(f'{resultdir}Sensitivity_results/sensitivity_results_{filename}_{R}.csv', encoding='utf-8', index=False, header=True)
+    chain_summary.to_csv(f'{resultdir}/Sensitivity_results/sensitivity_results_{filename}_{R}.csv', encoding='utf-8', index=False, header=True)
 

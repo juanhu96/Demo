@@ -38,7 +38,6 @@ except:
 def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
     
     print('Start computing distdf...\n')
-
     path = f'{path}/{constraint}'
 
     # If file exist, don't need to recompute
@@ -171,7 +170,7 @@ def run_assignment(Chain, M, K, R, constraint, block, block_utils, distdf, path,
     # af.assignment_stats_eval(economy, M) # this is not required
 
     if Pharmacy:
-        np.savetxt(f'{path/}locs_{K}_Pharmacy.csv', np.stack(locs, axis=0), fmt='%s')
+        np.savetxt(f'{path}/locs_{K}_Pharmacy.csv', np.stack(locs, axis=0), fmt='%s')
         np.savetxt(f'{path}/dists_{K}_Pharmacy.csv', np.stack(dists, axis=0))
         np.savetxt(f'{path}/assignment_{K}_Pharmacy.csv', np.array(economy.assignments), fmt='%s')
     

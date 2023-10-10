@@ -18,7 +18,7 @@ except:
     from Demand.demand_utils import demest_funcs as de
 
 
-def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data/", MAXDIST = 100000, scale_factor = 10000, nsplits = 3):
+def import_dist(Chain, M, datadir="/export/storage_covidvaccine/Data/", MAXDIST = 100000, scale_factor = 10000, nsplits = 3):
 
     # ============================================================================
     # New population
@@ -60,7 +60,7 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data/", MAX
     num_tracts, num_current_stores = np.shape(C_current_mat)
 
     ### Chains ###
-    C_chains_mat = np.genfromtxt(f'{datadir}/CA_dist_matrix_' + Chain_type + '.csv', delimiter = ",", dtype = float)
+    C_chains_mat = np.genfromtxt(f'{datadir}/CA_dist_matrix_{Chain}.csv', delimiter = ",", dtype = float)
     C_chains_mat = C_chains_mat.astype(int)
     C_chains_mat = C_chains_mat.T
     num_tracts, num_chains_stores = np.shape(C_chains_mat)

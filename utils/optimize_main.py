@@ -20,36 +20,38 @@ from utils.import_demand import import_BLP_estimation
 
 
 
-def optimize_main(Model, Chain, M, K, R=None, constraint='vaccinated', resultdir='/export/storage_covidvaccine/Result'):
+def optimize_main(Model, Chain, M, K, groups, capcoef, R=None, constraint='vaccinated', resultdir='/export/storage_covidvaccine/Result'):
         
     model_path = f'{resultdir}/{Model}'
     if not os.path.exists(model_path): os.mkdir(model_path)
 
-    parameter_path = f'{model_path}/M{str(M)}_K{str(K)}'
+    # parameter_path = f'{model_path}/M{str(M)}_K{str(K)}'
+    if capcoef: parameter_path = f'{model_path}/M{str(M)}_K{str(K)}_{groups}q_capcoef'
+    else: parameter_path = f'{model_path}/M{str(M)}_K{str(K)}_{groups}q'
     if not os.path.exists(parameter_path): os.mkdir(parameter_path)
 
-    chain_path = f'{parameter_path}/{Chain_type}/'
+    chain_path = f'{parameter_path}/{Chain}/'
     if not os.path.exists(chain_path): os.mkdir(chain_path)
 
-    optimize_chain(Model, Chain, M, K, chain_path, R, constraint=constraint)
+    optimize_chain(Model, Chain, M, K, groups, capcoef, chain_path, R, constraint=constraint)
 
     return
 
 
 
 
-def optimize_chain(Model, Chain, M, K, expdirpath, R=None, constraint='vaccinated', scale_factor=10000):
+def optimize_chain(Model, Chain, M, K, groups, capcoef, expdirpath, R=None, constraint='vaccinated', scale_factor=10000):
 
-    print(f'Start optimization with {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}. Results stored at {expdirpath}\n')
+    print(f'Start optimization with {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}.\n Results stored at {expdirpath}\n')
     
-    Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, _, _, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type, M)
+    Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, _, _, num_tracts, num_current_stores, num_total_stores = import_dist(Chain, M)
     
     BLP_models = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP']
     LogLin_models = ['MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin']
 
     if Model in BLP_models: 
         # TODO: need to utilize
-        F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, K) # F_D_current, F_D_total are just dummy
+        F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, K, groups, capcoef) # F_D_current, F_D_total are just dummy
 
     if Model in LogLin_models: 
         # TODO: import demand parameter from other directories
@@ -84,41 +86,30 @@ def optimize_chain(Model, Chain, M, K, expdirpath, R=None, constraint='vaccinate
 
         if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
 
-        # if Chain == 'Dollar':
-        #     optimize_rate(scenario='current', constraint=constraint,
-        #                 pc=pc_current, 
-        #                 pf=pfdh_current, 
-        #                 ncp=p_current, p=Population,
-        #                 closest=Closest_current, K=K, 
-        #                 num_current_stores=num_current_stores,
-        #                 num_total_stores=num_total_stores, 
-        #                 num_tracts=num_tracts,
-        #                 scale_factor=scale_factor,
-        #                 path = expdirpath + constraint + '/')
-
-        # optimize_rate(scenario='total', constraint=constraint,
-        #             pc=pc_total,
-        #             pf=pfdh_total,
-        #             ncp=p_total, p=Population, 
-        #             closest=Closest_total, K=K,
-        #             num_current_stores=num_current_stores,
-        #             num_total_stores=num_total_stores,
-        #             num_tracts=num_tracts,
-        #             scale_factor=scale_factor,
-        #             path = expdirpath + constraint + '/')
-            
-        if R is not None:
-            optimize_rate(scenario='total', constraint=constraint,
-                        pc=pc_total,
-                        pf=pfdh_total,
-                        ncp=p_total, p=Population, 
-                        closest=Closest_total, K=K,
+        if Chain == 'Dollar':
+            optimize_rate(scenario='current', constraint=constraint,
+                        pc=pc_current, 
+                        pf=pfdh_current, 
+                        ncp=p_current, p=Population,
+                        closest=Closest_current, K=K, 
                         num_current_stores=num_current_stores,
-                        num_total_stores=num_total_stores,
+                        num_total_stores=num_total_stores, 
                         num_tracts=num_tracts,
                         scale_factor=scale_factor,
                         path = expdirpath + constraint + '/',
                         R = R)
+
+        optimize_rate(scenario='total', constraint=constraint,
+                    pc=pc_total,
+                    pf=pfdh_total,
+                    ncp=p_total, p=Population, 
+                    closest=Closest_total, K=K,
+                    num_current_stores=num_current_stores,
+                    num_total_stores=num_total_stores,
+                    num_tracts=num_tracts,
+                    scale_factor=scale_factor,
+                    path = expdirpath + constraint + '/',
+                    R = R)
 
     # ================================================================================
     
@@ -136,7 +127,8 @@ def optimize_chain(Model, Chain, M, K, expdirpath, R=None, constraint='vaccinate
                         num_total_stores=num_total_stores, 
                         num_tracts=num_tracts,
                         scale_factor=scale_factor, 
-                        path = expdirpath + constraint + '/')
+                        path = expdirpath + constraint + '/',
+                        R = R)
                 
         optimize_rate(scenario = 'total', constraint = constraint,
                     pc = pc_total, 
@@ -147,7 +139,8 @@ def optimize_chain(Model, Chain, M, K, expdirpath, R=None, constraint='vaccinate
                     num_total_stores=num_total_stores,
                     num_tracts=num_tracts,
                     scale_factor=scale_factor,
-                    path = expdirpath + constraint + '/') 
+                    path = expdirpath + constraint + '/',
+                    R = R) 
   
     # ================================================================================
 
@@ -193,7 +186,8 @@ def optimize_chain(Model, Chain, M, K, expdirpath, R=None, constraint='vaccinate
                             num_total_stores=num_total_stores,
                             num_tracts=num_tracts, 
                             scale_factor=scale_factor,
-                            path = expdirpath + constraint + '/')
+                            path = expdirpath + constraint + '/',
+                            R = R)
 
         optimize_rate_fix(scenario = 'total', constraint = constraint,
                         ncp = p_total, pv = pv_total, p = Population, 
@@ -202,7 +196,8 @@ def optimize_chain(Model, Chain, M, K, expdirpath, R=None, constraint='vaccinate
                         num_total_stores=num_total_stores, 
                         num_tracts=num_tracts, 
                         scale_factor=scale_factor, 
-                        path = expdirpath + constraint + '/') 
+                        path = expdirpath + constraint + '/',
+                        R = R) 
 
     return 
 

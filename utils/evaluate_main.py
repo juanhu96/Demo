@@ -16,9 +16,12 @@ from utils.evaluate_model import compute_distdf, construct_blocks, run_assignmen
 
 
 
-def evaluate_main(Model, Chain, M, K, R=None, MIP=False, constraint='vaccinated', resultdir='/export/storage_covidvaccine/Result'):
+def evaluate_main(Model, Chain, M, K, groups, capcoef, R=None, MIP=False, constraint='vaccinated', resultdir='/export/storage_covidvaccine/Result'):
 
-    path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}/{Chain}'
+    if capcoef: path = f'{resultdir}/M{str(M)}_K{str(K)}_{groups}q_capcoef/{Chain}'
+    else: path = f'{resultdir}/M{str(M)}_K{str(K)}_{groups}q/{Chain}'
+
+    # path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}/{Chain}'
     
     evaluate_chain_RandomFCFS(Model, Chain, M, K, R, constraint, path)
     if MIP: evaluate_chain_MIP(Model, Chain, M, K, R, constraint, path)
@@ -30,7 +33,7 @@ def evaluate_main(Model, Chain, M, K, R=None, MIP=False, constraint='vaccinated'
 
 def evaluate_chain_RandomFCFS(Model, Chain, M, K, R, constraint, path):
 
-    print(f'Evaluating random order FCFS with Chain type: {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}. Results stored at {path}\n')
+    print(f'Evaluating random order FCFS with Chain type: {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}.\n Results stored at {path}\n')
     Chain_dict = {'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}
     
     if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
@@ -52,14 +55,13 @@ def evaluate_chain_RandomFCFS(Model, Chain, M, K, R, constraint, path):
     else: # MinDist
 
         z_total = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
-        compute_distdf(chain_type=temp_dict[Chain], chain_name=Chain, constraint='None', z=z_total, expdirpath=path)
+        compute_distdf(chain_type=Chain_dict[Chain], chain_name=Chain, constraint='None', z=z_total, expdirpath=path)
 
         block, block_utils, distdf = construct_blocks(Chain, M, K, 'None', path)
         run_assignment(Chain, M, K, 'None', block, block_utils, distdf, path)
 
 
     return
-
 
 
 
@@ -77,7 +79,6 @@ def evaluate_chain_MIP(Model, Chain, M, K, R, constraint, path):
 
     if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
 
-        print(f'{expdirpath}{constraint}/z...')
         z_total = np.genfromtxt(f'{expdirpath}{constraint}/z_total.csv', delimiter = ",", dtype = float)
 
         if Chain_type == 'Dollar':
@@ -105,7 +106,6 @@ def evaluate_chain_MIP(Model, Chain, M, K, R, constraint, path):
 
     else: # MinDist
 
-        print(f'{expdirpath}z...')
         z_total = np.genfromtxt(f'{expdirpath}z_total.csv', delimiter = ",", dtype = float)
         z_current = np.genfromtxt(f'{expdirpath}z_current.csv', delimiter = ",", dtype = float)
         

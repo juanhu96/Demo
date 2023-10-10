@@ -1,0 +1,9 @@
+Start optimization with Dollar; Model: MaxVaxHPIDistBLP; M = 5, K = 10000, R = None.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K10000_4q_capcoef/Dollar/
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.001

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Jul, 2022
+Created on Jul, 2023
 @author: Jingyuan Hu
 """
 
@@ -15,15 +15,15 @@ Model = sys.argv[1] # Model
 Chain = sys.argv[2] # Chain
 K = int(sys.argv[3]) # K
 M = int(sys.argv[4]) # M
-R = int(sys.argv[5]) # R
-
+# R = int(sys.argv[5]) # R
+groups = int(sys.argv[5])
+capcoef = sys.argv[6]
 
 from utils.optimize_main import optimize_main
 from utils.evaluate_main import evaluate_main
-from utils.partnership_summary import partnerships_summary
-from utils.import_demand import initial_BLP_estimation, import_BLP_estimation, demand_check
 
-def main(Model, Chain, K, M, R):
+
+def main(Model, Chain, K, M, groups, capcoef, R=None):
 
     '''
     BLP estimation:
@@ -38,16 +38,13 @@ def main(Model, Chain, K, M, R):
     
     '''
 
-    optimize_main(Model, Chain, M, K, R)
-    evaluate_main(Model, Chain, M, K, R)
-
-
-def initialization(Chain, K):
-
-    initial_BLP_estimation(Chain, K) # with HPI
-    # demand_check(Chain_type='Coffee', capacity=8000, heterogeneity=True)
+    optimize_main(Model, Chain, M, K, groups, capcoef, R)
+    evaluate_main(Model, Chain, M, K, groups, capcoef, R)
 
 
 
 if __name__ == "__main__":
-    main(Model, Chain, K, M, R)
+    # main(Model, Chain, K, M, R)
+    main(Model, Chain, K, M, groups, capcoef)
+
+
