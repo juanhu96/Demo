@@ -18,7 +18,8 @@ except:
     from Demand.demand_utils import demest_funcs as de
 
 
-def import_dist(Chain, M, datadir="/export/storage_covidvaccine/Data/", MAXDIST = 100000, scale_factor = 10000, nsplits = 3):
+
+def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/", MAXDIST = 100000, scale_factor = 10000):
 
     # ============================================================================
     # New population
@@ -51,7 +52,10 @@ def import_dist(Chain, M, datadir="/export/storage_covidvaccine/Data/", MAXDIST 
 
     # ============================================================================
 
-    Quartile = np.genfromtxt(f'{datadir}/HPIQuartile_TRACT.csv', delimiter = ",", dtype = int)
+    # TODO: need to change this based on 3q or 4q
+    Quartile = tract_hpi['HPIQuartile']
+    # Quartile = np.genfromtxt(f'{datadir}/HPIQuartile_TRACT.csv', delimiter = ",", dtype = int)
+
     
     ### Current ###
     C_current_mat = np.genfromtxt(f'{datadir}/CA_dist_matrix_current.csv', delimiter = ",", dtype = float)
@@ -113,3 +117,67 @@ def import_dist(Chain, M, datadir="/export/storage_covidvaccine/Data/", MAXDIST 
     return Population, Quartile, p_current, p_total, pc_current, pc_total, C_total_mat, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores
 
 
+
+
+def import_BLP_estimation(Chain_type, capacity, nsplits=3, capcoef=True, heterogeneity=True, resultdir='/export/storage_covidvaccine/Result/'):
+
+    if heterogeneity:
+        if capcoef: 
+            F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float) 
+            F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float)
+        else:
+            F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float) 
+            F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float)
+    else:
+        raise Exception("Warnings: homogeneous not computed")
+        if capcoef: 
+            F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{nsplits}q_capcoefs0_nodisthet.csv', delimiter = ",", dtype = float) 
+            F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{nsplits}q_capcoefs0_nodisthet.csv', delimiter = ",", dtype = float)
+        else:
+            F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{nsplits}q_nodisthet.csv', delimiter = ",", dtype = float) 
+            F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{nsplits}q_nodisthet.csv', delimiter = ",", dtype = float)
+
+    F_DH_total = np.concatenate((F_DH_current, F_DH_chain), axis = 1)
+
+    return F_DH_current, F_DH_total, F_DH_current, F_DH_total
+
+
+
+
+def import_LogLin_estimation(C_total, Quartile, nsplits, num_tracts, num_current_stores):
+
+    ## TODO: the demand parameter should also have a 3q version
+    if nsplits == 3: Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
+    elif nsplits == 4: Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
+    else: raise Exception("nsplits undefined, should be 3 or 4.")
+
+    F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
+    F_D_current = F_D_total[:,0:num_current_stores]
+
+    F_DH_total = []
+    
+    # raise Exception("This is not ready yet!\n")
+
+    for i in range(num_tracts):
+                
+        tract_quartile = Quartile[i]
+                
+        if tract_quartile == 1:
+            tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][2]) + (Demand_parameter[1][1] + Demand_parameter[1][5]) * np.log(C_total[i,:]/1000)
+        elif tract_quartile == 2:
+            tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][3]) + (Demand_parameter[1][1] + Demand_parameter[1][6]) * np.log(C_total[i,:]/1000)
+        elif tract_quartile == 3:
+            tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][4]) + (Demand_parameter[1][1] + Demand_parameter[1][7]) * np.log(C_total[i,:]/1000)
+        elif tract_quartile == 4:
+            # if nsplits = 3, this would never show up
+            # TODO: need to change the order of the demand parameters a a bit
+            tract_willingness = Demand_parameter[1][0] + Demand_parameter[1][1] * np.log(C_total[i,:]/1000)
+        else:
+            tract_willingness = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total[i,:]/1000)
+                
+        F_DH_total.append(tract_willingness)
+                
+    F_DH_total = np.asarray(F_DH_total)
+    F_DH_current = F_DH_total[:,0:num_current_stores]
+
+    return F_D_current, F_D_total, F_DH_current, F_DH_total

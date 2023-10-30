@@ -18,9 +18,6 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.construct_F import construct_F_BLP, construct_F_LogLin
-from utils.import_dist import import_dist
-from utils.import_demand import import_BLP_estimation
 
 scale_factor = 10000
 
@@ -41,13 +38,14 @@ def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/s
     path = f'{path}/{constraint}'
 
     # If file exist, don't need to recompute
-    if (R is not None) and os.path.isfile(f"{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}.csv"): 
-        print('Distance already computed (R fixed)\n')
-        return
-    elif (not (R is not None)) and os.path.isfile(f"{path}/ca_blk_{Chain}_dist_total.csv"): 
-        print('Distance already computed \n')
-        return
-        
+
+    # if (R is not None) and os.path.isfile(f"{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}.csv"): 
+    #     print('Distance already computed (R fixed)\n')
+    #     return
+    # elif (not (R is not None)) and os.path.isfile(f"{path}/ca_blk_{Chain}_dist_total.csv"): 
+    #     print('Distance already computed \n')
+    #     return
+     
     pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID'])
     pharmacy_locations = pharmacy_locations.loc[pharmacy_locations['StateID'] == 6, :]
     pharmacy_locations.drop(columns=['StateID'], inplace=True)
@@ -72,12 +70,15 @@ def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/s
     all_locations = pd.concat([pharmacy_locations, chain_locations])
     selected_locations = all_locations[z == 1]
     selected_locations['id'] = range(selected_locations.shape[0])
-    chainlocpath = f"{path}/ca_{Chain}_locations_total.dta"
-    selected_locations.to_stata(chainlocpath, write_index=False)
 
     # ============================= STATA ==================================
+
+    # chainlocpath = f"{path}/ca_{Chain}_locations_total.dta"
+    if R is not None: chainlocpath = f"{path}/ca_{Chain}_locations_total_fixR{str(R)}.dta"
+    else: chainlocpath = f"{path}/ca_{Chain}_locations_total.dta"
+    selected_locations.to_stata(chainlocpath, write_index=False)
+
     baselocpath = f"{datadir}/Intermediate/blk_coords.dta"
-    chainlocpath = f"{path}/ca_{Chain}_locations_total.dta"
     chain = pd.read_stata(chainlocpath)
     chain.tail()
     len(set(chain.id))
@@ -85,8 +86,10 @@ def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/s
     if R is not None: outpath = f"{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}.csv"
     else: outpath = f"{path}/ca_blk_{Chain}_dist_total.csv"
 
-    within = 2000 # km
-    limit = 30 # number of chain stores to consider
+    print(outpath)
+
+    within = 3000 # km
+    limit = 50 # number of chain stores to consider
     output = subprocess.run(["stata-mp", "-b", "do", f"/mnt/phd/jihu/VaxDemandDistance/Demand/datawork/geonear_pharmacies.do", baselocpath, chainlocpath, outpath, str(within), str(limit)], capture_output=True, text=True)
     # ============================= STATA ==================================
     
@@ -99,7 +102,7 @@ def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/s
 
 
 
-def construct_blocks(Chain, M, K, R, constraint, path, Pharmacy=False, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
+def construct_blocks(Chain, M, K, nsplits, R, constraint, path, Pharmacy=False, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
 
     print('Start constructing blocks...\n')
     if constraint != 'None': path = f'{path}/{constraint}'
@@ -131,7 +134,7 @@ def construct_blocks(Chain, M, K, R, constraint, path, Pharmacy=False, datadir='
 
     # Keep markets in both
     df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
-    df = de.hpi_dist_terms(df, nsplits=3, add_bins=True, add_dummies=False, add_dist=False)
+    df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=False, add_dist=False)
     df = df.loc[df.market_ids.isin(markets_unique), :]
     mkts_in_both = set(df['market_ids'].tolist()).intersection(set(block['market_ids'].tolist()))
     # print("Number of markets:", len(mkts_in_both))
@@ -165,7 +168,7 @@ def run_assignment(Chain, M, K, R, constraint, block, block_utils, distdf, path,
     geog_pops = block.population.values
     geog_pops = np.array(geog_pops).astype(int).tolist() # updated: float to int
 
-    economy = vaxclass.Economy(locs=locs, dists=dists, geog_pops=geog_pops, max_rank=M)
+    economy = vaxclass.Economy(locs=locs, dists=dists, geog_pops=geog_pops, max_rank=M, seed = 42)
     af.random_fcfs_eval(economy, distcoefs, abd, K)
     # af.assignment_stats_eval(economy, M) # this is not required
 

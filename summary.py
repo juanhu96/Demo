@@ -11,13 +11,13 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 import sys 
-# R = int(sys.argv[1])
-groups = int(sys.argv[1])
+nsplits = int(sys.argv[1])
 capcoef = sys.argv[2]
+R = sys.argv[3]
 
 from utils.partnerships_summary import partnerships_summary
 
-def summary(groups, capcoef, R=None):
+def summary(nsplits, capcoef, R=None):
 
     '''
     BLP estimation:
@@ -30,10 +30,14 @@ def summary(groups, capcoef, R=None):
     M_list = [5, 10]
     '''
 
-    partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Dollar'], M_list=[5], K_list=[8000, 10000], groups=groups, capcoef=capcoef, constraint_list=['vaccinated'], filename='34q_capcoef')
-
-
+    # partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[8000, 10000], nsplits=nsplits, capcoef=capcoef, constraint_list=['vaccinated'], filename=str(nsplits))
+    partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Dollar', 'Coffee', 'HighSchools'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R, constraint_list=['vaccinated'])
+    return
 
 
 if __name__ == "__main__":
-    summary(groups, capcoef)
+    
+    if R != 'None':
+        summary(nsplits, capcoef, int(R))
+    else:
+        summary(nsplits, capcoef)

@@ -97,24 +97,26 @@ def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_curre
 
             z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
             y = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
-            y_eval = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+            # y_eval = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
             mat_y = np.reshape(y, (num_tracts, num_total_stores))
-            mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
+            # mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
 
-            return z, mat_y, mat_y_eval, locs, dists, assignment 
+            # return z, mat_y, mat_y_eval, locs, dists, assignment 
+            return z, mat_y, mat_y, locs, dists, assignment 
 
     else:
         locs = np.genfromtxt(f'{path}locs_{K}_Pharmacy.csv', delimiter = "")
         dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
         assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
 
-        z = np.genfromtxt(f'{path}{eval_constr}/z_current.csv', delimiter = ",", dtype = float)
-        y = np.genfromtxt(f'{path}{eval_constr}/y_current.csv', delimiter = ",", dtype = float)
-        y_eval = np.genfromtxt(f'{path}{eval_constr}/y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+        z = np.genfromtxt(f'{path}z_current.csv', delimiter = ",", dtype = float)
+        y = np.genfromtxt(f'{path}y_current.csv', delimiter = ",", dtype = float)
+        # y_eval = np.genfromtxt(f'{path}/y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
         mat_y = np.reshape(y, (num_tracts, num_current_stores))
-        mat_y_eval = np.reshape(y_eval, (num_tracts, num_current_stores))       
+        # mat_y_eval = np.reshape(y_eval, (num_tracts, num_current_stores))       
             
-        return z, mat_y, mat_y_eval, locs, dists, assignment
+        # return z, mat_y, mat_y_eval, locs, dists, assignment
+        return z, mat_y, mat_y, locs, dists, assignment
 
 
 
@@ -186,192 +188,99 @@ def import_locations(df, Chain_type, Chain_name_list={'Dollar': '01_DollarStores
 
 
 
-def create_row_randomFCFS(Scenario, Model, Chain_type, M, K, opt_constr, stage, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
+def create_row_randomFCFS(Scenario, Model, Chain_type, M, K, nsplits, opt_constr, stage, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores, output='Full'):
 
-    # stores breakdown
+    
+    ## Stores breakdown
     if opt_constr != 'none':
+        
         R = num_current_stores - sum(z[0 : num_current_stores])
         closed_pharmacy = pharmacy_locations[z[0:num_current_stores] != 1]
         selected_chains = chain_locations[z[num_current_stores:] == 1]
         R_chains = selected_chains.shape[0]
 
-
-        pharmacy_1 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 1].index)
-        pharmacy_2 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 2].index)
-        pharmacy_3 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 3].index)
-
-        chains_1 = selected_chains[selected_chains.hpi_quantile == 1].shape[0]
-        chains_2 = selected_chains[selected_chains.hpi_quantile == 2].shape[0]
-        chains_3 = selected_chains[selected_chains.hpi_quantile == 3].shape[0]
+        pharmacy = [len(closed_pharmacy[closed_pharmacy.hpi_quantile == i].index) for i in range(1, nsplits+1)]
+        chains = [selected_chains[selected_chains.hpi_quantile == i].shape[0] for i in range(1, nsplits+1)]
 
     else:
+        
         R, R_chains = 0, 0
-        pharmacy_1, pharmacy_2, pharmacy_3 = 0, 0, 0
-        chains_1, chains_2, chains_3 = 0, 0, 0
+        pharmacy = [0 for i in range(1, nsplits+1)]
+        chains = [0 for i in range(1, nsplits+1)]
+
+
+    ## Total population
+    population = [sum(block.population)] + [sum(block[block.hpi_quantile == i].population) for i in range(1, nsplits+1)]
+    total_population = np.round(np.array(population) / 1000000, 2)
+
     
-
-    population = sum(block.population)
-    population_1 = sum(block[block.hpi_quantile == 1].population)
-    population_2 = sum(block[block.hpi_quantile == 2].population)
-    population_3 = sum(block[block.hpi_quantile == 3].population)
-    total_population = np.round(np.array([population, population_1, population_2, population_3]) / 1000000, 2)
-
-    dists_1 = dists[block.hpi_quantile == 1]
-    dists_2 = dists[block.hpi_quantile == 2]
-    dists_3 = dists[block.hpi_quantile == 3]
-    assignment_1 = assignment[block.hpi_quantile == 1]
-    assignment_2 = assignment[block.hpi_quantile == 2]
-    assignment_3 = assignment[block.hpi_quantile == 3]
-
-    locs_pharmacy = np.where(locs <= num_current_stores - R_chains, 1, 0) 
-    locs_chain = np.where(locs > num_current_stores - R_chains, 1, 0) # the R greatest ones are dollar stores
-    assignment_pharmacy = np.multiply(assignment, locs_pharmacy)
-    assignment_chain  = np.multiply(assignment, locs_chain)
-
-    assignment_pharmacy_1 = assignment_pharmacy[block.hpi_quantile == 1]
-    assignment_pharmacy_2 = assignment_pharmacy[block.hpi_quantile == 2]
-    assignment_pharmacy_3 = assignment_pharmacy[block.hpi_quantile == 3]
-
-    assignment_chain_1 = assignment_chain[block.hpi_quantile == 1]
-    assignment_chain_2 = assignment_chain[block.hpi_quantile == 2]
-    assignment_chain_3 = assignment_chain[block.hpi_quantile == 3]
-
-    ## Total vaccination & rates
-    vaccination = np.sum(assignment)
-    vaccination_1 = np.sum(assignment_1)
-    vaccination_2 = np.sum(assignment_2)
-    vaccination_3 = np.sum(assignment_3)
-    total_vaccination = np.round(np.array([vaccination, vaccination_1, vaccination_2, vaccination_3]) / 1000000, 4)
-
-    rate = vaccination / population
-    rate_1 = vaccination_1 / population_1
-    rate_2 = vaccination_2 / population_3
-    rate_3 = vaccination_3 / population_3
-    total_rate = np.round(np.array([rate, rate_1, rate_2, rate_3]) * 100, 3)
+    ## Total vaccination & rates    
+    assignment_hpi = [assignment[block.hpi_quantile == i] for i in range(1, nsplits+1)]
+    vaccination = [np.sum(assignment)] + [np.sum(assignment_hpi_i) for assignment_hpi_i in assignment_hpi]
+    total_vaccination = np.round(np.array(vaccination) / 1000000, 4)
+    rate = [vaccination[i] / population[i] for i in range(nsplits+1)]
+    total_rate = np.round(np.array(rate) * 100, 3)
 
 
     ## Pharmacy vaccination & rates
-    vaccination_pharmacy = np.sum(assignment_pharmacy)
-    vaccination_pharmacy_1 = np.sum(assignment_pharmacy_1)
-    vaccination_pharmacy_2 = np.sum(assignment_pharmacy_2)
-    vaccination_pharmacy_3 = np.sum(assignment_pharmacy_3)
-    total_vaccination_pharmacy = np.round(np.array([vaccination_pharmacy, vaccination_pharmacy_1, vaccination_pharmacy_2, vaccination_pharmacy_3]) / 1000000, 2)
+    locs_pharmacy = np.where(locs <= num_current_stores - R_chains, 1, 0) 
+    assignment_pharmacy = np.multiply(assignment, locs_pharmacy)
+    assignment_pharmacy_hpi = [assignment_pharmacy[block.hpi_quantile == i] for i in range(1, nsplits+1)]
 
-    rate_pharmacy = vaccination_pharmacy / population
-    rate_pharmacy_1 = vaccination_pharmacy_1 / population_1
-    rate_pharmacy_2 = vaccination_pharmacy_2 / population_3
-    rate_pharmacy_3 = vaccination_pharmacy_3 / population_3
-    total_pharmacy_rate = np.round(np.array([rate_pharmacy, rate_pharmacy_1, rate_pharmacy_2, rate_pharmacy_3]) * 100, 2)
+    vaccination_pharmacy = [np.sum(assignment_pharmacy)] + [np.sum(assignment_pharmacy_hpi_i) for assignment_pharmacy_hpi_i in assignment_pharmacy_hpi]
+    total_vaccination_pharmacy = np.round(np.array(vaccination_pharmacy) / 1000000, 2)
+    rate_pharmacy = [vaccination_pharmacy[i] / population[i] for i in range(nsplits+1)]
+    total_pharmacy_rate = np.round(np.array(rate_pharmacy) * 100, 2)
     
 
     ## Chain vaccination & rates
-    vaccination_chain = np.sum(assignment_chain)
-    vaccination_chain_1 = np.sum(assignment_chain_1)
-    vaccination_chain_2 = np.sum(assignment_chain_2)
-    vaccination_chain_3 = np.sum(assignment_chain_3)
-    total_vaccination_chain = np.round(np.array([vaccination_chain, vaccination_chain_1, vaccination_chain_2, vaccination_chain_3]) / 1000000, 2)
+    locs_chain = np.where(locs > num_current_stores - R_chains, 1, 0) # the R greatest ones are dollar stores
+    assignment_chain  = np.multiply(assignment, locs_chain)
+    assignment_chain_hpi = [assignment_chain[block.hpi_quantile == i] for i in range(1, nsplits+1)]
 
-    rate_chain = vaccination_chain / population
-    rate_chain_1 = vaccination_chain_1 / population_1
-    rate_chain_2 = vaccination_chain_2 / population_3
-    rate_chain_3 = vaccination_chain_3 / population_3
-    total_chain_rate = np.round(np.array([rate_chain, rate_chain_1, rate_chain_2, rate_chain_3]) * 100, 2)
+    vaccination_chain = [np.sum(assignment_chain)] + [np.sum(assignment_chain_hpi_i) for assignment_chain_hpi_i in assignment_chain_hpi]
+    total_vaccination_chain = np.round(np.array(vaccination_chain) / 1000000, 2)
+    rate_chain = [vaccination_chain[i] / population[i] for i in range(nsplits+1)]
+    total_chain_rate = np.round(np.array(rate_chain) * 100, 2)
 
 
-    # walkable (< 1.6km)
+    ## Walkable (< 1.6km)
     dists_walkable = np.where(np.exp(dists) < 1.6, 1, 0)
     assignment_walkable = assignment * dists_walkable
-    assignment_walkable_1 = assignment_walkable[block.hpi_quantile == 1]
-    assignment_walkable_2 = assignment_walkable[block.hpi_quantile == 2]
-    assignment_walkable_3 = assignment_walkable[block.hpi_quantile == 3]
+    assignment_walkable_hpi = [assignment_walkable[block.hpi_quantile == i] for i in range(1, nsplits+1)]
 
-    vaccination_walkable = np.sum(assignment_walkable)
-    vaccination_walkable_1 = np.sum(assignment_walkable_1)
-    vaccination_walkable_2 = np.sum(assignment_walkable_2)
-    vaccination_walkable_3 = np.sum(assignment_walkable_3)
-    total_vaccination_walkable = np.round(np.array([vaccination_walkable, vaccination_walkable_1, vaccination_walkable_2, vaccination_walkable_3]) / 1000000, 4)
+    vaccination_walkable = [np.sum(assignment_walkable)] + [np.sum(assignment_walkable_hpi_i) for assignment_walkable_hpi_i in assignment_walkable_hpi]
+    total_vaccination_walkable = np.round(np.array(vaccination_walkable) / 1000000, 4)
+    rate_walkable = [vaccination_walkable[i] / population[i] for i in range(nsplits+1)]
+    total_rate_walkable = np.round(np.array(rate_walkable) * 100, 3)
 
-    rate_walkable = vaccination_walkable / population
-    rate_walkable_1 = vaccination_walkable_1 / population_1
-    rate_walkable_2 = vaccination_walkable_2 / population_3
-    rate_walkable_3 = vaccination_walkable_3 / population_3
-    total_rate_walkable = np.round(np.array([rate_walkable, rate_walkable_1, rate_walkable_2, rate_walkable_3]) * 100, 3)
 
-    # walkable (pharmacy)
-    dists_walkable = np.where(np.exp(dists) < 1.6, 1, 0)
+    ## Walkable (pharmacy)
     assignment_pharmacy_walkable = assignment_pharmacy * dists_walkable
-    assignment_pharmacy_walkable_1 = assignment_pharmacy_walkable[block.hpi_quantile == 1]
-    assignment_pharmacy_walkable_2 = assignment_pharmacy_walkable[block.hpi_quantile == 2]
-    assignment_pharmacy_walkable_3 = assignment_pharmacy_walkable[block.hpi_quantile == 3]
+    assignment_pharmacy_walkable_hpi = [assignment_pharmacy_walkable[block.hpi_quantile == i] for i in range(1, nsplits+1)]
 
-    vaccination_pharmacy_walkable = np.sum(assignment_pharmacy_walkable)
-    vaccination_pharmacy_walkable_1 = np.sum(assignment_pharmacy_walkable_1)
-    vaccination_pharmacy_walkable_2 = np.sum(assignment_pharmacy_walkable_2)
-    vaccination_pharmacy_walkable_3 = np.sum(assignment_pharmacy_walkable_3)
-    total_vaccination_pharmacy_walkable = np.round(np.array([vaccination_pharmacy_walkable, vaccination_pharmacy_walkable_1, vaccination_pharmacy_walkable_2, vaccination_pharmacy_walkable_3]) / 1000000, 2)
+    vaccination_pharmacy_walkable = [np.sum(assignment_pharmacy_walkable)] + [np.sum(assignment_pharmacy_walkable_hpi_i) for assignment_pharmacy_walkable_hpi_i in assignment_pharmacy_walkable_hpi]
+    total_vaccination_pharmacy_walkable = np.round(np.array(vaccination_pharmacy_walkable) / 1000000, 2)
 
-    # walkable (chain)
-    dists_walkable = np.where(np.exp(dists) < 1.6, 1, 0)
+
+    ## Walkable (chain)
     assignment_chain_walkable = assignment_chain * dists_walkable
-    assignment_chain_walkable_1 = assignment_chain_walkable[block.hpi_quantile == 1]
-    assignment_chain_walkable_2 = assignment_chain_walkable[block.hpi_quantile == 2]
-    assignment_chain_walkable_3 = assignment_chain_walkable[block.hpi_quantile == 3]
+    assignment_chain_walkable_hpi = [assignment_chain_walkable[block.hpi_quantile == i] for i in range(1, nsplits+1)]
 
-    vaccination_chain_walkable = np.sum(assignment_chain_walkable)
-    vaccination_chain_walkable_1 = np.sum(assignment_chain_walkable_1)
-    vaccination_chain_walkable_2 = np.sum(assignment_chain_walkable_2)
-    vaccination_chain_walkable_3 = np.sum(assignment_chain_walkable_3)
-    total_vaccination_chain_walkable = np.round(np.array([vaccination_chain_walkable, vaccination_chain_walkable_1, vaccination_chain_walkable_2, vaccination_chain_walkable_3]) / 1000000, 2)
-
-    # dists is the log dist (km)
-    avg_dist = np.sum(assignment * np.exp(dists)) / vaccination
-    avg_dist_1 = np.sum(assignment_1 * np.exp(dists_1)) / vaccination_1
-    avg_dist_2 = np.sum(assignment_2 * np.exp(dists_2)) / vaccination_2
-    avg_dist_3 = np.sum(assignment_3 * np.exp(dists_3)) / vaccination_3
-    total_avg_dist = np.round(np.array([avg_dist, avg_dist_1, avg_dist_2, avg_dist_3]), 2)
+    vaccination_chain_walkable = [np.sum(assignment_chain_walkable)] + [np.sum(assignment_chain_walkable_hpi_i) for assignment_chain_walkable_hpi_i in assignment_chain_walkable_hpi]
+    total_vaccination_chain_walkable = np.round(np.array(vaccination_chain_walkable) / 1000000, 2)
 
 
+    ## Dists is the log dist (km)
+    dists_hpi = [dists[block.hpi_quantile == i] for i in range(1, nsplits+1)]
+    agg_dists = [np.sum(assignment * np.exp(dists))] + [np.sum(assignment_hpi[i] * np.exp(dists_hpi[i])) for i in range(nsplits)]
+    avg_dist = [agg_dists[i]  / vaccination[i] for i in range(nsplits+1)]
+    total_avg_dist = np.round(np.array(avg_dist), 2)
 
-    chain_summary = {'Model': Model, 'Chain': Scenario,
-                     'Opt Constr': opt_constr, 'Stage': stage,
-                     'M': M, 'K': K, 'Pharmacies replaced': R,
-                     'Pharmacies replaced HPI 1': pharmacy_1, 'Pharmacies replaced HPI 2': pharmacy_2, 
-                     'Pharmacies replaced HPI 3': pharmacy_3,
-                     'Stores opened HPI 1': chains_1, 'Stores opened HPI 2': chains_2, 
-                     'Stores opened HPI 3': chains_3,
-                     'Vaccination': total_vaccination[0], 
-                     'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 
-                     'Vaccination HPI3': total_vaccination[3],
-                     'Rate': total_rate[0],
-                     'Rate HPI1': total_rate[1], 'Rate HPI2': total_rate[2], 
-                     'Rate HPI3': total_rate[3],
-                     'Vaccination Walkable': total_vaccination_walkable[0], 
-                     'Vaccination Walkable HPI1': total_vaccination_walkable[1], 'Vaccination Walkable HPI2': total_vaccination_walkable[2], 
-                     'Vaccination Walkable HPI3': total_vaccination_walkable[3],
-                     'Vaccination Walkable rate HPI1': total_rate_walkable[1], 'Vaccination Walkable rate HPI2': total_rate_walkable[2],
-                     'Vaccination Walkable rate HPI3': total_rate_walkable[3],
-                     'Pharmacy Vaccination': total_vaccination_pharmacy[0], 
-                     'Pharmacy Vaccination HPI1': total_vaccination_pharmacy[1], 'Pharmacy Vaccination HPI2': total_vaccination_pharmacy[2], 
-                     'Pharmacy Vaccination HPI3': total_vaccination_pharmacy[3],
-                     'Pharmacy Rate': total_pharmacy_rate[0],
-                     'Pharmacy Rate HPI1': total_pharmacy_rate[1], 'Pharmacy Rate HPI2': total_pharmacy_rate[2], 
-                     'Pharmacy Rate HPI3': total_pharmacy_rate[3],
-                     'Chain Vaccination': total_vaccination_chain[0], 
-                     'Chain Vaccination HPI1': total_vaccination_chain[1], 'Chain Vaccination HPI2': total_vaccination_chain[2], 
-                     'Chain Vaccination HPI3': total_vaccination_chain[3],
-                     'Chain Rate': total_chain_rate[0],
-                     'Chain Rate HPI1': total_chain_rate[1], 'Chain Rate HPI2': total_chain_rate[2], 
-                     'Chain Rate HPI3': total_chain_rate[3],
-                     'Pharmacy Vaccination Walkable': total_vaccination_pharmacy_walkable[0], 
-                     'Pharmacy Vaccination Walkable HPI1': total_vaccination_pharmacy_walkable[1], 'Pharmacy Vaccination Walkable HPI2': total_vaccination_pharmacy_walkable[2], 
-                     'Pharmacy Vaccination Walkable HPI3': total_vaccination_pharmacy_walkable[3],
-                     'Chain Vaccination Walkable': total_vaccination_chain_walkable[0], 
-                     'Chain Vaccination Walkable HPI1': total_vaccination_chain_walkable[1], 'Chain Vaccination Walkable HPI2': total_vaccination_chain_walkable[2], 
-                     'Chain Vaccination Walkable HPI3': total_vaccination_chain_walkable[3],
-                     'Average distance': total_avg_dist[0],
-                     'Average distance HPI1': total_avg_dist[1], 'Average distance HPI2': total_avg_dist[2],
-                     'Average distance HPI3': total_avg_dist[3]}
-    
+
+    ## Summary
+    chain_summary = create_chain_summary(Model, Scenario, opt_constr, stage, M, K, nsplits, R, output, pharmacy, chains, total_vaccination, total_rate, total_vaccination_walkable, total_rate_walkable,
+    total_vaccination_pharmacy, total_pharmacy_rate, total_vaccination_chain, total_chain_rate, total_vaccination_pharmacy_walkable, total_vaccination_chain_walkable, total_avg_dist)   
     return chain_summary
 
 
@@ -380,106 +289,90 @@ def create_row_randomFCFS(Scenario, Model, Chain_type, M, K, opt_constr, stage, 
 
 
 
-def create_row_MIP(Scenario, Model, Chain_type, M, K, opt_constr, stage, CA_TRACT, mat_y_hpi, z, F_DH, C, C_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores):
+def create_row_MIP(Scenario, Model, Chain_type, M, K, nsplits, opt_constr, stage, CA_TRACT, mat_y_hpi, z, F_DH, C, C_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores, output='Full'):
 
     '''
     Computing summary statistics for results from optimization, which are tract-level results
     '''
 
+
+    ## Stores breakdown
+    if opt_constr != 'none':
+        R = num_current_stores - sum(z[0 : num_current_stores])
+        closed_pharmacy = pharmacy_locations[z[0:num_current_stores] != 1]
+        selected_chains = chain_locations[z[num_current_stores:] == 1]
+
+        pharmacy = [len(closed_pharmacy[closed_pharmacy.hpi_quantile == i].index) for i in range(1, nsplits+1)]
+        chains = [selected_chains[selected_chains.hpi_quantile == i].shape[0] for i in range(1, nsplits+1)]
+
+    else:
+        R = 0
+        pharmacy = [0 for i in range(1, nsplits+1)]
+        chains = [0 for i in range(1, nsplits+1)]
+
+
     ## Population
     total_population = sum(CA_TRACT['population'])
-    population1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['population'].values)
-    population2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['population'].values)
-    population3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['population'].values)
-    population_vec = [total_population, population1, population2, population3]
+    population_hpi = [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == i]['population'].values) for i in range(1, nsplits+1)]
+    population_vec = [total_population] + population_hpi
 
 
     ## Total vaccination
     total_rate_hpi = np.sum(np.multiply(F_DH, mat_y_hpi), axis = 1)
-    CA_TRACT['Rate_HPI'] = total_rate_hpi
-    CA_TRACT['Vaccinated_Population_HPI'] = CA_TRACT['Rate_HPI'] * CA_TRACT['population']
+    CA_TRACT['Rate'] = total_rate_hpi
+    CA_TRACT['Vaccinated_Population'] = CA_TRACT['Rate'] * CA_TRACT['population']
     
-    total_rate_hpi = sum(CA_TRACT['Vaccinated_Population_HPI'].values) / total_population
-    total_rate_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Vaccinated_Population_HPI'].values) / population1
-    total_rate_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Vaccinated_Population_HPI'].values) / population2
-    total_rate_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Vaccinated_Population_HPI'].values) / population3
-
-    total_rate = np.array([[total_rate_hpi, total_rate_hpi1, total_rate_hpi2, total_rate_hpi3]])
+    total_rate = np.array([[sum(CA_TRACT['Vaccinated_Population'].values) / total_population] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccinated_Population'].values) / population_hpi[i] for i in range(nsplits)]])
     total_vaccination = np.round(total_rate * population_vec / 1000000,2)[0]
     total_rate = np.round(total_rate * 100)[0]
 
 
     ## Total vaccination by pharmacy
     pharmacy_rate_hpi = np.sum(np.multiply(F_DH[:, 0:num_current_stores], mat_y_hpi[:, 0:num_current_stores]), axis = 1)
-    CA_TRACT['Pharmacy_Rate_HPI'] = pharmacy_rate_hpi
-    CA_TRACT['Pharmacy_Vaccinated_Population_HPI'] = CA_TRACT['Pharmacy_Rate_HPI'] * CA_TRACT['population']
+    CA_TRACT['Pharmacy_Rate'] = pharmacy_rate_hpi
+    CA_TRACT['Pharmacy_Vaccinated_Population'] = CA_TRACT['Pharmacy_Rate'] * CA_TRACT['population']
 
-    pharmacy_rate_hpi = sum(CA_TRACT['Pharmacy_Vaccinated_Population_HPI'].values) / total_population
-    pharmacy_rate_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Pharmacy_Vaccinated_Population_HPI'].values) / population1
-    pharmacy_rate_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Pharmacy_Vaccinated_Population_HPI'].values) / population2
-    pharmacy_rate_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Pharmacy_Vaccinated_Population_HPI'].values) / population3
-
-    pharmacy_rate = np.array([[pharmacy_rate_hpi, pharmacy_rate_hpi1, pharmacy_rate_hpi2, pharmacy_rate_hpi3]])
+    pharmacy_rate = np.array([[sum(CA_TRACT['Pharmacy_Vaccinated_Population'].values) / total_population] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Pharmacy_Vaccinated_Population'].values) / population_hpi[i] for i in range(nsplits)]])
     pharmacy_vaccination = np.round(pharmacy_rate * population_vec / 1000000,2)[0]
     pharmacy_rate = np.round(pharmacy_rate * 100)[0]
     
 
     ## Total vaccination by chain
     chain_rate_hpi = np.sum(np.multiply(F_DH[:, num_current_stores:num_total_stores], mat_y_hpi[:, num_current_stores:num_total_stores]), axis = 1)
-    CA_TRACT['Chain_Rate_HPI'] = chain_rate_hpi
-    CA_TRACT['Chain_Vaccinated_Population_HPI'] = CA_TRACT['Chain_Rate_HPI'] * CA_TRACT['population']
+    CA_TRACT['Chain_Rate'] = chain_rate_hpi
+    CA_TRACT['Chain_Vaccinated_Population'] = CA_TRACT['Chain_Rate'] * CA_TRACT['population']
 
-    chain_rate_hpi = sum(CA_TRACT['Chain_Vaccinated_Population_HPI'].values) / total_population
-    chain_rate_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Chain_Vaccinated_Population_HPI'].values) / population1
-    chain_rate_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Chain_Vaccinated_Population_HPI'].values) / population2
-    chain_rate_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Chain_Vaccinated_Population_HPI'].values) / population3
-
-    chain_rate = np.array([[chain_rate_hpi, chain_rate_hpi1, chain_rate_hpi2, chain_rate_hpi3]])
+    chain_rate = np.array([[sum(CA_TRACT['Chain_Vaccinated_Population'].values) / total_population] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Chain_Vaccinated_Population'].values) / population_hpi[i] for i in range(nsplits)]])
     chain_vaccination = np.round(chain_rate * population_vec / 1000000,2)[0]
     chain_rate = np.round(chain_rate * 100)[0]
 
 
     ## Walkable vaccination
     rate_walkable_hpi = np.sum(np.multiply(C_walkable, np.multiply(F_DH, mat_y_hpi)), axis =1) 
-    CA_TRACT['Vaccinate_Walkable_HPI'] = rate_walkable_hpi
-    CA_TRACT['Vaccination_Walkable_HPI'] = CA_TRACT['Vaccinate_Walkable_HPI'] * CA_TRACT['population']    
+    CA_TRACT['Vaccinate_Walkable'] = rate_walkable_hpi
+    CA_TRACT['Vaccination_Walkable'] = CA_TRACT['Vaccinate_Walkable'] * CA_TRACT['population']    
 
-    rate_walkable_hpi = sum(CA_TRACT['Vaccination_Walkable_HPI'].values)
-    rate_walkable_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Vaccination_Walkable_HPI'].values)
-    rate_walkable_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Vaccination_Walkable_HPI'].values)
-    rate_walkable_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Vaccination_Walkable_HPI'].values)
-    
-    rate_walkable_list = np.array([[rate_walkable_hpi, rate_walkable_hpi1, rate_walkable_hpi2, rate_walkable_hpi3]])
+    rate_walkable_list = np.array([[sum(CA_TRACT['Vaccination_Walkable'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccination_Walkable'].values) for i in range(nsplits)]])
     total_vaccination_walkable = np.round(rate_walkable_list / 1000000, 2)[0]
     total_rate_walkable = np.round(rate_walkable_list[0] / population_vec * 100)
 
 
     ## Walkable vaccination by pharmacy
     pharmacy_rate_walkable_hpi = np.sum(np.multiply(C_walkable[:, 0:num_current_stores], np.multiply(F_DH[:, 0:num_current_stores], mat_y_hpi[:, 0:num_current_stores])), axis =1) 
-    CA_TRACT['Pharmacy_Vaccinate_Walkable_HPI'] = pharmacy_rate_walkable_hpi
-    CA_TRACT['Pharmacy_Vaccination_Walkable_HPI'] = CA_TRACT['Pharmacy_Vaccinate_Walkable_HPI'] * CA_TRACT['population']    
+    CA_TRACT['Pharmacy_Vaccinate_Walkable'] = pharmacy_rate_walkable_hpi
+    CA_TRACT['Pharmacy_Vaccination_Walkable'] = CA_TRACT['Pharmacy_Vaccinate_Walkable'] * CA_TRACT['population']    
 
-    pharmacy_rate_walkable_hpi = sum(CA_TRACT['Pharmacy_Vaccination_Walkable_HPI'].values)
-    pharmacy_rate_walkable_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Pharmacy_Vaccination_Walkable_HPI'].values)
-    pharmacy_rate_walkable_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Pharmacy_Vaccination_Walkable_HPI'].values)
-    pharmacy_rate_walkable_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Pharmacy_Vaccination_Walkable_HPI'].values)
-    
-    pharmacy_rate_walkable_list = np.array([[pharmacy_rate_walkable_hpi, pharmacy_rate_walkable_hpi1, pharmacy_rate_walkable_hpi2, pharmacy_rate_walkable_hpi3]])
+    pharmacy_rate_walkable_list = np.array([[sum(CA_TRACT['Pharmacy_Vaccination_Walkable'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Pharmacy_Vaccination_Walkable'].values) for i in range(nsplits)]])
     pharmacy_vaccination_walkable = np.round(pharmacy_rate_walkable_list / 1000000, 2)[0]
     pharmacy_rate_walkable = np.round(pharmacy_rate_walkable_list[0] / population_vec * 100)
 
 
     ## Walkable vaccination by chain
     chain_rate_walkable_hpi = np.sum(np.multiply(C_walkable[:, num_current_stores:num_total_stores], np.multiply(F_DH[:, num_current_stores:num_total_stores], mat_y_hpi[:, num_current_stores:num_total_stores])), axis =1) 
-    CA_TRACT['Chain_Vaccinate_Walkable_HPI'] = chain_rate_walkable_hpi
-    CA_TRACT['Chain_Vaccination_Walkable_HPI'] = CA_TRACT['Chain_Vaccinate_Walkable_HPI'] * CA_TRACT['population']    
+    CA_TRACT['Chain_Vaccinate_Walkable'] = chain_rate_walkable_hpi
+    CA_TRACT['Chain_Vaccination_Walkable'] = CA_TRACT['Chain_Vaccinate_Walkable'] * CA_TRACT['population']    
 
-    chain_rate_walkable_hpi = sum(CA_TRACT['Chain_Vaccination_Walkable_HPI'].values)
-    chain_rate_walkable_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Chain_Vaccination_Walkable_HPI'].values)
-    chain_rate_walkable_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Chain_Vaccination_Walkable_HPI'].values)
-    chain_rate_walkable_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Chain_Vaccination_Walkable_HPI'].values)
-    
-    chain_rate_walkable_list = np.array([[chain_rate_walkable_hpi, chain_rate_walkable_hpi1, chain_rate_walkable_hpi2, chain_rate_walkable_hpi3]])
+    chain_rate_walkable_list = np.array([[sum(CA_TRACT['Chain_Vaccination_Walkable'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Chain_Vaccination_Walkable'].values) for i in range(nsplits)]])
     chain_vaccination_walkable = np.round(chain_rate_walkable_list / 1000000, 2)[0]
     chain_rate_walkable = np.round(chain_rate_walkable_list[0] / population_vec * 100)
 
@@ -487,85 +380,111 @@ def create_row_MIP(Scenario, Model, Chain_type, M, K, opt_constr, stage, CA_TRAC
     ## Distance among vaccinated
     # assigned_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, mat_y_hpi), axis = 1) / np.sum(mat_y_hpi, axis = 1), posinf=0)
     assigned_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, np.multiply(F_DH, mat_y_hpi)), axis = 1) / np.sum(np.multiply(F_DH, mat_y_hpi), axis = 1), posinf=0)
-    CA_TRACT['Dist_HPI_Assigned'] = assigned_dist_hpi
-    CA_TRACT['Assigned_Population_HPI'] = CA_TRACT['population'] * np.sum(mat_y_hpi, axis = 1)
-    CA_TRACT['Dist_HPI_weighted'] = CA_TRACT['Dist_HPI_Assigned'] * CA_TRACT['Assigned_Population_HPI']
+    CA_TRACT['Dist_Vaccinated'] = assigned_dist_hpi
+    CA_TRACT['Vaccinated_Population'] = CA_TRACT['population'] * np.sum(mat_y_hpi, axis = 1)
+    CA_TRACT['Dist_weighted'] = CA_TRACT['Dist_Vaccinated'] * CA_TRACT['Vaccinated_Population']
     
-    assigned_dist_hpi = sum(CA_TRACT['Dist_HPI_weighted'].values) / sum(CA_TRACT['Assigned_Population_HPI'].values)
-    assigned_dist_hpi1 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 1]['Assigned_Population_HPI'])
-    assigned_dist_hpi2 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 2]['Assigned_Population_HPI'])
-    assigned_dist_hpi3 = sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Dist_HPI_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == 3]['Assigned_Population_HPI'])
-    
-    assigned_dist_actual = np.array([[assigned_dist_hpi, assigned_dist_hpi1, assigned_dist_hpi2, assigned_dist_hpi3]])
+    assigned_dist_actual = np.array([[sum(CA_TRACT['Dist_weighted'].values) / sum(CA_TRACT['Vaccinated_Population'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Dist_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccinated_Population']) for i in range(nsplits)]])
     total_avg_dist = np.round(assigned_dist_actual/1000, 2)[0]
 
 
-    ## stores breakdown
-    if opt_constr != 'none':
-        R = num_current_stores - sum(z[0 : num_current_stores])
-        closed_pharmacy = pharmacy_locations[z[0:num_current_stores] != 1]
-        selected_chains = chain_locations[z[num_current_stores:] == 1]
-
-        pharmacy_1 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 1].index)
-        pharmacy_2 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 2].index)
-        pharmacy_3 = len(closed_pharmacy[closed_pharmacy.hpi_quantile == 3].index)
-
-        chains_1 = selected_chains[selected_chains.hpi_quantile == 1].shape[0]
-        chains_2 = selected_chains[selected_chains.hpi_quantile == 2].shape[0]
-        chains_3 = selected_chains[selected_chains.hpi_quantile == 3].shape[0]
-
-    else:
-        R = 0
-        pharmacy_1, pharmacy_2, pharmacy_3 = 0, 0, 0
-        chains_1, chains_2, chains_3 = 0, 0, 0
-
-
-    chain_summary = {'Model': Model, 'Chain': Scenario,
-                     'Opt Constr': opt_constr, 'Stage': stage,
-                     'M': M, 'K': K, 'Pharmacies replaced': R,
-                     'Pharmacies replaced HPI 1': pharmacy_1, 'Pharmacies replaced HPI 2': pharmacy_2, 
-                     'Pharmacies replaced HPI 3': pharmacy_3,
-                     'Stores opened HPI 1': chains_1, 'Stores opened HPI 2': chains_2, 
-                     'Stores opened HPI 3': chains_3,
-                     'Vaccination': total_vaccination[0], 
-                     'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 
-                     'Vaccination HPI3': total_vaccination[3],
-                     'Rate': total_rate[0],
-                     'Rate HPI1': total_rate[1], 'Rate HPI2': total_rate[2], 
-                     'Rate HPI3': total_rate[3],
-                     'Vaccination Walkable': total_vaccination_walkable[0], 
-                     'Vaccination Walkable HPI1': total_vaccination_walkable[1], 'Vaccination Walkable HPI2': total_vaccination_walkable[2], 
-                     'Vaccination Walkable HPI3': total_vaccination_walkable[3],
-                     'Vaccination Walkable rate HPI1': total_rate_walkable[1], 'Vaccination Walkable rate HPI2': total_rate_walkable[2],
-                     'Vaccination Walkable rate HPI3': total_rate_walkable[3],
-                     'Pharmacy Vaccination': pharmacy_vaccination[0], 
-                     'Pharmacy Vaccination HPI1': pharmacy_vaccination[1], 'Pharmacy Vaccination HPI2': pharmacy_vaccination[2], 
-                     'Pharmacy Vaccination HPI3': pharmacy_vaccination[3],
-                     'Pharmacy Rate': pharmacy_rate[0],
-                     'Pharmacy Rate HPI1': pharmacy_rate[1], 'Pharmacy Rate HPI2': pharmacy_rate[2], 
-                     'Pharmacy Rate HPI3': pharmacy_rate[3],
-                     'Chain Vaccination': chain_vaccination[0], 
-                     'Chain Vaccination HPI1': chain_vaccination[1], 'Chain Vaccination HPI2': chain_vaccination[2], 
-                     'Chain Vaccination HPI3': chain_vaccination[3],
-                     'Chain Rate': chain_rate[0],
-                     'Chain Rate HPI1': chain_rate[1], 'Chain Rate HPI2': chain_rate[2], 
-                     'Chain Rate HPI3': chain_rate[3],
-                     'Pharmacy Vaccination Walkable': pharmacy_vaccination_walkable[0], 
-                     'Pharmacy Vaccination Walkable HPI1': pharmacy_vaccination_walkable[1], 'Pharmacy Vaccination Walkable HPI2': pharmacy_vaccination_walkable[2], 
-                     'Pharmacy Vaccination Walkable HPI3': pharmacy_vaccination_walkable[3],
-                    #  'Pharmacy Vaccination Walkable rate HPI1': pharmacy_rate_walkable[1], 'Pharmacy Vaccination Walkable rate HPI2': pharmacy_rate_walkable[2],
-                    #  'Pharmacy Vaccination Walkable rate HPI3': pharmacy_rate_walkable[3],
-                     'Chain Vaccination Walkable': chain_vaccination_walkable[0], 
-                     'Chain Vaccination Walkable HPI1': chain_vaccination_walkable[1], 'Chain Vaccination Walkable HPI2': chain_vaccination_walkable[2], 
-                     'Chain Vaccination Walkable HPI3': chain_vaccination_walkable[3],
-                    #  'Chain Vaccination Walkable rate HPI1': chain_rate_walkable[1], 'Chain Vaccination Walkable rate HPI2': chain_rate_walkable[2],
-                    #  'Chain Vaccination Walkable rate HPI3': chain_rate_walkable[3],
-                     'Average distance': total_avg_dist[0],
-                     'Average distance HPI1': total_avg_dist[1], 'Average distance HPI2': total_avg_dist[2],
-                     'Average distance HPI3': total_avg_dist[3]}
+    ## Summary
+    chain_summary = create_chain_summary(Model, Scenario, opt_constr, stage, M, K, nsplits, R, output, pharmacy, chains, total_vaccination, total_rate, total_vaccination_walkable, total_rate_walkable,
+    pharmacy_vaccination, pharmacy_rate, chain_vaccination, chain_rate, pharmacy_vaccination_walkable, chain_vaccination_walkable, total_avg_dist) 
 
     return chain_summary
 
+
+
+
+# ====================================================================================
+
+
+
+
+def create_chain_summary(Model, Scenario, opt_constr, stage, M, K, nsplits, R, output, pharmacy, chains, total_vaccination, total_rate, total_vaccination_walkable, total_rate_walkable,
+    total_vaccination_pharmacy, total_pharmacy_rate, total_vaccination_chain, total_chain_rate, total_vaccination_pharmacy_walkable, total_vaccination_chain_walkable, total_avg_dist):
+
+
+    if nsplits == 3 and output == 'Core':
+
+        return {'Model': Model, 'Chain': Scenario, 'Opt Constr': opt_constr, 'Stage': stage, 'M': M, 'K': K, 'Pharmacies replaced': R,
+        'Vaccination': total_vaccination[0], 
+        'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 'Vaccination HPI3': total_vaccination[3],
+        'Vaccination Walkable': total_vaccination_walkable[0], 
+        'Vaccination Walkable HPI1': total_vaccination_walkable[1], 'Vaccination Walkable HPI2': total_vaccination_walkable[2], 'Vaccination Walkable HPI3': total_vaccination_walkable[3],
+        'Average distance': total_avg_dist[0],
+        'Average distance HPI1': total_avg_dist[1], 'Average distance HPI2': total_avg_dist[2], 'Average distance HPI3': total_avg_dist[3]}
+
+    elif nsplits == 4 and output == 'Core':
+
+        return {'Model': Model, 'Chain': Scenario, 'Opt Constr': opt_constr, 'Stage': stage, 'M': M, 'K': K, 'Pharmacies replaced': R,
+        'Vaccination': total_vaccination[0], 
+        'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 
+        'Vaccination HPI3': total_vaccination[3], 'Vaccination HPI4': total_vaccination[4],
+        'Vaccination Walkable': total_vaccination_walkable[0], 
+        'Vaccination Walkable HPI1': total_vaccination_walkable[1], 'Vaccination Walkable HPI2': total_vaccination_walkable[2], 
+        'Vaccination Walkable HPI3': total_vaccination_walkable[3], 'Vaccination Walkable HPI4': total_vaccination_walkable[4],
+        'Average distance': total_avg_dist[0],
+        'Average distance HPI1': total_avg_dist[1], 'Average distance HPI2': total_avg_dist[2],
+        'Average distance HPI3': total_avg_dist[3], 'Average distance HPI4': total_avg_dist[4]}
+
+    elif nsplits == 3 and output == 'Full':
+
+        return {'Model': Model, 'Chain': Scenario, 'Opt Constr': opt_constr, 'Stage': stage, 'M': M, 'K': K, 'Pharmacies replaced': R,
+        'Pharmacies replaced HPI 1': pharmacy[0], 'Pharmacies replaced HPI 2': pharmacy[1], 'Pharmacies replaced HPI 3': pharmacy[2],
+        'Stores opened HPI 1': chains[0], 'Stores opened HPI 2': chains[1], 'Stores opened HPI 3': chains[2],
+        'Vaccination': total_vaccination[0], 
+        'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 'Vaccination HPI3': total_vaccination[3],
+        'Rate': total_rate[0],
+        'Rate HPI1': total_rate[1], 'Rate HPI2': total_rate[2], 'Rate HPI3': total_rate[3],
+        'Vaccination Walkable': total_vaccination_walkable[0], 
+        'Vaccination Walkable HPI1': total_vaccination_walkable[1], 'Vaccination Walkable HPI2': total_vaccination_walkable[2], 'Vaccination Walkable HPI3': total_vaccination_walkable[3],
+        'Vaccination Walkable rate HPI1': total_rate_walkable[1], 'Vaccination Walkable rate HPI2': total_rate_walkable[2], 'Vaccination Walkable rate HPI3': total_rate_walkable[3],
+        'Pharmacy Vaccination': total_vaccination_pharmacy[0], 
+        'Pharmacy Vaccination HPI1': total_vaccination_pharmacy[1], 'Pharmacy Vaccination HPI2': total_vaccination_pharmacy[2], 'Pharmacy Vaccination HPI3': total_vaccination_pharmacy[3],
+        'Pharmacy Rate': total_pharmacy_rate[0],
+        'Pharmacy Rate HPI1': total_pharmacy_rate[1], 'Pharmacy Rate HPI2': total_pharmacy_rate[2], 'Pharmacy Rate HPI3': total_pharmacy_rate[3],
+        'Chain Vaccination': total_vaccination_chain[0], 
+        'Chain Vaccination HPI1': total_vaccination_chain[1], 'Chain Vaccination HPI2': total_vaccination_chain[2], 'Chain Vaccination HPI3': total_vaccination_chain[3],
+        'Chain Rate': total_chain_rate[0],
+        'Chain Rate HPI1': total_chain_rate[1], 'Chain Rate HPI2': total_chain_rate[2], 'Chain Rate HPI3': total_chain_rate[3],
+        'Pharmacy Vaccination Walkable': total_vaccination_pharmacy_walkable[0], 
+        'Pharmacy Vaccination Walkable HPI1': total_vaccination_pharmacy_walkable[1], 'Pharmacy Vaccination Walkable HPI2': total_vaccination_pharmacy_walkable[2], 'Pharmacy Vaccination Walkable HPI3': total_vaccination_pharmacy_walkable[3],
+        'Chain Vaccination Walkable': total_vaccination_chain_walkable[0], 
+        'Chain Vaccination Walkable HPI1': total_vaccination_chain_walkable[1], 'Chain Vaccination Walkable HPI2': total_vaccination_chain_walkable[2], 'Chain Vaccination Walkable HPI3': total_vaccination_chain_walkable[3],
+        'Average distance': total_avg_dist[0],
+        'Average distance HPI1': total_avg_dist[1], 'Average distance HPI2': total_avg_dist[2], 'Average distance HPI3': total_avg_dist[3]}
+
+    elif nsplits == 4 and output == 'Full':
+        
+        return {'Model': Model, 'Chain': Scenario, 'Opt Constr': opt_constr, 'Stage': stage, 'M': M, 'K': K, 'Pharmacies replaced': R,
+        'Pharmacies replaced HPI 1': pharmacy[0], 'Pharmacies replaced HPI 2': pharmacy[1], 'Pharmacies replaced HPI 3': pharmacy[2], 'Pharmacies replaced HPI 4': pharmacy[3],
+        'Stores opened HPI 1': chains[0], 'Stores opened HPI 2': chains[1], 'Stores opened HPI 3': chains[2], 'Stores opened HPI 4': chains[3],
+        'Vaccination': total_vaccination[0], 
+        'Vaccination HPI1': total_vaccination[1], 'Vaccination HPI2': total_vaccination[2], 'Vaccination HPI3': total_vaccination[3], 'Vaccination HPI4': total_vaccination[4],
+        'Rate': total_rate[0],
+        'Rate HPI1': total_rate[1], 'Rate HPI2': total_rate[2], 'Rate HPI3': total_rate[3], 'Rate HPI4': total_rate[4],
+        'Vaccination Walkable': total_vaccination_walkable[0], 
+        'Vaccination Walkable HPI1': total_vaccination_walkable[1], 'Vaccination Walkable HPI2': total_vaccination_walkable[2], 'Vaccination Walkable HPI3': total_vaccination_walkable[3],  'Vaccination Walkable HPI4': total_vaccination_walkable[4],
+        'Vaccination Walkable rate HPI1': total_rate_walkable[1], 'Vaccination Walkable rate HPI2': total_rate_walkable[2], 'Vaccination Walkable rate HPI3': total_rate_walkable[3], 'Vaccination Walkable rate HPI4': total_rate_walkable[4],
+        'Pharmacy Vaccination': total_vaccination_pharmacy[0], 
+        'Pharmacy Vaccination HPI1': total_vaccination_pharmacy[1], 'Pharmacy Vaccination HPI2': total_vaccination_pharmacy[2], 'Pharmacy Vaccination HPI3': total_vaccination_pharmacy[3], 'Pharmacy Vaccination HPI4': total_vaccination_pharmacy[4],
+        'Pharmacy Rate': total_pharmacy_rate[0],
+        'Pharmacy Rate HPI1': total_pharmacy_rate[1], 'Pharmacy Rate HPI2': total_pharmacy_rate[2], 'Pharmacy Rate HPI3': total_pharmacy_rate[3], 'Pharmacy Rate HPI4': total_pharmacy_rate[4],
+        'Chain Vaccination': total_vaccination_chain[0], 
+        'Chain Vaccination HPI1': total_vaccination_chain[1], 'Chain Vaccination HPI2': total_vaccination_chain[2], 'Chain Vaccination HPI3': total_vaccination_chain[3], 'Chain Vaccination HPI4': total_vaccination_chain[4],
+        'Chain Rate': total_chain_rate[0],
+        'Chain Rate HPI1': total_chain_rate[1], 'Chain Rate HPI2': total_chain_rate[2], 'Chain Rate HPI3': total_chain_rate[3], 'Chain Rate HPI4': total_chain_rate[4],
+        'Pharmacy Vaccination Walkable': total_vaccination_pharmacy_walkable[0], 
+        'Pharmacy Vaccination Walkable HPI1': total_vaccination_pharmacy_walkable[1], 'Pharmacy Vaccination Walkable HPI2': total_vaccination_pharmacy_walkable[2], 'Pharmacy Vaccination Walkable HPI3': total_vaccination_pharmacy_walkable[3], 'Pharmacy Vaccination Walkable HPI4': total_vaccination_pharmacy_walkable[4],
+        'Chain Vaccination Walkable': total_vaccination_chain_walkable[0], 
+        'Chain Vaccination Walkable HPI1': total_vaccination_chain_walkable[1], 'Chain Vaccination Walkable HPI2': total_vaccination_chain_walkable[2], 'Chain Vaccination Walkable HPI3': total_vaccination_chain_walkable[3], 'Chain Vaccination Walkable HPI4': total_vaccination_chain_walkable[4],
+        'Average distance': total_avg_dist[0],
+        'Average distance HPI1': total_avg_dist[1], 'Average distance HPI2': total_avg_dist[2], 'Average distance HPI3': total_avg_dist[3], 'Average distance HPI4': total_avg_dist[4]}
+
+    else:
+        raise Exception('Case undefined\n')
 
 
 # ====================================================================================

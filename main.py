@@ -15,15 +15,15 @@ Model = sys.argv[1] # Model
 Chain = sys.argv[2] # Chain
 K = int(sys.argv[3]) # K
 M = int(sys.argv[4]) # M
-# R = int(sys.argv[5]) # R
-groups = int(sys.argv[5])
+nsplits = int(sys.argv[5])
 capcoef = sys.argv[6]
+R = sys.argv[7] # R
 
 from utils.optimize_main import optimize_main
 from utils.evaluate_main import evaluate_main
 
 
-def main(Model, Chain, K, M, groups, capcoef, R=None):
+def main(Model, Chain, K, M, nsplits, capcoef, R=None):
 
     '''
     BLP estimation:
@@ -38,13 +38,16 @@ def main(Model, Chain, K, M, groups, capcoef, R=None):
     
     '''
 
-    optimize_main(Model, Chain, M, K, groups, capcoef, R)
-    evaluate_main(Model, Chain, M, K, groups, capcoef, R)
+    # optimize_main(Model, Chain, M, K, nsplits, capcoef, R)
+    evaluate_main(Model, Chain, M, K, nsplits, capcoef, R)
 
 
 
 if __name__ == "__main__":
-    # main(Model, Chain, K, M, R)
-    main(Model, Chain, K, M, groups, capcoef)
+    
+    if R != 'None':
+        main(Model, Chain, K, M, nsplits, capcoef, int(R))
+    else:
+        main(Model, Chain, K, M, nsplits, capcoef)
 
 
