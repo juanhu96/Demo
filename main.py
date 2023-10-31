@@ -39,7 +39,7 @@ def main(Model, Chain, K, M, nsplits, capcoef, R=None):
     '''
 
     # optimize_main(Model, Chain, M, K, nsplits, capcoef, R)
-    evaluate_main(Model, Chain, M, K, nsplits, capcoef, R)
+    evaluate_main(Model, Chain, M, K, nsplits, capcoef, R, MIP=True)
 
 
 

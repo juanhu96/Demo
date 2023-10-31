@@ -83,12 +83,11 @@ def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_curre
 
             z = np.genfromtxt(f'{path}z_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
             y = np.genfromtxt(f'{path}y_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
-            # NOTE: we did not perform second-stage evalution on R scenarios yet
-            # y_eval = np.genfromtxt(f'{path}y_total_eval_{eval_constr}_fixR.csv', delimiter = ",", dtype = float)
+            y_eval = np.genfromtxt(f'{path}y_total_eval_fixR{str(R)}.csv', delimiter = ",", dtype = float)
             mat_y = np.reshape(y, (num_tracts, num_total_stores))
-            # mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
+            mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
 
-            return z, mat_y, locs, dists, assignment 
+            return z, mat_y, mat_y_eval, locs, dists, assignment 
         
         else:
             locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
@@ -97,12 +96,11 @@ def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_curre
 
             z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
             y = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
-            # y_eval = np.genfromtxt(f'{path}y_total_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
+            y_eval = np.genfromtxt(f'{path}y_total_eval.csv', delimiter = ",", dtype = float)
             mat_y = np.reshape(y, (num_tracts, num_total_stores))
-            # mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
+            mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
 
-            # return z, mat_y, mat_y_eval, locs, dists, assignment 
-            return z, mat_y, mat_y, locs, dists, assignment 
+            return z, mat_y, mat_y_eval, locs, dists, assignment 
 
     else:
         locs = np.genfromtxt(f'{path}locs_{K}_Pharmacy.csv', delimiter = "")

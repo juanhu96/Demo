@@ -31,7 +31,10 @@ def summary(nsplits, capcoef, R=None):
     '''
 
     # partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[8000, 10000], nsplits=nsplits, capcoef=capcoef, constraint_list=['vaccinated'], filename=str(nsplits))
-    partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Dollar', 'Coffee', 'HighSchools'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R, constraint_list=['vaccinated'])
+    # partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Dollar', 'Coffee', 'HighSchools'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R, constraint_list=['vaccinated'])
+    # partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R, constraint_list=['vaccinated'], filename='BLPLogLin')
+    partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R, constraint_list=['vaccinated'], second_stage_MIP=True, filename='BLPLogLin')
+    
     return
 
 

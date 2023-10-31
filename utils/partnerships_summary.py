@@ -77,7 +77,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                             if capcoef: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q_capcoef/{Chain}/{opt_constr}/'
                             else: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{opt_constr}/'
 
-                            if R is not None: z, mat_y, locs, dists, assignment = import_solution(path, Chain, K, num_tracts, num_total_stores, num_current_stores, opt_constr, R)
+                            if R is not None: z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Chain, K, num_tracts, num_total_stores, num_current_stores, opt_constr, R)
                             else: z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Chain, K, num_tracts, num_total_stores, num_current_stores, opt_constr)
 
                             # first stage MIP

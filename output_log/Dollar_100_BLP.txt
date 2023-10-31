@@ -1,0 +1,67 @@
+Evaluating MIP with Chain type: Dollar; Model: MaxVaxHPIDistBLP; M = 5, K = 8000, R = 100. Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K8000_4q_capcoef/Dollar
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709015 rows, 40695907 columns and 81584318 nonzeros
+Model fingerprint: 0x1ca69797
+Coefficient statistics:
+  Matrix range     [9e-01, 3e+04]
+  Objective range  [9e-01, 3e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 8e+03]
+Presolve removed 0 rows and 0 columns (presolve time = 8s) ...
+Presolve removed 40696096 rows and 40503403 columns (presolve time = 14s) ...
+Presolve removed 40697362 rows and 40662843 columns (presolve time = 18s) ...
+Presolve removed 40697362 rows and 40662901 columns (presolve time = 21s) ...
+Presolve removed 40697400 rows and 40662939 columns (presolve time = 26s) ...
+Presolve removed 40697496 rows and 40663248 columns (presolve time = 31s) ...
+Presolve removed 40697529 rows and 40663294 columns (presolve time = 36s) ...
+Presolve removed 40697529 rows and 40663294 columns
+Presolve time: 40.35s
+Presolved: 11486 rows, 32613 columns, 65067 nonzeros
+
+Concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Ordering time: 0.01s
+
+Barrier statistics:
+ AA' NZ     : 3.245e+04
+ Factor NZ  : 1.543e+05 (roughly 20 MB of memory)
+ Factor Ops : 2.447e+06 (less than 1 second per iteration)
+ Threads    : 30
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   1.03378831e+09  2.33948686e+07  2.39e+02 3.63e+03  4.12e+04    40s
+   1   2.50165023e+08  9.88043697e+07  5.11e+01 8.19e-12  9.52e+03    40s
+   2   4.11358938e+07  7.82513513e+07  3.77e+00 4.32e-12  1.22e+03    40s
+   3   2.62221449e+07  4.36463210e+07  2.33e-01 2.73e-12  2.59e+02    40s
+   4   2.65546005e+07  3.04523373e+07  4.92e-02 3.41e-12  5.63e+01    40s
+   5   2.68197817e+07  2.86547456e+07  2.31e-02 2.50e-12  2.64e+01    40s
+   6   2.69353885e+07  2.78985059e+07  1.20e-02 1.82e-12  1.38e+01    40s
+   7   2.70017174e+07  2.74016806e+07  5.36e-03 1.82e-12  5.77e+00    40s
+   8   2.70310415e+07  2.72229164e+07  2.59e-03 1.82e-12  2.77e+00    40s
+   9   2.70580839e+07  2.71437114e+07  5.14e-04 1.82e-12  1.17e+00    40s
+
+Barrier performed 9 iterations in 40.49 seconds (33.04 work units)
+Barrier solve interrupted - model solved by another algorithm
+
+
+Solved with primal simplex
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   16106    2.7077760e+07   0.000000e+00   9.638283e+03     64s
+Extra simplex iterations after uncrush: 2818
+   18924    2.7077760e+07   0.000000e+00   0.000000e+00     78s
+
+Solved in 18924 iterations and 78.19 seconds (103.74 work units)
+Optimal objective  2.707776015e+07

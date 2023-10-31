@@ -195,7 +195,7 @@ def run_assignment(Chain, M, K, R, constraint, block, block_utils, distdf, path,
 
 def evaluate_rate(scenario, constraint, z, pc, pf, ncp, p, closest, K,
                   num_current_stores, num_total_stores, num_tracts, 
-                  scale_factor, path, MIPGap = 1e-3):
+                  scale_factor, path, R = None, MIPGap = 1e-3):
     
     """
     Parameters
@@ -240,7 +240,6 @@ def evaluate_rate(scenario, constraint, z, pc, pf, ncp, p, closest, K,
     env.setParam("OutputFlag",0)
     env.start()
     m = gp.Model("Vaccination")
-    # m.Params.IntegralityFocus = 1
     m.Params.MIPGap = MIPGap
     
     if scenario == "current": num_stores = num_current_stores
@@ -280,9 +279,13 @@ def evaluate_rate(scenario, constraint, z, pc, pf, ncp, p, closest, K,
     y_soln = np.zeros(num_tracts * num_stores)
     for k in range(num_tracts * num_stores):
         y_soln[k] = y[k].X    
-    
-    np.savetxt(path + 'y_' + scenario + '_eval_' +  constraint + '.csv', y_soln, delimiter=",")
- 
+
+    if R is not None:
+        np.savetxt(f'{path}y_{scenario}_eval_fixR{str(R)}.csv', y_soln, delimiter=",") 
+    else:
+        np.savetxt(f'{path}y_{scenario}_eval.csv', y_soln, delimiter=",")
+
+
     ### Finished all ###
     m.dispose()
     
