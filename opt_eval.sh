@@ -6,9 +6,9 @@
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 10000 5 4 True > ./output_log/Dollar_10000_4q_capcoef.txt &
 
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 8000 5 3 True > ./output_log/Dollar_8000_3q_capcoef.txt &
-# nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 8000 5 4 True > ./output_log/Dollar_8000_4q_capcoef.txt &
+# nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 8000 5 4 True None > ./output_log/Dollar_8000_4q_capcoef.txt &
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 10000 5 3 True > ./output_log/Dollar_10000_3q_capcoef.txt &
-# nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 10000 5 4 True > ./output_log/Dollar_10000_4q_capcoef.txt &
+# nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 10000 5 4 True None > ./output_log/Dollar_10000_4q_capcoef.txt &
 
 
 # ===================================================================================================
@@ -34,12 +34,16 @@
 
 # ===================================================================================================
 
-
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 8000 5 4 True 100 > ./output_log/Dollar_100_BLP.txt &
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 8000 5 4 True 100 > ./output_log/Dollar_100_LogLin.txt &
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 8000 5 4 True 200 > ./output_log/Dollar_200_BLP.txt &
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 8000 5 4 True 200 > ./output_log/Dollar_200_LogLin.txt &
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 8000 5 4 True 400 > ./output_log/Dollar_400_BLP.txt &
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 8000 5 4 True 400 > ./output_log/Dollar_400_LogLin.txt &
-nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 8000 5 4 True None > ./output_log/Dollar_FULL_BLP.txt &
-nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 8000 5 4 True None > ./output_log/Dollar_FULL_LogLin.txt &
+# nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 8000 5 4 True None > ./output_log/Dollar_FULL_BLP.txt &
+# nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 8000 5 4 True None > ./output_log/Dollar_FULL_LogLin.txt &
+
+
+# ===================================================================================================
+
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 8000 5 4 True None > ./output_log/Dollar_8000_heuristic.txt &

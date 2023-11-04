@@ -25,9 +25,8 @@ Notes:
 . do /mnt/phd/jihu/VaxDemandDistance/Demand/datawork/geonear_pharmacies.do /exp
 > ort/storage_covidvaccine/Data/Intermediate/blk_coords.dta /export/storage_cov
 > idvaccine/Result/MaxVaxDistLogLin/M5_K8000_4q_capcoef/Dollar/vaccinated/ca_Do
-> llar_locations_total_fixR100.dta /export/storage_covidvaccine/Result/MaxVaxDi
-> stLogLin/M5_K8000_4q_capcoef/Dollar/vaccinated/ca_blk_Dollar_dist_total_fixR1
-> 00.csv 3000 50 
+> llar_locations_total.dta /export/storage_covidvaccine/Result/MaxVaxDistLogLin
+> /M5_K8000_4q_capcoef/Dollar/vaccinated/ca_blk_Dollar_dist_total.csv 3000 50 
 
 . // NOTE: rename the input data's latitude and longitude variables to "latitud
 > e" and "longitude" before running this script.

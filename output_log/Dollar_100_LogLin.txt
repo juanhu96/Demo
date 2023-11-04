@@ -1,61 +1,18 @@
-Evaluating MIP with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 8000, R = 100. Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K8000_4q_capcoef/Dollar
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_model.py:63: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
 
-Set parameter ServerPassword
-Set parameter CSQueueTimeout to value 120
-Set parameter CSIdleTimeout to value 60
-Set parameter ServerTimeout to value 10
-Set parameter TokenServer to value "164.67.163.231"
-Set parameter MIPGap to value 0.001
-Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 8000, R = 100, Heuristic: False.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K8000_4q_capcoef/Dollar
 
-CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
-Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+Start computing distdf...
 
-Optimize a model with 40709015 rows, 40695907 columns and 81584318 nonzeros
-Model fingerprint: 0x53a78258
-Coefficient statistics:
-  Matrix range     [9e-01, 3e+04]
-  Objective range  [9e-01, 3e+04]
-  Bounds range     [1e+00, 1e+00]
-  RHS range        [1e+00, 8e+03]
-Presolve removed 0 rows and 0 columns (presolve time = 7s) ...
-Presolve removed 40696098 rows and 40503403 columns (presolve time = 12s) ...
-Presolve removed 40697324 rows and 40662870 columns (presolve time = 16s) ...
-Presolve removed 40697360 rows and 40662951 columns (presolve time = 21s) ...
-Presolve removed 40697404 rows and 40663169 columns (presolve time = 26s) ...
-Presolve removed 40697457 rows and 40663248 columns (presolve time = 31s) ...
-Presolve removed 40697459 rows and 40663251 columns
-Presolve time: 36.93s
-Presolved: 11556 rows, 32656 columns, 65170 nonzeros
+Start constructing blocks...
 
-Concurrent LP optimizer: primal simplex, dual simplex, and barrier
-Showing barrier log only...
+Start assignments...
 
-Ordering time: 0.01s
-
-Barrier statistics:
- AA' NZ     : 3.251e+04
- Factor NZ  : 1.542e+05 (roughly 20 MB of memory)
- Factor Ops : 2.417e+06 (less than 1 second per iteration)
- Threads    : 30
-
-                  Objective                Residual
-Iter       Primal          Dual         Primal    Dual     Compl     Time
-   0   1.04137258e+09  2.33060383e+07  2.49e+02 3.62e+03  4.16e+04    37s
-   1   2.52827084e+08  9.94723721e+07  5.42e+01 5.91e-12  9.67e+03    37s
-   2   3.81880207e+07  7.83911698e+07  3.12e+00 4.09e-12  1.13e+03    37s
-   3   2.60258118e+07  4.24623900e+07  1.91e-01 2.73e-12  2.40e+02    37s
-   4   2.63718988e+07  3.08684793e+07  2.66e-02 1.82e-12  6.19e+01    37s
-
-Barrier performed 4 iterations in 37.08 seconds (33.02 work units)
-Barrier solve interrupted - model solved by another algorithm
-
-
-Solved with primal simplex
-Iteration    Objective       Primal Inf.    Dual Inf.      Time
-   21394    2.6962891e+07   0.000000e+00   9.271237e+03     61s
-Extra simplex iterations after uncrush: 3079
-   24473    2.6962891e+07   0.000000e+00   0.000000e+00     77s
-
-Solved in 24473 iterations and 76.70 seconds (103.76 work units)
-Optimal objective  2.696289103e+07
+Computed abepsilon in: 1.25 seconds.
+Assigning individuals...
+Assigned individuals in: 152.01 seconds

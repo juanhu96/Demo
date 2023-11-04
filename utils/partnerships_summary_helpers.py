@@ -57,7 +57,10 @@ def import_dataset(nsplits, datadir):
     tract_hpi['population'].fillna(tract_hpi['Raw_Population'], inplace=True)
     tract_hpi['population'] = tract_hpi['population'].astype(int)
 
-    return df, df_temp, block, tract_hpi
+    ## For heuristic, keep blkid in block only to match locs, assignment
+    blk_tract_cw = blk_tract_cw.loc[blk_tract_cw.blkid.isin(block.blkid), :]
+
+    return df, df_temp, block, tract_hpi, blk_tract_cw
 
 
 

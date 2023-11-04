@@ -32,19 +32,10 @@ except:
 
 
 
-def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
+def compute_distdf(Chain_type, Chain, constraint, z, R, heuristic, path, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
     
     print('Start computing distdf...\n')
     path = f'{path}/{constraint}'
-
-    # If file exist, don't need to recompute
-
-    # if (R is not None) and os.path.isfile(f"{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}.csv"): 
-    #     print('Distance already computed (R fixed)\n')
-    #     return
-    # elif (not (R is not None)) and os.path.isfile(f"{path}/ca_blk_{Chain}_dist_total.csv"): 
-    #     print('Distance already computed \n')
-    #     return
      
     pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID'])
     pharmacy_locations = pharmacy_locations.loc[pharmacy_locations['StateID'] == 6, :]
@@ -73,9 +64,17 @@ def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/s
 
     # ============================= STATA ==================================
 
-    # chainlocpath = f"{path}/ca_{Chain}_locations_total.dta"
-    if R is not None: chainlocpath = f"{path}/ca_{Chain}_locations_total_fixR{str(R)}.dta"
-    else: chainlocpath = f"{path}/ca_{Chain}_locations_total.dta"
+    if R is not None: 
+        if heuristic:
+            chainlocpath = f"{path}/ca_{Chain}_locations_total_fixR{str(R)}_heuristic.dta"
+        else:
+            chainlocpath = f"{path}/ca_{Chain}_locations_total_fixR{str(R)}.dta"
+    else: 
+        if heuristic:
+            chainlocpath = f"{path}/ca_{Chain}_locations_total_heuristic.dta"
+        else:
+            chainlocpath = f"{path}/ca_{Chain}_locations_total.dta"
+
     selected_locations.to_stata(chainlocpath, write_index=False)
 
     baselocpath = f"{datadir}/Intermediate/blk_coords.dta"
@@ -83,14 +82,21 @@ def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/s
     chain.tail()
     len(set(chain.id))
 
-    if R is not None: outpath = f"{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}.csv"
-    else: outpath = f"{path}/ca_blk_{Chain}_dist_total.csv"
-
-    print(outpath)
+    if R is not None: 
+        if heuristic:
+            outpath = f"{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}_heuristic.csv"
+        else:
+            outpath = f"{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}.csv"
+    else: 
+        if heuristic:
+            outpath = f"{path}/ca_blk_{Chain}_dist_total_heuristic.csv"
+        else:
+            outpath = f"{path}/ca_blk_{Chain}_dist_total.csv"
 
     within = 3000 # km
     limit = 50 # number of chain stores to consider
     output = subprocess.run(["stata-mp", "-b", "do", f"/mnt/phd/jihu/VaxDemandDistance/Demand/datawork/geonear_pharmacies.do", baselocpath, chainlocpath, outpath, str(within), str(limit)], capture_output=True, text=True)
+    
     # ============================= STATA ==================================
     
 
@@ -102,7 +108,7 @@ def compute_distdf(Chain_type, Chain, constraint, z, R, path, datadir='/export/s
 
 
 
-def construct_blocks(Chain, M, K, nsplits, R, constraint, path, Pharmacy=False, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
+def construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path, Pharmacy=False, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
 
     print('Start constructing blocks...\n')
     if constraint != 'None': path = f'{path}/{constraint}'
@@ -120,8 +126,17 @@ def construct_blocks(Chain, M, K, nsplits, R, constraint, path, Pharmacy=False, 
     if Pharmacy:
         distdf = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
     else:
-        if R is not None: distdf = pd.read_csv(f'{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}.csv', dtype={'locid': int, 'blkid': int})
-        else: distdf = pd.read_csv(f'{path}/ca_blk_{Chain}_dist_total.csv', dtype={'locid': int, 'blkid': int})
+        if R is not None: 
+            if heuristic:
+                distdf = pd.read_csv(f'{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}_heuristic.csv', dtype={'locid': int, 'blkid': int})
+            else:
+                distdf = pd.read_csv(f'{path}/ca_blk_{Chain}_dist_total_fixR{str(R)}.csv', dtype={'locid': int, 'blkid': int})
+        else: 
+            if heuristic:
+                distdf = pd.read_csv(f'{path}/ca_blk_{Chain}_dist_total_heuristic.csv', dtype={'locid': int, 'blkid': int})
+            else:
+                distdf = pd.read_csv(f'{path}/ca_blk_{Chain}_dist_total.csv', dtype={'locid': int, 'blkid': int})
+
 
     distdf = distdf.groupby('blkid').head(M).reset_index(drop=True)
     distdf = distdf.loc[distdf.blkid.isin(blocks_unique), :]
@@ -154,7 +169,7 @@ def construct_blocks(Chain, M, K, nsplits, R, constraint, path, Pharmacy=False, 
 
 
 
-def run_assignment(Chain, M, K, R, constraint, block, block_utils, distdf, path, Pharmacy=False):
+def run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path, Pharmacy=False):
 
     print('Start assignments...\n')
     if constraint != 'None': path = f'{path}/{constraint}'
@@ -179,13 +194,24 @@ def run_assignment(Chain, M, K, R, constraint, block, block_utils, distdf, path,
     
     else:
         if R is not None:
-            np.savetxt(f'{path}/locs_{K}_{Chain}_fixR{str(R)}.csv', np.stack(locs, axis=0), fmt='%s')
-            np.savetxt(f'{path}/dists_{K}_{Chain}_fixR{str(R)}.csv', np.stack(dists, axis=0))
-            np.savetxt(f'{path}/assignment_{K}_{Chain}_fixR{str(R)}.csv', np.array(economy.assignments), fmt='%s')
+            if heuristic:
+                np.savetxt(f'{path}/locs_{K}_{Chain}_fixR{str(R)}_heuristic.csv', np.stack(locs, axis=0), fmt='%s')
+                np.savetxt(f'{path}/dists_{K}_{Chain}_fixR{str(R)}_heuristic.csv', np.stack(dists, axis=0))
+                np.savetxt(f'{path}/assignment_{K}_{Chain}_fixR{str(R)}_heuristic.csv', np.array(economy.assignments), fmt='%s')
+            else:
+                np.savetxt(f'{path}/locs_{K}_{Chain}_fixR{str(R)}.csv', np.stack(locs, axis=0), fmt='%s')
+                np.savetxt(f'{path}/dists_{K}_{Chain}_fixR{str(R)}.csv', np.stack(dists, axis=0))
+                np.savetxt(f'{path}/assignment_{K}_{Chain}_fixR{str(R)}.csv', np.array(economy.assignments), fmt='%s')
+
         else: 
-            np.savetxt(f'{path}/locs_{K}_{Chain}.csv', np.stack(locs, axis=0), fmt='%s')
-            np.savetxt(f'{path}/dists_{K}_{Chain}.csv', np.stack(dists, axis=0))
-            np.savetxt(f'{path}/assignment_{K}_{Chain}.csv', np.array(economy.assignments), fmt='%s')
+            if heuristic:
+                np.savetxt(f'{path}/locs_{K}_{Chain}_heuristic.csv', np.stack(locs, axis=0), fmt='%s')
+                np.savetxt(f'{path}/dists_{K}_{Chain}_heuristic.csv', np.stack(dists, axis=0))
+                np.savetxt(f'{path}/assignment_{K}_{Chain}_heuristic.csv', np.array(economy.assignments), fmt='%s')
+            else:
+                np.savetxt(f'{path}/locs_{K}_{Chain}.csv', np.stack(locs, axis=0), fmt='%s')
+                np.savetxt(f'{path}/dists_{K}_{Chain}.csv', np.stack(dists, axis=0))
+                np.savetxt(f'{path}/assignment_{K}_{Chain}.csv', np.array(economy.assignments), fmt='%s')
         
 
 

@@ -21,7 +21,7 @@ from gurobipy import GRB, quicksum
 
 def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
                   num_current_stores, num_total_stores, num_tracts, 
-                  scale_factor, path, R = None, MIPGap = 1e-3):
+                  scale_factor, path, R = None, heuristic=False, MIPGap = 1e-3):
     
     """
     Parameters
@@ -125,14 +125,25 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     ### Summary ###
     result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
 
+    
     if R is not None:
-        np.savetxt(f'{path}z_{scenario}_fixR{str(R)}.csv', z_soln, delimiter=",")
-        np.savetxt(f'{path}y_{scenario}_fixR{str(R)}.csv', y_soln, delimiter=",")
-        result_df.to_csv(f'{path}result_{scenario}_fixR{str(R)}.csv') 
+        if heuristic:
+            np.savetxt(f'{path}z_{scenario}_fixR{str(R)}_heuristic.csv', z_soln, delimiter=",")
+            np.savetxt(f'{path}y_{scenario}_fixR{str(R)}_heuristic.csv', y_soln, delimiter=",")
+            result_df.to_csv(f'{path}result_{scenario}_fixR{str(R)}_heuristic.csv') 
+        else:
+            np.savetxt(f'{path}z_{scenario}_fixR{str(R)}.csv', z_soln, delimiter=",")
+            np.savetxt(f'{path}y_{scenario}_fixR{str(R)}.csv', y_soln, delimiter=",")
+            result_df.to_csv(f'{path}result_{scenario}_fixR{str(R)}.csv') 
     else:
-        np.savetxt(f'{path}z_{scenario}.csv', z_soln, delimiter=",")
-        np.savetxt(f'{path}y_{scenario}.csv', y_soln, delimiter=",")
-        result_df.to_csv(f'{path}result_{scenario}.csv') 
+        if heuristic:
+            np.savetxt(f'{path}z_{scenario}_heuristic.csv', z_soln, delimiter=",")
+            np.savetxt(f'{path}y_{scenario}_heuristic.csv', y_soln, delimiter=",")
+            result_df.to_csv(f'{path}result_{scenario}_heuristic.csv') 
+        else:
+            np.savetxt(f'{path}z_{scenario}.csv', z_soln, delimiter=",")
+            np.savetxt(f'{path}y_{scenario}.csv', y_soln, delimiter=",")
+            result_df.to_csv(f'{path}result_{scenario}.csv') 
  
     ### Finished all ###
     m.dispose()

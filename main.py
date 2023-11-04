@@ -23,7 +23,7 @@ from utils.optimize_main import optimize_main
 from utils.evaluate_main import evaluate_main
 
 
-def main(Model, Chain, K, M, nsplits, capcoef, R=None):
+def main(Model, Chain, K, M, nsplits, capcoef, R=None, heuristic=True):
 
     '''
     BLP estimation:
@@ -39,7 +39,12 @@ def main(Model, Chain, K, M, nsplits, capcoef, R=None):
     '''
 
     # optimize_main(Model, Chain, M, K, nsplits, capcoef, R)
-    evaluate_main(Model, Chain, M, K, nsplits, capcoef, R, MIP=True)
+    # evaluate_main(Model, Chain, M, K, nsplits, capcoef, R)
+    
+    if heuristic: 
+        assert Model == "MaxVaxHPIDistBLP", "heuristics for BLP only" # only do this for BLP
+        optimize_main(Model, Chain, M, K, nsplits, capcoef, R, heuristic=heuristic)
+        evalute_main(Model, Chain, M, K, nsplits, capcoef, R, heuristic=heuristic)
 
 
 

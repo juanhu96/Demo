@@ -52,10 +52,10 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
 
     # ============================================================================
 
-    # TODO: need to change this based on 3q or 4q
     Quartile = tract_hpi['HPIQuartile']
-    # Quartile = np.genfromtxt(f'{datadir}/HPIQuartile_TRACT.csv', delimiter = ",", dtype = int)
-
+    
+    tract_abd = pd.read_csv(f"{datadir}/Intermediate/tract_abd.csv", usecols=['tract', 'abd'])
+    abd = tract_abd['abd'].values
     
     ### Current ###
     C_current_mat = np.genfromtxt(f'{datadir}/CA_dist_matrix_current.csv', delimiter = ",", dtype = float)
@@ -114,7 +114,7 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     pc_current = p_current * C_current
     pc_total = p_total * C_total
 
-    return Population, Quartile, p_current, p_total, pc_current, pc_total, C_total_mat, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores
+    return Population, Quartile, abd, p_current, p_total, pc_current, pc_total, C_total_mat, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores
 
 
 
@@ -144,19 +144,18 @@ def import_BLP_estimation(Chain_type, capacity, nsplits=3, capcoef=True, heterog
 
 
 
-def import_LogLin_estimation(C_total, Quartile, nsplits, num_tracts, num_current_stores):
+def import_LogLin_estimation(C_total, Quartile, abd, nsplits, num_tracts, num_current_stores):
 
-    ## TODO: the demand parameter should also have a 3q version
     if nsplits == 3: Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
     elif nsplits == 4: Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
     else: raise Exception("nsplits undefined, should be 3 or 4.")
 
-    F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
+    # F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
+    abd = np.nan_to_num(abd, nan=Demand_parameter[0][0])
+    F_D_total = abd.reshape(8057, 1) + Demand_parameter[0][1] * np.log(C_total/1000)
     F_D_current = F_D_total[:,0:num_current_stores]
 
     F_DH_total = []
-    
-    # raise Exception("This is not ready yet!\n")
 
     for i in range(num_tracts):
                 

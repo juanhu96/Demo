@@ -1,8 +1,8 @@
-/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary_helpers.py:380: RuntimeWarning: invalid value encountered in true_divide
+/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary_helpers.py:383: RuntimeWarning: invalid value encountered in true_divide
   assigned_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, np.multiply(F_DH, mat_y_hpi)), axis = 1) / np.sum(np.multiply(F_DH, mat_y_hpi), axis = 1), posinf=0)
-/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary_helpers.py:380: RuntimeWarning: invalid value encountered in true_divide
+/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary_helpers.py:383: RuntimeWarning: invalid value encountered in true_divide
   assigned_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, np.multiply(F_DH, mat_y_hpi)), axis = 1) / np.sum(np.multiply(F_DH, mat_y_hpi), axis = 1), posinf=0)
-/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary_helpers.py:380: RuntimeWarning: invalid value encountered in true_divide
+/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary_helpers.py:383: RuntimeWarning: invalid value encountered in true_divide
   assigned_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, np.multiply(F_DH, mat_y_hpi)), axis = 1) / np.sum(np.multiply(F_DH, mat_y_hpi), axis = 1), posinf=0)
 Importing dataset...
 

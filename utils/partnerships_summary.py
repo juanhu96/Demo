@@ -55,7 +55,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
         Filename
     '''
 
-    df, df_temp, block, tract_hpi = import_dataset(nsplits, datadir)
+    df, df_temp, block, tract_hpi, _ = import_dataset(nsplits, datadir)
     chain_summary_table = []
 
     for Model in Model_list:
