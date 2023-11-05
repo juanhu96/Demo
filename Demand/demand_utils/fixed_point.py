@@ -105,6 +105,7 @@ def run_fp(
         tol = 0.001,
         dampener = 0, #dampener>0 to reduce step size
         coefsavepath:str = None,
+        cap_coefs_to0:bool = False,
         verbose:bool = False
         ):
     """
@@ -128,12 +129,14 @@ def run_fp(
         offer_weights = offer_weights[offer_inds]
         print(f"Number of agents: {len(offer_inds)}")
         agent_loc_data = agent_data_full.loc[offer_inds].copy()
-        agent_loc_data['weights'] = offer_weights/agent_loc_data['population']
+        agent_loc_data['weights'] = offer_weights/agent_loc_data['population'] #population here is ZIP code population
 
         pi_init = results.pi if iter > 0 else 0.001*np.ones((1, len(str(agent_formulation).split('+')))) #initialize pi to last result, unless first iteration
         results = de.estimate_demand(df, agent_loc_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=verbose)
 
         coefs = results.pi.flatten() if iter==0 else coefs*dampener + results.pi.flatten()*(1-dampener)
+        if cap_coefs_to0:
+            coefs = np.minimum(coefs, 0)
         agent_results = de.compute_abd(results, df, agent_unique_data, coefs=coefs)
 
         abd = agent_results['abd'].values
@@ -142,8 +145,8 @@ def run_fp(
         print(f"\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}\n")
         # save results
         if coefsavepath is not None:
-            np.save(coefsavepath+str(iter), results.pi)
-            np.save(coefsavepath, results.pi)
+            np.save(coefsavepath+str(iter), coefs)
+            np.save(coefsavepath, coefs)
 
         # assignment
         a0 = copy.deepcopy(economy.assignments)
@@ -156,5 +159,5 @@ def run_fp(
     
     print(results)
 
-    return agent_results, results
+    return agent_results, results, agent_loc_data
     

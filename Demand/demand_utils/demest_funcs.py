@@ -209,7 +209,8 @@ def start_table(tablevars: List[str]) -> Tuple[List[str], List[str], List[str]]:
         vv_fmt = format_dict[vv]
         varlabels.append(vv_fmt)
         if 'dist' in vv:
-            coefrows.append(f"{vv_fmt}" + "$^{\\dag}$ ")
+            # coefrows.append(f"{vv_fmt}" + "$^{\\dag}$ ")
+            coefrows.append(f"{vv_fmt}")
         else:
             coefrows.append(f"{vv_fmt} ")
         serows.append(" ")

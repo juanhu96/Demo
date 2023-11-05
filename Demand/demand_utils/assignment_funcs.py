@@ -34,7 +34,7 @@ def random_fcfs(economy: Economy,
     # compute all-but-epsilon for each location for each geography
     economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)] 
     time2 = time.time()
-    print("Computed abepsilon in:", round(time2- time1, 2), "seconds.\nAssigning individuals...")
+    print("Computed abepsilon in:", round(time2- time1, 3), "seconds.\nAssigning individuals...")
 
     # reset occupancies 
     economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
@@ -42,7 +42,8 @@ def random_fcfs(economy: Economy,
     # reset offers and assignments
     economy.offers = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
     economy.assignments = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
-
+    time3 = time.time()
+    print("time3 - time2:", round(time3-time2, 3))
     # Iterate over individuals in the shuffled ordering
     for (tt,ii) in economy.ordering:
         for (jj,ll) in enumerate(economy.locs[tt]): #locs[tt] is ordered by distance from geography tt, in ascending order
@@ -55,8 +56,8 @@ def random_fcfs(economy: Economy,
                     if economy.occupancies[ll] == capacity:
                         full_locations.add(ll)
                 break
-
-    print("Assigned individuals in:", round(time.time() - time2, 2), "seconds")
+    time4 = time.time()
+    print("time4 - time3:", round(time4-time3, 3))
     return
 
 

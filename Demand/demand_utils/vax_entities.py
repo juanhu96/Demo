@@ -41,6 +41,10 @@ class Economy:
 
         self.occupancies = dict.fromkeys(np.unique(locids), 0) # number of individuals assigned to each location
 
+        self.maxrank_geogs = [len(ll)-1 for ll in locs] # list of max rank that can be offered in each geography (mostly max_rank-1, but could be less if there are fewer than max_rank locations in a geography)
+        self.fallback_loc = [ll[-1] for ll in locs] # list of fallback locations (last location in each geography)
+        # TODO: only need one of the 2 above
+
         # generate epsilon_diff - based on the comparison to empirical shares with nearest distance, i'm pretty sure it should be epsilon_opt="logistic" and scale=1
         if epsilon_opt == "gumbel":
             epsilon_0 = [gumbel_r.rvs(size=(geog_pops[tt])) for tt in range(n_geogs)]

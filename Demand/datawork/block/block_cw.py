@@ -81,5 +81,4 @@ blk_tract.merge(agent_results, on='blkid', how='outer', indicator=True)['_merge'
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 blk_zip = pd.read_csv(f"{datadir}/Intermediate/blk_zip.csv")
 blk_zip_unique = blk_zip[['zip']].drop_duplicates()
-blk_zip_unique.zip = blk_zip_unique.zip.astype(str)
 blk_zip_unique.merge(df, on='zip', how='outer', indicator=True)['_merge'].value_counts() # 49 left only
