@@ -80,7 +80,10 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     Closest_total = np.ones((num_tracts, num_total_stores))
     np.put_along_axis(Closest_current, np.argpartition(C_current_mat,M,axis=1)[:,M:],0,axis=1)
     np.put_along_axis(Closest_total, np.argpartition(C_total_mat,M,axis=1)[:,M:],0,axis=1)
-    
+
+    ### C, store the indicies of the M closest site
+    C = np.argsort(C_total_mat, axis=1)[:, :M]
+
     ###########################################################################
 
     C_currentMinDist = C_current_mat * Closest_current
@@ -114,7 +117,7 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     pc_current = p_current * C_current
     pc_total = p_total * C_total
 
-    return Population, Quartile, abd, p_current, p_total, pc_current, pc_total, C_total_mat, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, num_tracts, num_current_stores, num_total_stores
+    return Population, Quartile, abd, p_current, p_total, pc_current, pc_total, C_total_mat, Closest_current, Closest_total, c_currentMinDist, c_totalMinDist, C, num_tracts, num_current_stores, num_total_stores
 
 
 
@@ -180,3 +183,18 @@ def import_LogLin_estimation(C_total, Quartile, abd, nsplits, num_tracts, num_cu
     F_DH_current = F_DH_total[:,0:num_current_stores]
 
     return F_D_current, F_D_total, F_DH_current, F_DH_total
+
+
+
+def import_MNL_estimation(Chain_type, capacity, nsplits=4, capcoef=True, resultdir='/export/storage_covidvaccine/Result/'):
+
+    if capcoef: 
+        V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float) 
+        V_chain = np.genfromtxt(f'{resultdir}BLP_matrix/V_{Chain_type}_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float)
+    else:
+        V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float) 
+        V_chain = np.genfromtxt(f'{resultdir}BLP_matrix/V_{Chain_type}_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float)
+
+    V_total = np.concatenate((V_current, V_chain), axis = 1)
+
+    return V_current, V_total

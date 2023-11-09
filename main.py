@@ -16,7 +16,11 @@ Chain = sys.argv[2] # Chain
 K = int(sys.argv[3]) # K
 M = int(sys.argv[4]) # M
 nsplits = int(sys.argv[5])
+
 capcoef = sys.argv[6]
+if capcoef == 'False': capcoef = False
+else: capcoef = True
+
 R = sys.argv[7] # R
 
 from utils.optimize_main import optimize_main
@@ -38,13 +42,12 @@ def main(Model, Chain, K, M, nsplits, capcoef, R=None, heuristic=True):
     
     '''
 
-    # optimize_main(Model, Chain, M, K, nsplits, capcoef, R)
-    # evaluate_main(Model, Chain, M, K, nsplits, capcoef, R)
+    optimize_main(Model, Chain, M, K, nsplits, capcoef, R)
+    evaluate_main(Model, Chain, M, K, nsplits, capcoef, R)
     
-    if heuristic: 
-        assert Model == "MaxVaxHPIDistBLP", "heuristics for BLP only" # only do this for BLP
+    if Model == "MaxVaxHPIDistBLP" and heuristic: 
         optimize_main(Model, Chain, M, K, nsplits, capcoef, R, heuristic=heuristic)
-        evalute_main(Model, Chain, M, K, nsplits, capcoef, R, heuristic=heuristic)
+        evaluate_main(Model, Chain, M, K, nsplits, capcoef, R, heuristic=heuristic)
 
 
 

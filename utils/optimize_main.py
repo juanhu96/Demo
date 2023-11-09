@@ -14,8 +14,10 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix
-from utils.import_parameters import import_basics, import_BLP_estimation, import_LogLin_estimation
+from utils.import_parameters import import_basics, import_BLP_estimation, import_LogLin_estimation, import_MNL_estimation
 from utils.heuristic import rescale_estimation
+
+from utils.optimize_model_MNL import optimize_model_MNL
 
 
 def optimize_main(Model, Chain, M, K, nsplits, capcoef, R=None, constraint='vaccinated', heuristic=False, resultdir='/export/storage_covidvaccine/Result'):
@@ -46,22 +48,26 @@ def optimize_main(Model, Chain, M, K, nsplits, capcoef, R=None, constraint='vacc
 
 def optimize_chain(Model, Chain, M, K, nsplits, capcoef, expdirpath, R, constraint, heuristic, scale_factor=10000):
 
-    print(f'Start optimization with {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}.\n Results stored at {expdirpath}\n')
+    print(f'Start optimization with Model={Model}, M={M}, K={K}, Chain={Chain}, nsplits={nsplits}, capcoef={capcoef}, R={R}, heuristic={heuristic}. \n Results stored at {expdirpath}\n')
     
-    Population, Quartile, abd, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, _, _, num_tracts, num_current_stores, num_total_stores = import_basics(Chain, M, nsplits)
+    Population, Quartile, abd, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, _, _, C, num_tracts, num_current_stores, num_total_stores = import_basics(Chain, M, nsplits)
     
     BLP_models = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP']
     LogLin_models = ['MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin']
+    MNL_models = ['MNL']
 
     if Model in BLP_models: 
         F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, K, nsplits, capcoef) # F_D_current, F_D_total are just dummy
 
     if Model in LogLin_models: 
-        F_D_current, F_D_total, F_DH_current, F_DH_total = import_LogLin_estimation(C_total, Quartile, abd, nsplits, num_tracts, num_current_stores)
+        F_D_current, F_D_total, F_DH_current, F_DH_total = import_LogLin_estimation(C_total, Quartile, abd, nsplits, num_tracts, num_current_stores) # F_DH_current, F_DH_total are just dummy
     
     if heuristic:
-        print("*********************** HEURISTIC ***********************")
         F_DH_total = rescale_estimation(F_DH_total, Model, Chain, M, K, nsplits, capcoef, R, constraint)
+    
+    if Model in MNL_models:
+
+        V_current, V_total = import_MNL_estimation(Chain, K, nsplits, capcoef)
         
 
     # ================================================================================
@@ -84,26 +90,36 @@ def optimize_chain(Model, Chain, M, K, nsplits, capcoef, expdirpath, R, constrai
         pfdh_current = p_current * f_dh_current
         pfdh_total = p_total * f_dh_total
 
+
+
+    if Model in MNL_models:
+
+        v_total = V_total.flatten()
+        pfdh_total = p_total * v_total
+        pfdh_total = pfdh_total * Closest_total # make sure v_ij are zero other place
     
+
     # ================================================================================
 
-    if Model == 'MaxVaxHPIDistBLP' or Model == 'MaxVaxHPIDistLogLin':
+    if Model == 'MNL':
 
         if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
 
-        # NOTE: Just to get z_current, y_current is dummy
-        # if Chain == 'Dollar':
-        #     optimize_rate(scenario='current', constraint=constraint,
-        #                 pc=pc_current, 
-        #                 pf=pfdh_current, 
-        #                 ncp=p_current, p=Population,
-        #                 closest=Closest_current, K=K, 
-        #                 num_current_stores=num_current_stores,
-        #                 num_total_stores=num_total_stores, 
-        #                 num_tracts=num_tracts,
-        #                 scale_factor=scale_factor,
-        #                 path = expdirpath + constraint + '/',
-        #                 R = R)
+        optimize_model_MNL(scenario='total', 
+                        pf=pfdh_total,
+                        v=v_total,
+                        C=C,
+                        K=K,
+                        num_current_stores=num_current_stores,
+                        num_total_stores=num_total_stores,
+                        num_tracts=num_tracts,
+                        path=expdirpath + constraint + '/')
+
+
+
+    if Model == 'MaxVaxHPIDistBLP':
+
+        if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
 
         optimize_rate(scenario='total', constraint=constraint,
                     pc=pc_total,
@@ -120,11 +136,10 @@ def optimize_chain(Model, Chain, M, K, nsplits, capcoef, expdirpath, R, constrai
 
     # ================================================================================
     
-    if Model == 'MaxVaxDistBLP' or Model == 'MaxVaxDistLogLin':
+    if Model == 'MaxVaxDistLogLin':
 
         if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
-        
-        # NOTE: set the other to zero
+
         pfd_total_zero = pfd_total * Closest_total 
 
         optimize_rate(scenario = 'total', constraint = constraint,

@@ -123,27 +123,20 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     
     
     ### Summary ###
-    result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
-
+    z_file_name = f'{path}z_{scenario}'
+    y_file_name = f'{path}y_{scenario}'
     
-    if R is not None:
-        if heuristic:
-            np.savetxt(f'{path}z_{scenario}_fixR{str(R)}_heuristic.csv', z_soln, delimiter=",")
-            np.savetxt(f'{path}y_{scenario}_fixR{str(R)}_heuristic.csv', y_soln, delimiter=",")
-            result_df.to_csv(f'{path}result_{scenario}_fixR{str(R)}_heuristic.csv') 
-        else:
-            np.savetxt(f'{path}z_{scenario}_fixR{str(R)}.csv', z_soln, delimiter=",")
-            np.savetxt(f'{path}y_{scenario}_fixR{str(R)}.csv', y_soln, delimiter=",")
-            result_df.to_csv(f'{path}result_{scenario}_fixR{str(R)}.csv') 
-    else:
-        if heuristic:
-            np.savetxt(f'{path}z_{scenario}_heuristic.csv', z_soln, delimiter=",")
-            np.savetxt(f'{path}y_{scenario}_heuristic.csv', y_soln, delimiter=",")
-            result_df.to_csv(f'{path}result_{scenario}_heuristic.csv') 
-        else:
-            np.savetxt(f'{path}z_{scenario}.csv', z_soln, delimiter=",")
-            np.savetxt(f'{path}y_{scenario}.csv', y_soln, delimiter=",")
-            result_df.to_csv(f'{path}result_{scenario}.csv') 
+    if R is not None: 
+        z_file_name += f'_fixR{str(R)}'
+        y_file_name += f'_fixR{str(R)}'
+
+    if heuristic:
+        z_file_name += '_heuristic'
+        y_file_name += '_heuristic'
+
+    np.savetxt(f'{z_file_name}.csv', z_soln, delimiter=",")
+    np.savetxt(f'{y_file_name}.csv', y_soln, delimiter=",")
+
  
     ### Finished all ###
     m.dispose()

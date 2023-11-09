@@ -35,44 +35,24 @@ def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, R, heuristic, constra
 
     print(f'Evaluating random order FCFS with Chain type: {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}, Heuristic: {heuristic}.\n Results stored at {path}\n')
     Chain_dict = {'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}
-    
-    if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
-            
-        if R is not None: 
-            if heuristic:
-                z_total = np.genfromtxt(f'{path}/{constraint}/z_total_fixR{str(R)}_heuristic.csv', delimiter = ",", dtype = float)
-            else:
-                z_total = np.genfromtxt(f'{path}/{constraint}/z_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
-        else: 
-            if heuristic:
-                z_total = np.genfromtxt(f'{path}/{constraint}/z_total_heuristic.csv', delimiter = ",", dtype = float)
-            else:
-                z_total = np.genfromtxt(f'{path}/{constraint}/z_total.csv', delimiter = ",", dtype = float)
-            
+
+    z_file_name = f'{path}/{constraint}/z_total'
+    if R is not None: z_file_name += f'_fixR{str(R)}'
+    if heuristic: z_file_name += '_heuristic'
+    z_total = np.genfromtxt(f'{z_file_name}.csv', delimiter = ",", dtype = float)        
         
-        compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, heuristic, path)
+
+    compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, heuristic, path)
 
 
-        if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and constraint == 'vaccinated': # only once
-            # Pharmacy-only
-            block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path, Pharmacy=True)
-            run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path, Pharmacy=True)
+    if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and constraint == 'vaccinated': # Pharmacy-only
+        block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path, Pharmacy=True)
+        run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path, Pharmacy=True)
                 
-        # Pharmacy+others
-        block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path)
-        run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path)
+
+    block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path)
+    run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path)
             
-            
-    else: # MinDist
-
-        # z_total = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
-        # compute_distdf(chain_type=Chain_dict[Chain], chain_name=Chain, constraint='None', z=z_total, expdirpath=path)
-
-        # block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, 'None', path)
-        # run_assignment(Chain, M, K, 'None', block, block_utils, distdf, path)
-
-        pass
-
 
     return
 
@@ -104,21 +84,6 @@ def evaluate_chain_MIP(Model, Chain, M, K, nsplits, capcoef, R, heuristic, const
                     scale_factor=scale_factor,
                     path = f'{path}/{constraint}/',
                     R = R)
-
-
-    # else: # MinDist
-
-    #     z_total = np.genfromtxt(f'{path}/z_total.csv', delimiter = ",", dtype = float)
-
-    #     evaluate_rate(scenario = 'total', constraint = constraint, z = z_total,
-    #                 pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
-    #                 closest = Closest_total, K=K,
-    #                 num_current_stores=num_current_stores,
-    #                 num_total_stores=num_total_stores,
-    #                 num_tracts=num_tracts,
-    #                 scale_factor=scale_factor,
-    #                 path = expdirpath,
-    #                 MIPGap = 5e-2)
 
 
     return

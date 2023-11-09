@@ -68,56 +68,62 @@ def import_dataset(nsplits, datadir):
 
 
 
-def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_current_stores, eval_constr='vaccinated', R=None, Pharmacy=False):
+def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_current_stores, R=None, heuristic=False, Pharmacy=False):
     
     '''
     z, y: results from first/second stage
-    dists, assignment: results from second stage
+    locs, dists, assignment: results from second stage
     '''
     
     print('Importing solution...\n')
 
-    if not Pharmacy:
-
-        if R is not None:
-            locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}_fixR{str(R)}.csv', delimiter = "")
-            dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}_fixR{str(R)}.csv', delimiter = "")
-            assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}_fixR{str(R)}.csv', delimiter = "")
-
-            z = np.genfromtxt(f'{path}z_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
-            y = np.genfromtxt(f'{path}y_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
-            y_eval = np.genfromtxt(f'{path}y_total_eval_fixR{str(R)}.csv', delimiter = ",", dtype = float)
-            mat_y = np.reshape(y, (num_tracts, num_total_stores))
-            mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
-
-            return z, mat_y, mat_y_eval, locs, dists, assignment 
+    if Pharmacy:
+        locs_filename = f'{path}locs_{K}_Pharmacy.csv'
+        dists_filename = f'{path}dists_{K}_Pharmacy.csv'
+        assignment_filename = f'{path}assignment_{K}_Pharmacy.csv'
+        # z_filename = f'{path}z_current.csv'
+        # y_filename = f'{path}y_current.csv'
+        z = np.ones(num_current_stores)
+    
+    else:
+        suffix = f"_fixR{str(R)}_heuristic" if R is not None and heuristic else f"_fixR{str(R)}" if R is not None else "_heuristic" if heuristic else ""
         
-        else:
-            locs = np.genfromtxt(f'{path}locs_{K}_{Chain_type}.csv', delimiter = "")
-            dists = np.genfromtxt(f'{path}dists_{K}_{Chain_type}.csv', delimiter = "")
-            assignment = np.genfromtxt(f'{path}assignment_{K}_{Chain_type}.csv', delimiter = "")
+        print(f'suffix: {suffix}')
 
-            z = np.genfromtxt(f'{path}z_total.csv', delimiter = ",", dtype = float)
-            y = np.genfromtxt(f'{path}y_total.csv', delimiter = ",", dtype = float)
-            y_eval = np.genfromtxt(f'{path}y_total_eval.csv', delimiter = ",", dtype = float)
-            mat_y = np.reshape(y, (num_tracts, num_total_stores))
-            mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
+        locs_filename = f'{path}locs_{K}_{Chain_type}{suffix}.csv'
+        dists_filename = f'{path}dists_{K}_{Chain_type}{suffix}.csv'
+        assignment_filename = f'{path}assignment_{K}_{Chain_type}{suffix}.csv'
+        z_filename = f'{path}z_total{suffix}.csv'
+        y_filename = f'{path}y_total{suffix}.csv'
+        y_eval_filename = f'{path}y_total_eval{suffix}.csv'
 
-            return z, mat_y, mat_y_eval, locs, dists, assignment 
+        z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+        y = np.genfromtxt(y_filename, delimiter=",", dtype=float)
+
+    # Load data
+    locs = np.genfromtxt(locs_filename, delimiter="")
+    dists = np.genfromtxt(dists_filename, delimiter="")
+    assignment = np.genfromtxt(assignment_filename, delimiter="")
+
+    
+    if Pharmacy:
+        # 1. Pharmacy-only, no evaluation
+        # mat_y = np.reshape(y, (num_tracts, num_current_stores))
+        # mat_y_eval = mat_y
+        return z, locs, dists, assignment
+    
+    elif heuristic:
+        # 2. Haven't evaluted heuristic yet
+        mat_y = np.reshape(y, (num_tracts, num_total_stores))
+        mat_y_eval = mat_y
 
     else:
-        locs = np.genfromtxt(f'{path}locs_{K}_Pharmacy.csv', delimiter = "")
-        dists = np.genfromtxt(f'{path}dists_{K}_Pharmacy.csv', delimiter = "")
-        assignment = np.genfromtxt(f'{path}assignment_{K}_Pharmacy.csv', delimiter = "")
+        mat_y = np.reshape(y, (num_tracts, num_total_stores))
+        mat_y_eval = mat_y
+        # y_eval = np.genfromtxt(y_eval_filename, delimiter=",", dtype=float)
+        # mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
 
-        z = np.genfromtxt(f'{path}z_current.csv', delimiter = ",", dtype = float)
-        y = np.genfromtxt(f'{path}y_current.csv', delimiter = ",", dtype = float)
-        # y_eval = np.genfromtxt(f'{path}/y_current_eval_{eval_constr}.csv', delimiter = ",", dtype = float)
-        mat_y = np.reshape(y, (num_tracts, num_current_stores))
-        # mat_y_eval = np.reshape(y_eval, (num_tracts, num_current_stores))       
-            
-        # return z, mat_y, mat_y_eval, locs, dists, assignment
-        return z, mat_y, mat_y, locs, dists, assignment
+    return z, mat_y, mat_y_eval, locs, dists, assignment
 
 
 
@@ -142,7 +148,7 @@ def import_locations(df, Chain_type, Chain_name_list={'Dollar': '01_DollarStores
 
     Chain_name = Chain_name_list[Chain_type]
 
-    ## NOTE: TEMP 
+    ## NOTE: to be modified 
     if Chain_type == 'Dollar':
         chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv", usecols=['Latitude', 'Longitude', 'Zip_Code', 'State'])
         chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude', 'Zip_Code': 'zip_code'}, inplace=True)
