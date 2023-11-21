@@ -12,6 +12,7 @@ class Economy:
             shuffle=True, # whether to shuffle the ordering of individuals
             epsilon_opt = "logistic", # "logistic", "gumbel", "zero"
             epsilon_scale = 1, # scale factor for epsilon
+            mnl = False, # whether to use MNL
             seed = 1234 # random seed
             ):
 
@@ -61,3 +62,6 @@ class Economy:
             epsilon_diff = [epsilon_scale * epsilon_diff[tt] for tt in range(n_geogs)]
 
         self.epsilon_diff = epsilon_diff 
+        # For MNL:
+        self.gumbel_draws = [[gumbel_r.rvs(size=max_rank+1) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
+        self.utils = [[np.zeros(max_rank+1) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]

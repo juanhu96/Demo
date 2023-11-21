@@ -106,6 +106,7 @@ def run_fp(
         dampener = 0, #dampener>0 to reduce step size
         coefsavepath:str = None,
         cap_coefs_to0:bool = False,
+        mnl:bool = False,
         verbose:bool = False
         ):
     """
@@ -150,7 +151,11 @@ def run_fp(
 
         # assignment
         a0 = copy.deepcopy(economy.assignments)
-        af.random_fcfs(economy, distcoefs, abd, capacity)
+        if mnl:
+            af.random_fcfs_mnl(economy, distcoefs, abd, capacity)
+        else:
+            af.random_fcfs(economy, distcoefs, abd, capacity)
+
         af.assignment_stats(economy)
         converged = wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol)
         print(f"Iteration {iter} complete.\n\n")

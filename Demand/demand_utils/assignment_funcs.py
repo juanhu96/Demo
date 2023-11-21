@@ -61,6 +61,60 @@ def random_fcfs(economy: Economy,
     return
 
 
+def random_fcfs_mnl(economy: Economy,
+                distcoefs: np.ndarray,
+                abd: np.ndarray,
+                capacity: int
+                ):
+    """
+    Assign individuals to locations in random order, first-come-first-serve.
+    Individuals choose locations according to a multinomial logit model.
+    """
+    
+    time1 = time.time()
+    assert len(distcoefs) == economy.n_geogs == len(abd)
+    # compute all-but-epsilon for each location for each geography
+    economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)]
+    for tt in range(economy.n_geogs):
+        for ii in range(len(economy.utils[tt])):
+            economy.utils[tt][ii][1:] += economy.abepsilon[tt]
+    time2 = time.time()
+    print("Computed utils in:", round(time2- time1, 3), "seconds.\nAssigning individuals...")
+
+    # reset occupancies 
+    economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
+    full_locations = set()
+    # reset offers and assignments
+    economy.offers = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
+    economy.assignments = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
+    time3 = time.time()
+    print("time3 - time2:", round(time3-time2, 3))
+    # Iterate over individuals in the shuffled ordering
+    for (tt,ii) in economy.ordering:
+        locs_tt = economy.locs[tt]
+        locs_subset_bools = [True if ll not in full_locations else False for ll in locs_tt]
+
+        #TODO: if all 5 locations full, choose from all locations for now
+        if sum(locs_subset_bools) == 0:
+            locs_subset_bools = np.repeat(True, len(locs_tt))
+
+        economy.offers[tt][locs_subset_bools] += 1 #TODO: verify if "offered" <=> not full
+
+        util_subset_bools = np.concatenate([[True], locs_subset_bools]) #0th location is the outside option
+        ii_choice = np.argmax(economy.utils[tt][ii][util_subset_bools])
+        if ii_choice > 0:
+            loc_chosen = locs_tt[ii_choice-1] #0th location is the outside option
+            jj = np.where(locs_tt == loc_chosen)[0][0]
+            economy.assignments[tt][jj] += 1
+            economy.occupancies[loc_chosen] += 1
+            if economy.occupancies[loc_chosen] == capacity:
+                full_locations.add(loc_chosen)
+
+    time4 = time.time()
+    print("time4 - time3:", round(time4-time3, 3))
+    return
+
+
 
 def seq_lotteries(economy: Economy,
                   distcoefs: np.ndarray,

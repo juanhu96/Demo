@@ -39,14 +39,16 @@ outdir = "/export/storage_covidvaccine/Result/Demand"
 #=================================================================
 testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
 
-testing = False #TODO: remove
+testing = False #TODO: testing doesn't work rn 
 
-capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 8000 #capacity per location. lower when testing
-# capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
+capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
 max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 200 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 3 #number of HPI quantiles
 hpi_level = sys.argv[4] if len(sys.argv) > 4 else 'zip' #zip or tract
-
+mnl = True #TODO: switch to False
+if mnl:
+    max_rank = 5 
+    
 
 
 # in rundemest_assm.sh we have, e.g.:
@@ -61,6 +63,7 @@ setting_tag += "_const" if only_constant else ""
 setting_tag += "_nodisthet" if no_dist_heterogeneity else ""
 setting_tag += "_capcoefs0" if cap_coefs_to0 else ""
 setting_tag += f"_{hpi_level}hpi" if hpi_level != 'zip' else ""
+setting_tag += "_mnl" if mnl else ""
 
 print(setting_tag)
 coefsavepath = f"{outdir}/coefs/{setting_tag}_coefs" if not testing else None
@@ -205,7 +208,7 @@ dists = dist_grp.logdist.apply(np.array).values
 geog_pops = cw_pop.population.values
 # round to integers 
 geog_pops = [np.round(ll).astype(int) for ll in geog_pops]
-economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank)
+economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank, mnl=mnl)
 
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 sys.stdout.flush()
@@ -233,6 +236,7 @@ agent_results, results, agent_loc_data = fp.run_fp(
     coefsavepath=coefsavepath, #TODO: save intermediate in iter
     micro_computation_chunks=1 if max_rank <= 50 else 10,
     cap_coefs_to0=cap_coefs_to0,
+    mnl=mnl,
     verbose=testing
 )
 
