@@ -1,3 +1,5 @@
+# this is just a script for speed testing.
+
 # demand estimation with capacity constraints
 
 # 0. Draw a random order for demanders once.
@@ -37,33 +39,21 @@ outdir = "/export/storage_covidvaccine/Result/Demand"
 #=================================================================
 # SETTINGS
 #=================================================================
-testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
-
-testing = False #TODO: testing doesn't work rn 
-
-capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
+# testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
+testing = False  #TODO:
+capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. 
 max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 200 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 3 #number of HPI quantiles
-hpi_level = sys.argv[4] if len(sys.argv) > 4 else 'zip' #zip or tract
-mnl = True #TODO: switch to False
-if mnl:
-    max_rank = 5 
-    
-
 
 # in rundemest_assm.sh we have, e.g.:
 # nohup python3 /users/facsupport/zhli/VaxDemandDistance/Demand/demest_assm.py 10000 10 > demest_assm_10000_10.out &
 
 only_constant = False #if True, only estimate constant term in demand. default to False
 no_dist_heterogeneity = False #if True, no distance heterogeneity in demand. default to False
-cap_coefs_to0 = False # if we get positive distance coefficients, set them to 0 TODO:
 
 setting_tag = f"{capacity}_{max_rank}_{nsplits}q"
 setting_tag += "_const" if only_constant else ""
 setting_tag += "_nodisthet" if no_dist_heterogeneity else ""
-setting_tag += "_capcoefs0" if cap_coefs_to0 else ""
-setting_tag += f"_{hpi_level}hpi" if hpi_level != 'zip' else ""
-setting_tag += "_mnl" if mnl else ""
 
 print(setting_tag)
 coefsavepath = f"{outdir}/coefs/{setting_tag}_coefs" if not testing else None
@@ -90,17 +80,26 @@ if testing:
     test_ngeog = int(round(test_frac*ngeog, 0))
     blocks_tokeep = np.random.choice(blocks_unique, size=test_ngeog, replace=False)
     capacity = capacity * test_frac  #capacity per location. lower when testing
-    cw_pop = cw_pop.loc[cw_pop.blkid.isin(blocks_tokeep), :]
 else:
     test_frac = 1
     blocks_tokeep = blocks_unique
 
 
+cw_pop = cw_pop.loc[cw_pop.blkid.isin(blocks_tokeep), :]
 cw_pop.sort_values(by=['blkid'], inplace=True)
 
 print("Number of geogs:", cw_pop.shape[0]) # 377K
 print("Number of individuals:", cw_pop.population.sum()) # 39M
 sys.stdout.flush()
+
+# from block_dist.py. this is in long format. sorted by blkid, then logdist
+distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
+# assert (distdf['blkid'].is_monotonic_increasing and distdf.groupby('blkid')['logdist'].apply(lambda x: x.is_monotonic_increasing).all())
+# keep blkids in data
+distdf = distdf.groupby('blkid').head(max_rank).reset_index(drop=True)
+distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
+
+
 
 
 
@@ -108,6 +107,7 @@ sys.stdout.flush()
 # Data for demand estimation: market-level data, agent-level data
 #=================================================================
 
+hpi_level = 'tract'
 ref_lastq = False
 
 
@@ -153,6 +153,7 @@ sys.stdout.flush()
 
 # read in agent_data
 agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=['blkid', 'market_ids'])
+agent_data_read = agent_data_read.loc[agent_data_read.blkid.isin(blocks_tokeep), :]
 
 # keep markets in both
 mkts_in_both = set(df['market_ids'].tolist()).intersection(set(agent_data_read['market_ids'].tolist()))
@@ -161,19 +162,8 @@ agent_data_read = agent_data_read.loc[agent_data_read.market_ids.isin(mkts_in_bo
 df = df.loc[df.market_ids.isin(mkts_in_both), :]
 
 # subset distances and crosswalk also
+distdf = distdf.loc[distdf.blkid.isin(agent_data_read.blkid.unique()), :]
 cw_pop = cw_pop.loc[cw_pop.market_ids.isin(mkts_in_both), :]
-
-saved_distdf_subset = False
-if saved_distdf_subset:
-    distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv")
-else:
-    # from block_dist.py. this is in long format. sorted by blkid, then logdist
-    distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
-    distdf = distdf.groupby('blkid').head(max_rank).reset_index(drop=True)
-    distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
-    # keep blkids in data
-    distdf = distdf.loc[distdf.blkid.isin(agent_data_read.blkid.unique()), :]
-    distdf.to_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv", index=False)
 
 
 # add HPI quantile to agent data
@@ -186,7 +176,6 @@ elif hpi_level == 'tract':
     agent_data_read = agent_data_read.merge(blk_tract_cw, on='blkid', how='left')
     tract_hpi['hpi_quantile'] = pd.cut(tract_hpi['hpi'], splits, labels=False, include_lowest=True) + 1
     agent_data_read = agent_data_read.merge(tract_hpi[['tract', 'hpi_quantile']], on='tract', how='left')
-
 
 # merge distances
 agent_data_full = distdf.merge(agent_data_read[['blkid', 'market_ids', 'hpi_quantile']], on='blkid', how='left')
@@ -208,154 +197,86 @@ dists = dist_grp.logdist.apply(np.array).values
 geog_pops = cw_pop.population.values
 # round to integers 
 geog_pops = [np.round(ll).astype(int) for ll in geog_pops]
-economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank, mnl=mnl)
+economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank)
 
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 sys.stdout.flush()
 
-#=================================================================
-#=================================================================
+# agent_results, results, agent_loc_data = fp.run_fp(
+#     economy=economy,
+#     capacity=capacity,
+#     agent_data_full=agent_data_full,
+#     cw_pop=cw_pop,
+#     df=df,
+#     product_formulations=product_formulations,
+#     agent_formulation=agent_formulation,
+#     coefsavepath=coefsavepath, #TODO: save intermediate in iter
+#     micro_computation_chunks=1 if max_rank <= 50 else 10,
+#     verbose=testing
+# )
+converged = False
+iter = 0
+dists_mm_sorted, sorted_indices, wdists = fp.wdist_init(cw_pop, economy.dists)
+agent_unique_data = agent_data_full.drop_duplicates(subset=['blkid']).copy()
 
-ivcols = [cc for cc in df.columns if cc.startswith('demand_instruments')]
-ivcols
-#=================================================================
 
-# RUN FIXED POINT
+len(agent_unique_data.market_ids.unique())
 
-print("Entering fixed point loop...\nTime:", round(time.time()-time_entered, 2), "seconds")
-sys.stdout.flush()
+# IN LOOP
 
-agent_results, results, agent_loc_data = fp.run_fp(
+offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
+assert len(offer_weights) == agent_data_full.shape[0]
+offer_inds = np.flatnonzero(offer_weights)
+offer_weights = offer_weights[offer_inds]
+print(f"Number of agents: {len(offer_inds)}")
+agent_loc_data = agent_data_full.loc[offer_inds].copy()
+agent_loc_data['weights'] = offer_weights/agent_loc_data['population']
+
+pi_init = 0.001*np.ones((1, len(str(agent_formulation).split('+')))) #initialize pi to last result, unless first iteration
+results = de.estimate_demand(df, agent_loc_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=1e-8, poolnum=1, verbose=False)
+
+coefs = results.pi.flatten()
+agent_results = de.compute_abd(results, df, agent_unique_data, coefs=coefs)
+
+abd = agent_results['abd'].values
+distcoefs = agent_results['distcoef'].values
+
+print(f"\nDistance coefficients: {[round(x, 5) for x in results.pi.flatten()]}\n")
+
+#=====REFRESH MODULES=====
+import importlib
+import copy
+
+importlib.reload(vaxclass)
+importlib.reload(af)
+importlib.reload(de)
+importlib.reload(fp)
+try:
+    from demand_utils import vax_entities as vaxclass
+    from demand_utils import assignment_funcs as af
+    from demand_utils import demest_funcs as de
+    from demand_utils import fixed_point as fp
+except:
+    from Demand.demand_utils import vax_entities as vaxclass
+    from Demand.demand_utils import assignment_funcs as af
+    from Demand.demand_utils import demest_funcs as de
+    from Demand.demand_utils import fixed_point as fp
+
+
+# import cProfile
+
+# cProfile.run('af.random_fcfs( economy=economy, distcoefs=distcoefs, abd=abd, capacity=capacity)')
+
+af.random_fcfs(
     economy=economy,
-    capacity=capacity,
-    agent_data_full=agent_data_full,
-    cw_pop=cw_pop,
-    df=df,
-    product_formulations=product_formulations,
-    agent_formulation=agent_formulation,
-    coefsavepath=coefsavepath, #TODO: save intermediate in iter
-    micro_computation_chunks=1 if max_rank <= 50 else 10,
-    cap_coefs_to0=cap_coefs_to0,
-    mnl=mnl,
-    verbose=testing
+    distcoefs=distcoefs,
+    abd=abd,
+    capacity=capacity
 )
 
-print("Done with fixed point loop at time:", round(time.time()-time_entered, 2), "seconds")
-sys.stdout.flush()
-
-# save agent_results
-
-if not testing:
-    try:
-        agent_results[['blkid', 'hpi_quantile', 'market_ids', 'abd', 'distcoef']].to_csv(f"{outdir}/agent_results_{setting_tag}.csv", index=False)
-        print(f"Saved agent_results to {outdir}/agent_results_{setting_tag}.csv")
-        results.to_pickle(f"{outdir}/results_{setting_tag}.pkl")
-        print(f"Saved results to {outdir}/results_{setting_tag}.pkl")
-        agent_loc_data.to_csv(f"{outdir}/agent_loc_data_{setting_tag}.csv", index=False)
-    except: #if no storage space 
-        agent_results[['blkid', 'market_ids', 'abd', 'distcoef']].to_csv(f"/export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv", index=False)
-        print(f"Saved agent_results to /export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv")
-        results.to_pickle(f"/export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
-        print(f"Saved results to /export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
-        agent_loc_data.to_csv(f"/export/storage_adgandhi/MiscLi/agent_loc_data_{setting_tag}.csv", index=False)
 
 
+loctt = economy.locs[0]
+locid = 3112
 
-# #=================================================================
-# #=================================================================
-# Write coefficient table
-results = pd.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
-print(results)
-tablevars = []
-for qq in range(1, nsplits+1): #e.g. quantiles 1,2,3
-    tablevars += [f'logdistXhpi_quantile{qq}']
-
-for qq in range(1, nsplits): #e.g. quantiles 1,2,3
-    tablevars += [f'hpi_quantile{qq}']
-
-tablevars = tablevars + controls + ['1']
-print("Table variables:", tablevars)
-
-coefrows, serows, varlabels = de.start_table(tablevars)
-coefrows, serows = de.fill_table(results, coefrows, serows, tablevars)
-
-coefrows = [r + "\\\\ \n" for r in coefrows]
-serows = [r + "\\\\ \n\\addlinespace\n" for r in serows]
-
-latex = "\\begin{tabular}{lcccc}\n \\toprule\n\\midrule\n"
-for (ii,vv) in enumerate(varlabels):
-    latex += coefrows[ii]
-    latex += serows[ii]
-
-latex += "\\bottomrule\n\\end{tabular}\n\n\nNote: $^{\\dag}$ indicates a variable at the block level."
-table_path = f"{outdir}/coeftables/coeftable_{setting_tag}.tex" 
-
-with open(table_path, "w") as f:
-    print(f"Saved table at: {table_path}")
-    f.write(latex)
-
-print("Done!")
-
-
-# #=================================================================
-# #=================================================================
-# #=====REFRESH MODULES=====
-# import importlib
-# import copy
-
-# importlib.reload(vaxclass)
-# importlib.reload(af)
-# importlib.reload(de)
-# importlib.reload(fp)
-# try:
-#     from demand_utils import vax_entities as vaxclass
-#     from demand_utils import assignment_funcs as af
-#     from demand_utils import demest_funcs as de
-#     from demand_utils import fixed_point as fp
-# except:
-#     from Demand.demand_utils import vax_entities as vaxclass
-#     from Demand.demand_utils import assignment_funcs as af
-#     from Demand.demand_utils import demest_funcs as de
-#     from Demand.demand_utils import fixed_point as fp
-
-# #=================================================================
-# #=================================================================
-# FOR FIX COMPARISON  
-results = pd.read_pickle(f"{outdir}/results_8000_200_3q.pkl")
-
-for nsplits in [3, 4]:
-    tablevars = []
-    for qq in range(1, nsplits+1): #e.g. quantiles 1,2,3
-        tablevars += [f'logdistXhpi_quantile{qq}']
-
-    for qq in range(1, nsplits): #e.g. quantiles 1,2,3
-        tablevars += [f'hpi_quantile{qq}']
-
-    tablevars = tablevars + controls + ['1']
-    print("Table variables:", tablevars)
-
-    coefrows, serows, varlabels = de.start_table(tablevars)
-    for capacity in [8000,10000,12000]:
-        setting_tag = f"{capacity}_200_{nsplits}q"
-        results = pd.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
-        print(setting_tag)
-        print(results)
-        coefrows, serows = de.fill_table(results, coefrows, serows, tablevars)
-
-    coefrows = [r + "\\\\ \n" for r in coefrows]
-    serows = [r + "\\\\ \n\\addlinespace\n" for r in serows]
-
-
-
-    latex = "\\begin{tabular}{lccc}\n \\toprule\n\\midrule\n \\ Variable & \\multicolumn{3}{c}{Capacity} \\\\ \n & 8,000 & 10,000 & 12,000 \\\\ \n"
-    for (ii,vv) in enumerate(varlabels):
-        latex += coefrows[ii]
-        latex += serows[ii]
-    latex += "\\bottomrule\n\\end{tabular}\n\n"
-
-    table_path = f"{outdir}/coeftables/coeftable_{nsplits}q.tex"
-
-    with open(table_path, "w") as f:
-        print(f"Saved table at: {table_path}")
-        f.write(latex)
-
+loctt = np.delete(loctt, np.where(loctt == locid)[0])
