@@ -21,7 +21,7 @@ from gurobipy import GRB, quicksum
 
 def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
                   num_current_stores, num_total_stores, num_tracts, 
-                  scale_factor, path, MIPGap = 1e-3):
+                  scale_factor, path, R = None, heuristic=False, MIPGap = 1e-3):
     
     """
     Parameters
@@ -94,7 +94,7 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
             m.addConstr(quicksum(p[i] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
     elif constraint == 'vaccinated':
         for j in range(num_stores):
-            m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j]) # TODO: double check the formula
+            m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
 
     for i in range(num_tracts):
         m.addConstr(quicksum(y[i * num_stores + j] for j in range(num_stores)) <= 1)
@@ -102,8 +102,9 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     for k in range(num_tracts * num_stores):
         m.addConstr(y[k] <= closest[k])
 
-    m.addConstr(z.sum() == num_current_stores, name = 'N')    
+    m.addConstr(z.sum() == num_current_stores, name = 'N')
 
+    if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
 
     ## Solve ###
     m.update()
@@ -122,10 +123,20 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     
     
     ### Summary ###
-    result_df = pd.DataFrame([sum(z_soln), round(end - start,1)], index =['Stores used', 'Time'], columns =['Value'])
-    np.savetxt(f'{path}z_{scenario}.csv', z_soln, delimiter=",")
-    np.savetxt(f'{path}y_{scenario}.csv', y_soln, delimiter=",")
-    result_df.to_csv(f'{path}result_{scenario}.csv') 
+    z_file_name = f'{path}z_{scenario}'
+    y_file_name = f'{path}y_{scenario}'
+    
+    if R is not None: 
+        z_file_name += f'_fixR{str(R)}'
+        y_file_name += f'_fixR{str(R)}'
+
+    if heuristic:
+        z_file_name += '_heuristic'
+        y_file_name += '_heuristic'
+
+    np.savetxt(f'{z_file_name}.csv', z_soln, delimiter=",")
+    np.savetxt(f'{y_file_name}.csv', y_soln, delimiter=",")
+
  
     ### Finished all ###
     m.dispose()

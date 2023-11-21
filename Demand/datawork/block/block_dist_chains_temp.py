@@ -9,18 +9,12 @@ datadir = "/export/storage_covidvaccine/Data"
 codedir = "/mnt/phd/jihu/VaxDemandDistance"
 
 # read chain locations, subset to CA
-# chain_type = '01_DollarStores', '04_Coffee', '09_HighSchools'
-# chain_name = 'Dollar', 'Coffee', 'HighSchools'
-chain_type = '04_Coffee'
-chain_name = 'Coffee'
-
-# chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{chain_type}.csv", usecols=['Latitude', 'Longitude', 'State']) # FOR DOLLAR ONLY
-# chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude'}, inplace=True) # FOR DOLLAR ONLY
-chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{chain_type}.csv", usecols=['latitude', 'longitude', 'region']) # FOR COFFEE ONLY
-chain_locations.rename(columns={'region': 'State'}, inplace=True) # FOR COFFEE ONLY
-
+chain_type = '09_HighSchools'
+chain_name = 'HighSchools'
+chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{chain_type}.csv", usecols=['latitude', 'longitude', 'State']) # FOR HIGH SCHOOLS ONLY
 chain_locations = chain_locations.loc[chain_locations['State'] == 'CA', :]
 chain_locations.drop(columns=['State'], inplace=True)
+print(chain_locations.shape) # 1290
 
 chain_locations['id'] = range(chain_locations.shape[0])
 chainlocpath = f"{datadir}/Intermediate/ca_{chain_name}_locations.dta"

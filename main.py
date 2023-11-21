@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Jul, 2022
+Created on Jul, 2023
 @author: Jingyuan Hu
 """
 
@@ -10,12 +10,24 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
+import sys 
+Model = sys.argv[1] # Model
+Chain = sys.argv[2] # Chain
+K = int(sys.argv[3]) # K
+M = int(sys.argv[4]) # M
+nsplits = int(sys.argv[5])
+
+capcoef = sys.argv[6]
+if capcoef == 'False': capcoef = False
+else: capcoef = True
+
+R = sys.argv[7] # R
+
 from utils.optimize_main import optimize_main
 from utils.evaluate_main import evaluate_main
-from utils.partnership_summary import partnerships_summary
-from utils.import_demand import initial_BLP_estimation, import_BLP_estimation, demand_check
 
-def main():
+
+def main(Model, Chain, K, M, nsplits, capcoef, R=None, heuristic=True):
 
     '''
     BLP estimation:
@@ -30,22 +42,20 @@ def main():
     
     '''
 
-    # ==============================================================================================================
-
-    # for capacity in [8000]:
-        # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity) # with HPI
-        # initial_BLP_estimation(Chain_type='Dollar', capacity=capacity, heterogeneity=False) # without
-    # demand_check(Chain_type='Dollar', capacity=100000)
-    # demand_check(Chain_type='Dollar', capacity=100000, heterogeneity=False)
-
-    # ==============================================================================================================
+    optimize_main(Model, Chain, M, K, nsplits, capcoef, R)
+    evaluate_main(Model, Chain, M, K, nsplits, capcoef, R)
     
-    # optimize_main(Model_list = ['MaxVaxDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-    # evaluate_main(Model_list = ['MaxVaxDistLogLin'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5])
-
-    partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MaxVaxFixV'], Chain_list = ['Dollar'], K_list = [10000], M_list = [5], filename = 'M5_K10000')
+    if Model == "MaxVaxHPIDistBLP" and heuristic: 
+        optimize_main(Model, Chain, M, K, nsplits, capcoef, R, heuristic=heuristic)
+        evaluate_main(Model, Chain, M, K, nsplits, capcoef, R, heuristic=heuristic)
 
 
 
 if __name__ == "__main__":
-    main()
+    
+    if R != 'None':
+        main(Model, Chain, K, M, nsplits, capcoef, int(R))
+    else:
+        main(Model, Chain, K, M, nsplits, capcoef)
+
+

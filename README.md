@@ -5,6 +5,9 @@
  - [HPI](https://api.healthyplacesindex.org/)
    - Tract-level: 2022, imputed
    - ZIP-level: 2022, imputed with 2011 data, otherwise assigned to quartile 1
+ - Block data:
+   - Population aged 5+: data.census.gov [link](https://data.census.gov/table?t=Resident+Population&g=040XX00US06$1000000&y=2020&tid=DECENNIALDHC2020.P1)
+   - Coordinates: [link](https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/California/)
  - [`AdminShapefiles`](https://www.census.gov/cgi-bin/geo/shapefiles/index.php)
    - 2010 tract boundaries (for compatibility with HPI)
    - 2020 ZIP boundaries 
