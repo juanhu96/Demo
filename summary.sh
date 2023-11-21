@@ -28,8 +28,9 @@
 
 
 # ==================================================================================================
-# heuristic
-# nohup python3 /mnt/phd/jihu/VaxDemandDistance/summary.py 4 True 100 > ./output_log/summary_4q_R100.txt &
-nohup python3 /mnt/phd/jihu/VaxDemandDistance/summary.py 4 False 100 > ./output_log/summary_4q_R100.txt &
-nohup python3 /mnt/phd/jihu/VaxDemandDistance/summary.py 4 False 200 > ./output_log/summary_4q_R200.txt &
-nohup python3 /mnt/phd/jihu/VaxDemandDistance/summary.py 4 False 400 > ./output_log/summary_4q_R400.txt &
+
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/summary.py 4 False None > ./output_log/summary_Full.txt &
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/summary.py 4 False 100 > ./output_log/summary_100.txt &
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/summary.py 4 False 200 > ./output_log/summary_200.txt &
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/summary.py 4 False 400 > ./output_log/summary_400.txt &
+

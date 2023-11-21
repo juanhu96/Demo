@@ -185,7 +185,10 @@ def run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, di
 
     economy = vaxclass.Economy(locs=locs, dists=dists, geog_pops=geog_pops, max_rank=M, seed = 42)
     af.random_fcfs_eval(economy, distcoefs, abd, K)
-    # af.assignment_stats_eval(economy, M) # this is not required
+    # TODO: random fcfs mnl
+
+    af.random_fcfs_eval(economy, distcoefs, abd, K)
+
 
     if Pharmacy:
         np.savetxt(f'{path}/locs_{K}_Pharmacy.csv', np.stack(locs, axis=0), fmt='%s')

@@ -46,4 +46,7 @@
 
 # ===================================================================================================
 
-nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 8000 5 4 True None > ./output_log/Dollar_8000_heuristic.txt &
+# nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MNL Dollar 10000 5 4 False None > ./output_log/MNL_5gap.txt &
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MNL Dollar 10000 5 4 False 100 > ./output_log/MNL_100.txt &
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MNL Dollar 10000 5 4 False 200 > ./output_log/MNL_200.txt &
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MNL Dollar 10000 5 4 False 400 > ./output_log/MNL_400.txt &
