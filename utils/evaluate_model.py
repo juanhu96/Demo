@@ -183,12 +183,13 @@ def run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, di
     geog_pops = block.population.values
     geog_pops = np.array(geog_pops).astype(int).tolist() # updated: float to int
 
-    economy = vaxclass.Economy(locs=locs, dists=dists, geog_pops=geog_pops, max_rank=M, seed = 42)
-    af.random_fcfs_eval(economy, distcoefs, abd, K)
-    # TODO: random fcfs mnl
-
-    af.random_fcfs_eval(economy, distcoefs, abd, K)
-
+    mnl = True
+    economy = vaxclass.Economy(locs=locs, dists=dists, geog_pops=geog_pops, max_rank=M, seed = 42, mnl=mnl)
+    if mnl: 
+        print("***************** WE'RE HERE ******************\n")
+        af.random_fcfs_mnl_eval(economy, distcoefs, abd, K)
+    else: af.random_fcfs_eval(economy, distcoefs, abd, K)
+    
 
     if Pharmacy:
         np.savetxt(f'{path}/locs_{K}_Pharmacy.csv', np.stack(locs, axis=0), fmt='%s')

@@ -42,7 +42,7 @@ def main(Model, Chain, K, M, nsplits, capcoef, R=None, heuristic=True):
     
     '''
 
-    optimize_main(Model, Chain, M, K, nsplits, capcoef, R)
+    # optimize_main(Model, Chain, M, K, nsplits, capcoef, R)
     evaluate_main(Model, Chain, M, K, nsplits, capcoef, R)
     
     if Model == "MaxVaxHPIDistBLP" and heuristic: 
