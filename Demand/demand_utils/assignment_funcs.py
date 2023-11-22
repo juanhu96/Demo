@@ -77,7 +77,7 @@ def random_fcfs_mnl(economy: Economy,
     economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)]
     for tt in range(economy.n_geogs):
         for ii in range(len(economy.utils[tt])):
-            economy.utils[tt][ii][1:] += economy.abepsilon[tt]
+            economy.utils[tt][ii] = economy.gumbel_draws[tt][ii] + np.concatenate([[0], economy.abepsilon[tt]])
     time2 = time.time()
     print("Computed utils in:", round(time2- time1, 3), "seconds.\nAssigning individuals...")
 
@@ -90,6 +90,7 @@ def random_fcfs_mnl(economy: Economy,
     time3 = time.time()
     print("time3 - time2:", round(time3-time2, 3))
     # Iterate over individuals in the shuffled ordering
+    n_notassigned = 0
     for (tt,ii) in economy.ordering:
         locs_tt = economy.locs[tt]
         locs_subset_bools = [True if ll not in full_locations else False for ll in locs_tt]
@@ -98,18 +99,22 @@ def random_fcfs_mnl(economy: Economy,
         if sum(locs_subset_bools) == 0:
             locs_subset_bools = np.repeat(True, len(locs_tt))
 
-        economy.offers[tt][locs_subset_bools] += 1 #TODO: verify if "offered" <=> not full
+        economy.offers[tt][locs_subset_bools] += 1
 
         util_subset_bools = np.concatenate([[True], locs_subset_bools]) #0th location is the outside option
         ii_choice = np.argmax(economy.utils[tt][ii][util_subset_bools])
         if ii_choice > 0:
-            loc_chosen = locs_tt[ii_choice-1] #0th location is the outside option
+            loc_chosen = locs_tt[locs_subset_bools][ii_choice-1] #0th location is the outside option
             jj = np.where(locs_tt == loc_chosen)[0][0]
             economy.assignments[tt][jj] += 1
             economy.occupancies[loc_chosen] += 1
             if economy.occupancies[loc_chosen] == capacity:
                 full_locations.add(loc_chosen)
+        else:
+            n_notassigned += 1
+    print("Number of individuals not assigned:", n_notassigned, " out of ", len(economy.ordering))
 
+    print("Number of full locations:", len(full_locations), " out of ", len(economy.occupancies))
     time4 = time.time()
     print("time4 - time3:", round(time4-time3, 3))
     return

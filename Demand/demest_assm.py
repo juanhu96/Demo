@@ -163,9 +163,11 @@ df = df.loc[df.market_ids.isin(mkts_in_both), :]
 # subset distances and crosswalk also
 cw_pop = cw_pop.loc[cw_pop.market_ids.isin(mkts_in_both), :]
 
-saved_distdf_subset = False
+saved_distdf_subset = True #TODO: change to False if changing max_rank
 if saved_distdf_subset:
     distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv")
+    if testing:
+        distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
 else:
     # from block_dist.py. this is in long format. sorted by blkid, then logdist
     distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
@@ -173,7 +175,12 @@ else:
     distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
     # keep blkids in data
     distdf = distdf.loc[distdf.blkid.isin(agent_data_read.blkid.unique()), :]
-    distdf.to_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv", index=False)
+    if not testing:
+        distdf.to_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv", index=False)
+        print(f"Saved distdf to {datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv")
+    else:
+        print("Not saving distdf because testing")
+        distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
 
 
 # add HPI quantile to agent data
@@ -321,41 +328,43 @@ print("Done!")
 # #=================================================================
 # #=================================================================
 # FOR FIX COMPARISON  
-results = pd.read_pickle(f"{outdir}/results_8000_200_3q.pkl")
-
-for nsplits in [3, 4]:
-    tablevars = []
-    for qq in range(1, nsplits+1): #e.g. quantiles 1,2,3
-        tablevars += [f'logdistXhpi_quantile{qq}']
-
-    for qq in range(1, nsplits): #e.g. quantiles 1,2,3
-        tablevars += [f'hpi_quantile{qq}']
-
-    tablevars = tablevars + controls + ['1']
-    print("Table variables:", tablevars)
-
-    coefrows, serows, varlabels = de.start_table(tablevars)
-    for capacity in [8000,10000,12000]:
-        setting_tag = f"{capacity}_200_{nsplits}q"
-        results = pd.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
-        print(setting_tag)
-        print(results)
-        coefrows, serows = de.fill_table(results, coefrows, serows, tablevars)
-
-    coefrows = [r + "\\\\ \n" for r in coefrows]
-    serows = [r + "\\\\ \n\\addlinespace\n" for r in serows]
 
 
+# results = pd.read_pickle(f"{outdir}/results_8000_200_3q.pkl")
 
-    latex = "\\begin{tabular}{lccc}\n \\toprule\n\\midrule\n \\ Variable & \\multicolumn{3}{c}{Capacity} \\\\ \n & 8,000 & 10,000 & 12,000 \\\\ \n"
-    for (ii,vv) in enumerate(varlabels):
-        latex += coefrows[ii]
-        latex += serows[ii]
-    latex += "\\bottomrule\n\\end{tabular}\n\n"
+# for nsplits in [3, 4]:
+#     tablevars = []
+#     for qq in range(1, nsplits+1): #e.g. quantiles 1,2,3
+#         tablevars += [f'logdistXhpi_quantile{qq}']
 
-    table_path = f"{outdir}/coeftables/coeftable_{nsplits}q.tex"
+#     for qq in range(1, nsplits): #e.g. quantiles 1,2,3
+#         tablevars += [f'hpi_quantile{qq}']
 
-    with open(table_path, "w") as f:
-        print(f"Saved table at: {table_path}")
-        f.write(latex)
+#     tablevars = tablevars + controls + ['1']
+#     print("Table variables:", tablevars)
+
+#     coefrows, serows, varlabels = de.start_table(tablevars)
+#     for capacity in [8000,10000,12000]:
+#         setting_tag = f"{capacity}_200_{nsplits}q"
+#         results = pd.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
+#         print(setting_tag)
+#         print(results)
+#         coefrows, serows = de.fill_table(results, coefrows, serows, tablevars)
+
+#     coefrows = [r + "\\\\ \n" for r in coefrows]
+#     serows = [r + "\\\\ \n\\addlinespace\n" for r in serows]
+
+
+
+#     latex = "\\begin{tabular}{lccc}\n \\toprule\n\\midrule\n \\ Variable & \\multicolumn{3}{c}{Capacity} \\\\ \n & 8,000 & 10,000 & 12,000 \\\\ \n"
+#     for (ii,vv) in enumerate(varlabels):
+#         latex += coefrows[ii]
+#         latex += serows[ii]
+#     latex += "\\bottomrule\n\\end{tabular}\n\n"
+
+#     table_path = f"{outdir}/coeftables/coeftable_{nsplits}q.tex"
+
+#     with open(table_path, "w") as f:
+#         print(f"Saved table at: {table_path}")
+#         f.write(latex)
 
