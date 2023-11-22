@@ -13,11 +13,10 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix
+from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix, optimize_rate_MNL
 from utils.import_parameters import import_basics, import_BLP_estimation, import_LogLin_estimation, import_MNL_estimation
 from utils.heuristic import rescale_estimation
 
-from utils.optimize_model_MNL import optimize_model_MNL
 
 
 def optimize_main(Model, Chain, M, K, nsplits, capcoef, R=None, constraint='vaccinated', heuristic=False, resultdir='/export/storage_covidvaccine/Result'):
@@ -97,7 +96,7 @@ def optimize_chain(Model, Chain, M, K, nsplits, capcoef, expdirpath, R, constrai
         v_total = V_total.flatten()
         pfdh_total = p_total * v_total
         pfdh_total = pfdh_total * Closest_total # make sure v_ij are zero other place
-    
+        
 
     # ================================================================================
 
@@ -105,7 +104,7 @@ def optimize_chain(Model, Chain, M, K, nsplits, capcoef, expdirpath, R, constrai
 
         if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
 
-        optimize_model_MNL(scenario='total', 
+        optimize_rate_MNL(scenario='total', 
                         pf=pfdh_total,
                         v=v_total,
                         C=C,
@@ -113,6 +112,8 @@ def optimize_chain(Model, Chain, M, K, nsplits, capcoef, expdirpath, R, constrai
                         num_current_stores=num_current_stores,
                         num_total_stores=num_total_stores,
                         num_tracts=num_tracts,
+                        scale_factor=scale_factor,
+                        R = R,
                         path=expdirpath + constraint + '/')
 
 

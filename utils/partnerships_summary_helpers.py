@@ -68,7 +68,7 @@ def import_dataset(nsplits, datadir):
 
 
 
-def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_current_stores, R=None, heuristic=False, Pharmacy=False):
+def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, R=None, heuristic=False, Pharmacy=False):
     
     '''
     z, y: results from first/second stage
@@ -98,7 +98,9 @@ def import_solution(path, Chain_type, K, num_tracts, num_total_stores, num_curre
         y_eval_filename = f'{path}y_total_eval{suffix}.csv'
 
         z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
-        y = np.genfromtxt(y_filename, delimiter=",", dtype=float)
+        
+        if Model == 'MNL': y = np.zeros((num_tracts, num_total_stores)) # dummy
+        else: y = np.genfromtxt(y_filename, delimiter=",", dtype=float)
 
     # Load data
     locs = np.genfromtxt(locs_filename, delimiter="")

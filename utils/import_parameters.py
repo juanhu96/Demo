@@ -188,6 +188,8 @@ def import_LogLin_estimation(C_total, Quartile, abd, nsplits, num_tracts, num_cu
 
 def import_MNL_estimation(Chain_type, capacity, nsplits=4, capcoef=True, resultdir='/export/storage_covidvaccine/Result/'):
 
+    print("import_MNL_estimation\n")
+
     if capcoef: 
         V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float) 
         V_chain = np.genfromtxt(f'{resultdir}BLP_matrix/V_{Chain_type}_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float)
@@ -196,5 +198,5 @@ def import_MNL_estimation(Chain_type, capacity, nsplits=4, capcoef=True, resultd
         V_chain = np.genfromtxt(f'{resultdir}BLP_matrix/V_{Chain_type}_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float)
 
     V_total = np.concatenate((V_current, V_chain), axis = 1)
-
+    
     return V_current, V_total
