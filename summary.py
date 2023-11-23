@@ -36,7 +36,7 @@ def summary(nsplits, capcoef, R=None):
     # partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[8000, 10000], nsplits=nsplits, capcoef=capcoef, filename=str(nsplits))
     # partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Dollar', 'Coffee', 'HighSchools'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R)
     # partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R, second_stage_MIP=True, filename='BLPLogLin')
-    partnerships_summary(Model_list=['MNL', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[10000], nsplits=nsplits, capcoef=capcoef, R=R, filename='MNL_LogLin_new')
+    partnerships_summary(Model_list=['MNL', 'MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[10000], nsplits=nsplits, capcoef=capcoef, R=R, filename='MNL_LogLin_BLP_new')
     
     return
 

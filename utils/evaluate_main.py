@@ -49,6 +49,8 @@ def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, R, heuristic, constra
         block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path, Pharmacy=True)
         run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path, Pharmacy=True)
                 
+    
+    return 
 
     block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path)
     run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path)
