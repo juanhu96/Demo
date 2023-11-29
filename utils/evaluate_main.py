@@ -7,6 +7,7 @@ Created on Jul, 2023
 
 import os
 import numpy as np
+import time
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -42,7 +43,7 @@ def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, R, heuristic, constra
     z_total = np.genfromtxt(f'{z_file_name}.csv', delimiter = ",", dtype = float)        
         
 
-    compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, heuristic, path)
+    compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, heuristic, path) # NOTE: JUST FOR NOW
 
 
     if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and constraint == 'vaccinated': # Pharmacy-only

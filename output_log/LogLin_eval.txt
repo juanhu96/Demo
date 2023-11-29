@@ -1,0 +1,13 @@
+Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000, R = None, Heuristic: False.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar
+
+Start constructing blocks...
+
+Start assignments...
+
+***************** WE'RE HERE ******************
+
+Computed utils in: 55.103 seconds.
+Assigning individuals...
+time3 - time2: 0.662
+time4 - time3: 849.402

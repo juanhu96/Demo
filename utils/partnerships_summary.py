@@ -76,7 +76,8 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                     else: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{constraint}/'
 
                     z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R)
-                
+
+                    print(np.sum(assignment), assignment)
 
                     # first stage MIP
                     if Model != 'MNL':
