@@ -187,10 +187,12 @@ def run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, di
     economy = vaxclass.Economy(locs=locs, dists=dists, geog_pops=geog_pops, max_rank=M, seed = 42, mnl=mnl)
     if mnl: 
         print("***************** EVALUATING WITH MNL ******************\n")
-        af.random_fcfs_mnl_eval(economy, distcoefs, abd, 5000)
+        af.random_fcfs_mnl_eval(economy, distcoefs, abd, K)
     else: af.random_fcfs_eval(economy, distcoefs, abd, K)
 
     af.assignment_stats_eval(economy)
+
+    return
     
 
     if Pharmacy:
