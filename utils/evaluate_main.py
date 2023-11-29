@@ -7,6 +7,7 @@ Created on Jul, 2023
 
 import os
 import numpy as np
+import time
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -46,7 +47,9 @@ def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, R, heuristic, constra
 
 
     if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and constraint == 'vaccinated': # Pharmacy-only
+        print(time.time())
         block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path, Pharmacy=True)
+        print(time.time())
         run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path, Pharmacy=True)
                 
     

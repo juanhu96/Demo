@@ -280,28 +280,61 @@ def random_fcfs_mnl_eval(economy: Economy,
     time3 = time.time()
     print("time3 - time2:", round(time3-time2, 3))
     # Iterate over individuals in the shuffled ordering
+    ap = 0
     for (tt,ii) in economy.ordering:
+        
+        if ap > 10:
+            return
+
         locs_tt = economy.locs[tt]
         locs_subset_bools = [True if ll not in full_locations else False for ll in locs_tt]
 
         #TODO: if all 5 locations full, choose from all locations for now
-        if sum(locs_subset_bools) == 0:
-            locs_subset_bools = np.repeat(True, len(locs_tt))
+        # if sum(locs_subset_bools) == 0:
+        #     locs_subset_bools = np.repeat(True, len(locs_tt))
+
+        if sum(locs_subset_bools) == 0: # JINGYUAN
+            locs_subset_bools = np.repeat(False, len(locs_tt))
 
         economy.offers[tt][locs_subset_bools] += 1 #TODO: verify if "offered" <=> not full
 
-        util_subset_bools = np.concatenate([[True], locs_subset_bools]) #0th location is the outside option
-        ii_choice = np.argmax(economy.utils[tt][ii][util_subset_bools])
+        util_subset_bools = np.concatenate([[True], locs_subset_bools])
+
+        util_subset_bools = [True, False, True, False, True, True]
+
+        ii_choice = np.argmax(economy.utils[tt][ii][util_subset_bools]) # JINGYUAN: shouldn't this be random process?
+
+        print(economy.utils[tt][ii], economy.utils[tt][ii][util_subset_bools], ii_choice)
+        
+        # JINGYUAN: isn't ii_choice = 0 the outside option? ii_choice > 0 means you are going to one of the site, index by ii_choice-1
+
         if ii_choice > 0:
-            loc_chosen = locs_tt[ii_choice-1] #0th location is the outside option
+            loc_chosen = locs_tt[ii_choice-1]
             jj = np.where(locs_tt == loc_chosen)[0][0]
             economy.assignments[tt][jj] += 1
             economy.occupancies[loc_chosen] += 1
             if economy.occupancies[loc_chosen] == capacity:
                 full_locations.add(loc_chosen)
 
+        ap += 1
+
     time4 = time.time()
     print("time4 - time3:", round(time4-time3, 3))
     return
 
 
+
+
+def assignment_stats_eval(economy: Economy, max_rank: int = 10):
+    
+    total_pop = np.sum([len(economy.epsilon_diff[tt]) for tt in range(economy.n_geogs)])
+    
+    # assignments
+    assignments = economy.assignments
+    print("Assignments:")
+    for ii in range(max_rank):
+        assignments_ii = [assignments[tt][ii] for tt in range(economy.n_geogs) if ii < len(assignments[tt])]
+        print(f"% Rank {ii} assignments: {np.sum(assignments_ii)/total_pop*100}")
+    print(f"% Assigned: {np.sum([np.sum(assignments[tt]) for tt in range(economy.n_geogs)]) / total_pop * 100}")
+
+    return 

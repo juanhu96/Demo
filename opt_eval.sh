@@ -53,3 +53,5 @@ nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxDistLogLin Dollar 10
 # nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MNL Dollar 10000 5 4 False 400 > ./output_log/MNL_400.txt &
 
 nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 10000 5 4 False None > ./output_log/BLP_eval.txt
+
+nohup python3 /mnt/phd/jihu/VaxDemandDistance/main.py MaxVaxHPIDistBLP Dollar 10000 5 4 False None > ./output_log/debug.txt
