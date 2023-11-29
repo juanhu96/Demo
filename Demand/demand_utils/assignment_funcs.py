@@ -70,11 +70,13 @@ def random_fcfs_mnl(economy: Economy,
     Assign individuals to locations in random order, first-come-first-serve.
     Individuals choose locations according to a multinomial logit model.
     """
-    
+    max_rank = len(economy.locs[0])
     time1 = time.time()
     assert len(distcoefs) == economy.n_geogs == len(abd)
+    print("MEAN ABD:", np.mean(abd))
     # compute all-but-epsilon for each location for each geography
     economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)]
+    print("MEAN ABEPSILON:", np.mean([np.mean(economy.abepsilon[tt]) for tt in range(economy.n_geogs)]))
     for tt in range(economy.n_geogs):
         for ii in range(len(economy.utils[tt])):
             economy.utils[tt][ii] = economy.gumbel_draws[tt][ii] + np.concatenate([[0], economy.abepsilon[tt]])
@@ -93,13 +95,15 @@ def random_fcfs_mnl(economy: Economy,
     n_notassigned = 0
     for (tt,ii) in economy.ordering:
         locs_tt = economy.locs[tt]
+
         locs_subset_bools = [True if ll not in full_locations else False for ll in locs_tt]
 
-        #TODO: if all 5 locations full, choose from all locations for now
+        #if all 5 locations full, choose from all locations for now
         if sum(locs_subset_bools) == 0:
             locs_subset_bools = np.repeat(True, len(locs_tt))
 
-        economy.offers[tt][locs_subset_bools] += 1
+        # every available location is "offered" (used to compute agent distances)
+        economy.offers[tt][locs_subset_bools] += 1/np.sum(locs_subset_bools)
 
         util_subset_bools = np.concatenate([[True], locs_subset_bools]) #0th location is the outside option
         ii_choice = np.argmax(economy.utils[tt][ii][util_subset_bools])

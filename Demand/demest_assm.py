@@ -39,13 +39,13 @@ outdir = "/export/storage_covidvaccine/Result/Demand"
 #=================================================================
 testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
 
-testing = False #TODO: testing doesn't work rn 
+testing = False 
 
-capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing
+capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing TODO: change to 10000 or sth
 max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 200 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 3 #number of HPI quantiles
 hpi_level = sys.argv[4] if len(sys.argv) > 4 else 'zip' #zip or tract
-mnl = True #TODO: switch to False
+mnl = True #TODO: switch to False for original model
 if mnl:
     max_rank = 5 
     
@@ -91,6 +91,10 @@ if testing:
     blocks_tokeep = np.random.choice(blocks_unique, size=test_ngeog, replace=False)
     capacity = capacity * test_frac  #capacity per location. lower when testing
     cw_pop = cw_pop.loc[cw_pop.blkid.isin(blocks_tokeep), :]
+    print("********** TESTING **********")
+    print(f"Number of geogs: {ngeog}")
+    print(f"Number of geogs to keep: {test_ngeog}")
+    print(f"Capacity: {capacity}")
 else:
     test_frac = 1
     blocks_tokeep = blocks_unique
@@ -153,6 +157,10 @@ sys.stdout.flush()
 
 # read in agent_data
 agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=['blkid', 'market_ids'])
+# subset when testing
+if testing:
+    agent_data_read = agent_data_read.loc[agent_data_read.blkid.isin(blocks_tokeep), :]
+
 
 # keep markets in both
 mkts_in_both = set(df['market_ids'].tolist()).intersection(set(agent_data_read['market_ids'].tolist()))
@@ -163,7 +171,7 @@ df = df.loc[df.market_ids.isin(mkts_in_both), :]
 # subset distances and crosswalk also
 cw_pop = cw_pop.loc[cw_pop.market_ids.isin(mkts_in_both), :]
 
-saved_distdf_subset = True #TODO: change to False if changing max_rank
+saved_distdf_subset = False #TODO: change to False if changing sample
 if saved_distdf_subset:
     distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv")
     if testing:
@@ -220,11 +228,11 @@ economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank, mnl=mnl)
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 sys.stdout.flush()
 
-#=================================================================
-#=================================================================
 
-ivcols = [cc for cc in df.columns if cc.startswith('demand_instruments')]
-ivcols
+if mnl:
+    print("MNL distance distribution by rank:")
+    print([np.mean([dd[ii] for dd in dists]) for ii in range(len(dists[0]))])
+#=================================================================
 #=================================================================
 
 # RUN FIXED POINT
@@ -244,10 +252,24 @@ agent_results, results, agent_loc_data = fp.run_fp(
     micro_computation_chunks=1 if max_rank <= 50 else 10,
     cap_coefs_to0=cap_coefs_to0,
     mnl=mnl,
-    verbose=testing
+    verbose=True #TODO: change to False
 )
 
+
+# TESTING=========================================================
+
+# totpop = np.sum(cw_pop.population.values)
+# df_pops = cw_pop.groupby('market_ids').agg({'population': 'sum'}).reset_index()
+# df = df.merge(df_pops, on='market_ids', how='left')
+# vaxpop = np.sum(df.population.values * df.shares.values)
+# print("Total population:", totpop)
+# print("Vaccinated population:", vaxpop)
+# print("Vaccinated population share:", vaxpop/totpop)
+# # vaccinated population matches 73.64%, which is the assigned population in random FCFS
+#=================================================================
+
 print("Done with fixed point loop at time:", round(time.time()-time_entered, 2), "seconds")
+
 sys.stdout.flush()
 
 # save agent_results
@@ -325,7 +347,7 @@ print("Done!")
 #     from Demand.demand_utils import demest_funcs as de
 #     from Demand.demand_utils import fixed_point as fp
 
-# #=================================================================
+#=================================================================
 # #=================================================================
 # FOR FIX COMPARISON  
 

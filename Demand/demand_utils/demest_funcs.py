@@ -134,6 +134,7 @@ def compute_abd(
     deltas = results.compute_delta(market_id = df['market_ids'])
     deltas_df = pd.DataFrame({'market_ids': df['market_ids'], 'delta': deltas.flatten()})
     if verbose:
+        print(f"Mean delta: {deltas_df['delta'].mean()}")
         print(f"pi labels: {results.pi_labels}")
 
     agent_utils = agent_data.assign(
@@ -154,8 +155,6 @@ def compute_abd(
                 qq = int(vv[-1]) #last character is the quantile number
                 agent_utils.loc[:, 'distcoef'] +=  agent_data[f"hpi_quantile{qq}"] * coef
         else:
-            if verbose:
-                print(f"Adding {vv} to agent-level utility")
             agent_utils.loc[:, 'agent_utility'] += agent_data[vv] * coef 
             #agent_utility will be agent-level utility without distance terms. if all the agent-level terms are distance, we'll just be returning delta
 

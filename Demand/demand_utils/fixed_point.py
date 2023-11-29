@@ -122,6 +122,12 @@ def run_fp(
     dists_mm_sorted, sorted_indices, wdists = wdist_init(cw_pop, economy.dists)
     agent_unique_data = agent_data_full.drop_duplicates(subset=['blkid']).copy()
 
+    if verbose:
+        pd.options.display.max_columns = None
+        pd.options.display.max_rows = None
+        pd.options.display.width = None
+        
+
     while not converged and iter < maxiter:
         # subset agent_data to the offered locations
         offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
@@ -133,12 +139,27 @@ def run_fp(
         agent_loc_data['weights'] = offer_weights/agent_loc_data['population'] #population here is ZIP code population
 
         pi_init = results.pi if iter > 0 else 0.001*np.ones((1, len(str(agent_formulation).split('+')))) #initialize pi to last result, unless first iteration
+
+        if verbose:
+            print(f"\nIteration {iter}:\n")
+            print("df:")
+            print(df.head(50))
+            print("agent_loc_data:")
+            print(agent_loc_data.head(100))
+            print("agent_unique_data:")
+            print(agent_unique_data.head(100))
+            print("pi_init:")
+            print(pi_init)
+            print("Weight distribution by market:")
+            print(agent_loc_data.groupby('market_ids')['weights'].sum().describe())
+            sys.stdout.flush()
+
         results = de.estimate_demand(df, agent_loc_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=verbose)
 
         coefs = results.pi.flatten() if iter==0 else coefs*dampener + results.pi.flatten()*(1-dampener)
         if cap_coefs_to0:
             coefs = np.minimum(coefs, 0)
-        agent_results = de.compute_abd(results, df, agent_unique_data, coefs=coefs)
+        agent_results = de.compute_abd(results, df, agent_unique_data, coefs=coefs, verbose=verbose)
 
         abd = agent_results['abd'].values
         distcoefs = agent_results['distcoef'].values
