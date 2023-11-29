@@ -64,7 +64,8 @@ def random_fcfs(economy: Economy,
 def random_fcfs_mnl(economy: Economy,
                 distcoefs: np.ndarray,
                 abd: np.ndarray,
-                capacity: int
+                capacity: int,
+                evaluation: bool = False
                 ):
     """
     Assign individuals to locations in random order, first-come-first-serve.
@@ -97,7 +98,8 @@ def random_fcfs_mnl(economy: Economy,
 
         #TODO: if all 5 locations full, choose from all locations for now
         if sum(locs_subset_bools) == 0:
-            locs_subset_bools = np.repeat(True, len(locs_tt))
+            if evaluation: locs_subset_bools = np.repeat(False, len(locs_tt)) # for evaluation only
+            else: locs_subset_bools = np.repeat(True, len(locs_tt))
 
         economy.offers[tt][locs_subset_bools] += 1
 
