@@ -28,7 +28,6 @@ rename id locid
 rename km_to_id dist
 
 gen logdist = log(dist)
-drop dist
 
 count
 ds

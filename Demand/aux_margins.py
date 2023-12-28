@@ -58,3 +58,29 @@ print(f"Median 10th nearest dist, Q1: {share(median_abd, median_logdist_rank10, 
 # interquartile range of vax rates
 print(df.shares.quantile(0.75) - df.shares.quantile(0.25))
 # #=================================================================
+
+# DISTANCE BINS
+
+setting_tag = "10000_300_3q_distbins_at1_5"
+
+agent_results_full = pd.read_csv(f"{outdir}/agent_results_{setting_tag}.csv")
+agent_results = agent_results_full[agent_results_full.hpi_quantile == 1]
+agent_withpop = agent_results.merge(cw_pop[['blkid', 'population']], on='blkid', how='left')
+blockpops_int = np.round(agent_withpop.population.values).astype(int)
+abd_expandpop = np.repeat(agent_withpop.abd.values, blockpops_int)
+median_abd = np.median(abd_expandpop)
+print(f"Median abd: {median_abd}")
+results = pyblp.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
+coefs = results.pi.flatten()
+print(results.pi_labels)
+
+
+def share_bin(abd, coef):
+    u = np.exp(coef + abd)
+    return u / (1 + u)
+
+
+
+print(f"Distance 0-1km: {share_bin(median_abd, 0):.3f}")
+print(f"Distance 1-5km: {share_bin(median_abd, coefs[0]):.3f}")
+print(f"Distance 5+ km: {share_bin(median_abd, coefs[1]):.3f}")

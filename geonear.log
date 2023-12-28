@@ -1,0 +1,49 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /mnt/staff/zhli/VaxDemandDistance/geonear.log
+  log type:  text
+ opened on:  21 Dec 2023, 13:01:09
+
+. 
+. *Pass in parameters.
+. local baselocs "`1'"
+
+. local nborlocs "`2'"
+
+. local outpath "`3'"
+
+. local within "`4'"
+
+. local limit "`5'"
+
+. 
+. if "`within'" == "" local within 200 //max distance in km to search for neigh
+> bors
+
+. if "`limit'" == "" local limit 300 //max number of neighbors to return
+
+. 
+. di "baselocs: `baselocs'"
+baselocs: /export/storage_covidvaccine/Data/Intermediate/blk_coords.dta
+
+. di "nborlocs: `nborlocs'"
+nborlocs: /export/storage_covidvaccine/Data/Intermediate/ca_pharmacy_locations.
+> dta
+
+. di "outpath: `outpath'"
+outpath: /export/storage_covidvaccine/Data/Intermediate/ca_blk_pharm_dist.csv
+
+. di "within: `within'"
+within: 2000
+
+. di "limit: `limit'"
+limit: 300
+
+. 
+. use "`baselocs'", clear
+
+. 
+. ds
+latitude   longitude  blkid
+
+. 

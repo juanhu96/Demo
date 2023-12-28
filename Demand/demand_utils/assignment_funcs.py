@@ -40,8 +40,8 @@ def random_fcfs(economy: Economy,
     economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
     full_locations = set()
     # reset offers and assignments
-    economy.offers = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
-    economy.assignments = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
+    economy.offers = [np.zeros(len(economy.locs[tt]), dtype=int) for tt in range(economy.n_geogs)]
+    economy.assignments = [np.zeros(len(economy.locs[tt]), dtype=int) for tt in range(economy.n_geogs)]
     time3 = time.time()
     print("time3 - time2:", round(time3-time2, 3))
     # Iterate over individuals in the shuffled ordering
@@ -127,44 +127,6 @@ def random_fcfs_mnl(economy: Economy,
 
 
 
-def seq_lotteries(economy: Economy,
-                  distcoefs: np.ndarray,
-                  abd: np.ndarray,
-                  capacity: int
-                  ): #TODO: test this
-    """
-    In each round rr, assign individuals to their ranked rr-th location, breaking ties randomly if capacity is reached.
-    """
-    time1 = time.time()
-    # compute all-but-epsilon for each location for each geography
-    economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)]
-    time2 = time.time()
-    print("Computed abepsilon in:", round(time2- time1, 2), "seconds.\nAssigning individuals...")
-
-    # reset occupancies
-    economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
-    full_locations = set()
-
-    indivs_rem = economy.ordering.copy()
-    rank = 0
-    while indivs_rem:
-        np.random.shuffle(indivs_rem)
-        for (tt,ii) in indivs_rem:
-            ll = economy.locs[tt][rank]
-            if ll not in full_locations:  # -> the individual is offered here
-                economy.offers[tt][rank] += 1
-                indivs_rem.remove((tt,ii))
-                if economy.abepsilon[tt][rank] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
-                    economy.assignments[tt][rank] += 1
-                    economy.occupancies[ll] += 1
-                    if economy.occupancies[ll] == capacity:
-                        full_locations.add(ll)
-        rank += 1
-
-    print("Assigned individuals in:", round(time.time() - time2, 2), "seconds")
-    return
-
-
 
 def pref_stats(economy: Economy):
     """
@@ -187,29 +149,44 @@ def assignment_stats(economy: Economy, max_rank: int = 10):
     
     # offers
     offers = economy.offers
+    frac_offered_any = 0
     print("Offers:")
     for ii in range(max_rank):
         offers_ii = [offers[tt][ii] for tt in range(economy.n_geogs) if ii < len(offers[tt])]
         sum_offers_ii = np.sum(offers_ii)
-        print(f"% Rank {ii} offers: {sum_offers_ii/total_pop*100}")
+        frac_offered_ii = sum_offers_ii/total_pop
+        print(f"% Rank {ii} offers: {frac_offered_ii * 100:.5f}")
+        frac_offered_any += frac_offered_ii
 
-    frac_offered_any = np.sum([np.sum(offers[tt]) for tt in range(economy.n_geogs)]) / total_pop
-    print(f"% Offered: {frac_offered_any * 100}")
-    if frac_offered_any < 1:
-        print("*********\nWarning: not all individuals are offered") #shouldn't happen since we offer the last location
+    print(f"% Offered any: {frac_offered_any * 100}")
     max_rank_offered = np.max([np.max(np.flatnonzero(offers[tt])) for tt in range(economy.n_geogs)])
     print(f"Max rank offered: {max_rank_offered}")
-    # number of individuals offered max_rank_offered
     print(f"Number of individuals offered max_rank_offered: {np.sum([offers[tt][max_rank_offered] for tt in range(economy.n_geogs) if max_rank_offered < len(offers[tt])])}")
 
+    # offer distances
+    offer_dists = np.concatenate([np.repeat(economy.dists[tt], offers[tt]) for tt in range(economy.n_geogs)])
+    print(f"Mean offer distance: {np.mean(offer_dists):.5f}")
+    # quantiles
+    print("Quantiles of offered distances:")
+    for qq in np.arange(0,1.1,0.1):
+        print(f"{qq} quantile: {np.quantile(offer_dists, qq):.5f}")
 
     # assignments
     assignments = economy.assignments
     print("Assignments:")
     for ii in range(max_rank):
         assignments_ii = [assignments[tt][ii] for tt in range(economy.n_geogs) if ii < len(assignments[tt])]
-        print(f"% Rank {ii} assignments: {np.sum(assignments_ii)/total_pop*100}")
-    print(f"% Assigned: {np.sum([np.sum(assignments[tt]) for tt in range(economy.n_geogs)]) / total_pop * 100}")
+        print(f"% Rank {ii} assignments: {np.sum(assignments_ii)/total_pop*100:.5f}")
+    print(f"% Assigned: {np.sum([np.sum(assignments[tt]) for tt in range(economy.n_geogs)]) / total_pop * 100:.5f}")
+
+    # assignment distances
+    assignment_dists = np.concatenate([np.repeat(economy.dists[tt], assignments[tt]) for tt in range(economy.n_geogs)])
+    print(f"Mean assignment distance: {np.mean(assignment_dists):.5f}")
+    # quantiles
+    print("Quantiles of assignment distances:")
+    for qq in np.arange(0,1.1,0.1):
+        print(f"{qq} quantile: {np.quantile(assignment_dists, qq):.5f}")
+
 
     return frac_offered_any
 

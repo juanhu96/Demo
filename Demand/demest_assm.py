@@ -7,11 +7,65 @@
 
 # Notation: I use "geog" to denote a block/tract. We're using blocks now.
 
+import sys
+import os
 import pandas as pd
 import numpy as np
 import pyblp
-import sys
 import time
+
+#=================================================================
+# SETTINGS
+#=================================================================
+
+testing = False 
+
+capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location.
+max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 300 #maximum rank to offer
+nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 4 #number of HPI quantiles
+hpi_level = 'zip' #zip or tract
+mnl = any([arg == 'mnl' for arg in sys.argv]) # False for original model
+distbins = any(['distbin' in arg for arg in sys.argv]) # False for original model
+distbin_cuts = [1,5]
+n_distbins = len(distbin_cuts) + 1
+if mnl:
+    max_rank = 5
+    
+
+# in rundemest_assm.sh we have, e.g.:
+# nohup python3 /users/facsupport/zhli/VaxDemandDistance/Demand/demest_assm.py 10000 10 > demest_assm_10000_10.out &
+
+only_constant = any(['const' in arg for arg in sys.argv]) #if True, only estimate constant term in demand. default to False
+no_dist_heterogeneity = any(['nodisthet' in arg for arg in sys.argv]) #if True, no distance heterogeneity in demand. default to False
+cap_coefs_to0 = any(['capcoef' in arg for arg in sys.argv]) #if True, set coefficients on distance to 0 when capacity is 0. default to
+
+
+setting_tag = f"{capacity}_{max_rank}_{nsplits}q"
+setting_tag += "_const" if only_constant else ""
+setting_tag += "_nodisthet" if no_dist_heterogeneity else ""
+setting_tag += "_capcoefs0" if cap_coefs_to0 else ""
+setting_tag += f"_{hpi_level}hpi" if hpi_level != 'zip' else ""
+setting_tag += f"_distbins_at{str(distbin_cuts).replace(', ', '_').replace('[', '').replace(']', '')}" if distbins else ""
+setting_tag += "_mnl" if mnl else ""
+
+
+datadir = "/export/storage_covidvaccine/Data"
+outdir = "/export/storage_covidvaccine/Result/Demand"
+
+datestr = time.strftime("%Y%m%d-%H%M")
+if len(sys.argv) > 1:
+    if not os.path.exists(f"{outdir}/logs/{setting_tag}"):
+        os.makedirs(f"{outdir}/logs/{setting_tag}")
+
+    # Redirect stdout and stderr to a log file only when additional command line arguments are present
+    datestr = time.strftime("%Y%m%d-%H%M%S")
+    log_file = open(f"{outdir}/logs/{setting_tag}/{datestr}.log", "w")
+    sys.stdout = log_file
+    sys.stderr = log_file
+
+
+print("**********************\nSETTING:", setting_tag)
+
 
 print("Entering demest_assm.py")
 time_entered = time.time()
@@ -28,44 +82,11 @@ except:
     from Demand.demand_utils import demest_funcs as de
     from Demand.demand_utils import fixed_point as fp
 
-np.random.seed(1234)
 
-datadir = "/export/storage_covidvaccine/Data"
-outdir = "/export/storage_covidvaccine/Result/Demand"
-
-
-#=================================================================
-# SETTINGS
-#=================================================================
-testing = sys.argv == [''] #test if running in terminal, full run if running in shell script
-
-testing = False 
-
-capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location. lower when testing TODO: change to 10000 or sth
-max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 200 #maximum rank to offer
-nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 3 #number of HPI quantiles
-hpi_level = sys.argv[4] if len(sys.argv) > 4 else 'zip' #zip or tract
-mnl = True #TODO: switch to False for original model
-if mnl:
-    max_rank = 5 
-    
+randomseed = 1234
+np.random.seed(randomseed)
 
 
-# in rundemest_assm.sh we have, e.g.:
-# nohup python3 /users/facsupport/zhli/VaxDemandDistance/Demand/demest_assm.py 10000 10 > demest_assm_10000_10.out &
-
-only_constant = False #if True, only estimate constant term in demand. default to False
-no_dist_heterogeneity = False #if True, no distance heterogeneity in demand. default to False
-cap_coefs_to0 = False # if we get positive distance coefficients, set them to 0 TODO:
-
-setting_tag = f"{capacity}_{max_rank}_{nsplits}q"
-setting_tag += "_const" if only_constant else ""
-setting_tag += "_nodisthet" if no_dist_heterogeneity else ""
-setting_tag += "_capcoefs0" if cap_coefs_to0 else ""
-setting_tag += f"_{hpi_level}hpi" if hpi_level != 'zip' else ""
-setting_tag += "_mnl" if mnl else ""
-
-print(setting_tag)
 coefsavepath = f"{outdir}/coefs/{setting_tag}_coefs" if not testing else None
 
 
@@ -75,8 +96,17 @@ coefsavepath = f"{outdir}/coefs/{setting_tag}_coefs" if not testing else None
 
 print(f"Testing: {testing}")
 print(f"Capacity: {capacity}")
+print(f"MNL: {mnl}")
+print(f"np.random.seed: {randomseed}")
 print(f"Max rank: {max_rank}")
 print(f"Number of HPI quantiles: {nsplits}")
+print(f"HPI level: {hpi_level}")
+print(f"Distance bins: {distbins}")
+print(f"Distance bin cuts: {distbin_cuts}")
+print(f"Number of distance bins: {n_distbins}")
+print(f"Only constant: {only_constant}")
+print(f"No distance heterogeneity: {no_dist_heterogeneity}")
+print(f"Cap coefs to 0: {cap_coefs_to0}")
 print(f"Setting tag: {setting_tag}")
 print(f"Coef save path: {coefsavepath}")
 sys.stdout.flush()
@@ -132,6 +162,15 @@ if only_constant:
 
 if no_dist_heterogeneity:
     agent_formulation_str = '0 + logdist'
+elif distbins:
+    agent_formulation_str = '0 +'
+    for qq in range(1, nsplits+1):
+        for dd in range(1, n_distbins):
+            agent_formulation_str += f' distbin{dd}Xhpi_quantile{qq} +'
+    # remove the last +
+    agent_formulation_str = agent_formulation_str[:-1]
+        
+
 else:
     agent_formulation_str = '0 +'
     for qq in range(1, nsplits):
@@ -171,24 +210,13 @@ df = df.loc[df.market_ids.isin(mkts_in_both), :]
 # subset distances and crosswalk also
 cw_pop = cw_pop.loc[cw_pop.market_ids.isin(mkts_in_both), :]
 
-saved_distdf_subset = False #TODO: change to False if changing sample
-if saved_distdf_subset:
-    distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv")
-    if testing:
-        distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
-else:
-    # from block_dist.py. this is in long format. sorted by blkid, then logdist
-    distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
-    distdf = distdf.groupby('blkid').head(max_rank).reset_index(drop=True)
-    distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
-    # keep blkids in data
-    distdf = distdf.loc[distdf.blkid.isin(agent_data_read.blkid.unique()), :]
-    if not testing:
-        distdf.to_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv", index=False)
-        print(f"Saved distdf to {datadir}/Intermediate/ca_blk_pharm_dist_blockstokeep.csv")
-    else:
-        print("Not saving distdf because testing")
-        distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
+saved_distdf_subset = False 
+# from block_dist.py. this is in long format. sorted by blkid, then logdist
+distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
+distdf = distdf.groupby('blkid').head(max_rank).reset_index(drop=True)
+distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
+# keep blkids in data
+distdf = distdf.loc[distdf.blkid.isin(agent_data_read.blkid.unique()), :]
 
 
 # add HPI quantile to agent data
@@ -205,7 +233,12 @@ elif hpi_level == 'tract':
 
 # merge distances
 agent_data_full = distdf.merge(agent_data_read[['blkid', 'market_ids', 'hpi_quantile']], on='blkid', how='left')
-agent_data_full = de.hpi_dist_terms(agent_data_full, nsplits=nsplits, add_bins=False, add_dummies=True, add_dist=True)
+
+if distbins:
+    agent_data_full = de.hpi_dist_terms(agent_data_full, dist_varname = 'dist', nsplits=nsplits, add_bins=False, add_dummies=True, add_dist=False, add_distbins = True, distbin_cuts=distbin_cuts)
+else:
+    agent_data_full = de.hpi_dist_terms(agent_data_full, nsplits=nsplits, add_bins=False, add_dummies=True, add_dist=True)
+
 agent_data_full['nodes'] = 0 #for pyblp
 # merge in market population
 mktpop = cw_pop.groupby('market_ids').agg({'population': 'sum'}).reset_index()
@@ -233,6 +266,13 @@ if mnl:
     print("MNL distance distribution by rank:")
     print([np.mean([dd[ii] for dd in dists]) for ii in range(len(dists[0]))])
 #=================================================================
+# TEST
+# import copy
+# dists_mm_sorted, sorted_indices, wdists, mm_where= fp.wdist_init(cw_pop, economy.dists)
+# a0 = copy.deepcopy(economy.assignments)
+# a1 = copy.deepcopy(economy.assignments)
+# converged = fp.wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, mm_where, tol=0.01)
+    
 #=================================================================
 
 # RUN FIXED POINT
@@ -252,7 +292,9 @@ agent_results, results, agent_loc_data = fp.run_fp(
     micro_computation_chunks=1 if max_rank <= 50 else 10,
     cap_coefs_to0=cap_coefs_to0,
     mnl=mnl,
-    verbose=True #TODO: change to False
+    verbose=True,
+    setting_tag=setting_tag,
+    outdir=outdir
 )
 
 
@@ -294,34 +336,8 @@ if not testing:
 # #=================================================================
 # Write coefficient table
 results = pd.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
-print(results)
-tablevars = []
-for qq in range(1, nsplits+1): #e.g. quantiles 1,2,3
-    tablevars += [f'logdistXhpi_quantile{qq}']
-
-for qq in range(1, nsplits): #e.g. quantiles 1,2,3
-    tablevars += [f'hpi_quantile{qq}']
-
-tablevars = tablevars + controls + ['1']
-print("Table variables:", tablevars)
-
-coefrows, serows, varlabels = de.start_table(tablevars)
-coefrows, serows = de.fill_table(results, coefrows, serows, tablevars)
-
-coefrows = [r + "\\\\ \n" for r in coefrows]
-serows = [r + "\\\\ \n\\addlinespace\n" for r in serows]
-
-latex = "\\begin{tabular}{lcccc}\n \\toprule\n\\midrule\n"
-for (ii,vv) in enumerate(varlabels):
-    latex += coefrows[ii]
-    latex += serows[ii]
-
-latex += "\\bottomrule\n\\end{tabular}\n\n\nNote: $^{\\dag}$ indicates a variable at the block level."
 table_path = f"{outdir}/coeftables/coeftable_{setting_tag}.tex" 
-
-with open(table_path, "w") as f:
-    print(f"Saved table at: {table_path}")
-    f.write(latex)
+de.write_table(results, table_path)
 
 print("Done!")
 
@@ -329,64 +345,25 @@ print("Done!")
 # #=================================================================
 # #=================================================================
 # #=====REFRESH MODULES=====
-# import importlib
-# import copy
+import importlib
+import copy
 
-# importlib.reload(vaxclass)
-# importlib.reload(af)
-# importlib.reload(de)
-# importlib.reload(fp)
-# try:
-#     from demand_utils import vax_entities as vaxclass
-#     from demand_utils import assignment_funcs as af
-#     from demand_utils import demest_funcs as de
-#     from demand_utils import fixed_point as fp
-# except:
-#     from Demand.demand_utils import vax_entities as vaxclass
-#     from Demand.demand_utils import assignment_funcs as af
-#     from Demand.demand_utils import demest_funcs as de
-#     from Demand.demand_utils import fixed_point as fp
-
-#=================================================================
-# #=================================================================
-# FOR FIX COMPARISON  
+importlib.reload(vaxclass)
+importlib.reload(af)
+importlib.reload(de)
+importlib.reload(fp)
+try:
+    from demand_utils import vax_entities as vaxclass
+    from demand_utils import assignment_funcs as af
+    from demand_utils import demest_funcs as de
+    from demand_utils import fixed_point as fp
+except:
+    from Demand.demand_utils import vax_entities as vaxclass
+    from Demand.demand_utils import assignment_funcs as af
+    from Demand.demand_utils import demest_funcs as de
+    from Demand.demand_utils import fixed_point as fp
 
 
-# results = pd.read_pickle(f"{outdir}/results_8000_200_3q.pkl")
-
-# for nsplits in [3, 4]:
-#     tablevars = []
-#     for qq in range(1, nsplits+1): #e.g. quantiles 1,2,3
-#         tablevars += [f'logdistXhpi_quantile{qq}']
-
-#     for qq in range(1, nsplits): #e.g. quantiles 1,2,3
-#         tablevars += [f'hpi_quantile{qq}']
-
-#     tablevars = tablevars + controls + ['1']
-#     print("Table variables:", tablevars)
-
-#     coefrows, serows, varlabels = de.start_table(tablevars)
-#     for capacity in [8000,10000,12000]:
-#         setting_tag = f"{capacity}_200_{nsplits}q"
-#         results = pd.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
-#         print(setting_tag)
-#         print(results)
-#         coefrows, serows = de.fill_table(results, coefrows, serows, tablevars)
-
-#     coefrows = [r + "\\\\ \n" for r in coefrows]
-#     serows = [r + "\\\\ \n\\addlinespace\n" for r in serows]
-
-
-
-#     latex = "\\begin{tabular}{lccc}\n \\toprule\n\\midrule\n \\ Variable & \\multicolumn{3}{c}{Capacity} \\\\ \n & 8,000 & 10,000 & 12,000 \\\\ \n"
-#     for (ii,vv) in enumerate(varlabels):
-#         latex += coefrows[ii]
-#         latex += serows[ii]
-#     latex += "\\bottomrule\n\\end{tabular}\n\n"
-
-#     table_path = f"{outdir}/coeftables/coeftable_{nsplits}q.tex"
-
-#     with open(table_path, "w") as f:
-#         print(f"Saved table at: {table_path}")
-#         f.write(latex)
-
+if len(sys.argv) > 1:
+    # Close log file only when additional command line arguments are present
+    log_file.close()

@@ -14,7 +14,9 @@ def hpi_dist_terms(
         nsplits:int = 4, #number of HPI quantiles
         add_bins:bool = False, #add hpi_quantile
         add_dummies:bool = False, #add hpi_quantile{qq}
-        add_dist:bool = False #add logdistXhpi_quantile{qq}
+        add_dist:bool = False, #add logdistXhpi_quantile{qq}
+        add_distbins:bool = False, #add distbin{dd}Xhpi_quantile{qq}
+        distbin_cuts:np.ndarray = [1,5] #distance quantile cuts
         ) -> pd.DataFrame:
 
     # bin hpi into quantiles
@@ -31,6 +33,21 @@ def hpi_dist_terms(
     if add_dist:
         for qq in range(1, nsplits+1):
             df[f'{dist_varname}Xhpi_quantile{qq}'] = df[dist_varname] * df[f'hpi_quantile{qq}']
+
+    # add the distance quantile interaction term
+    if add_distbins:
+        distbin_cuts_inf = np.concatenate(([-np.inf], distbin_cuts, [np.inf]))
+        print("distbin_cuts_inf:", distbin_cuts_inf)
+        df = df.assign(distbin = pd.cut(df[dist_varname], distbin_cuts_inf, labels=False, include_lowest=True))
+        print("Distance quantiles:")
+        print(df.distbin.value_counts())
+        for qq in range(1, nsplits+1):
+            # distance quantile interaction term starts at 1 (so 0 is the reference category)
+            for dd in range(1, len(distbin_cuts_inf)-1):
+                df[f'distbin{dd}Xhpi_quantile{qq}'] = (df['distbin'] == dd).astype(int) * df[f'hpi_quantile{qq}']
+        print("Distance bin interactions:")
+        print(df.filter(regex='distbin').sum())
+
 
     return df
 
@@ -78,6 +95,7 @@ def estimate_demand(
     pyblp.options.flush_output = True
     
     agent_vars = str(agent_formulation).split(' + ')
+    print(f"agent_vars: {agent_vars}")
 
     df = add_ivcols(df, agent_data, agent_vars=agent_vars, verbose=verbose)
     
@@ -93,12 +111,20 @@ def estimate_demand(
         optimization_config = pyblp.Optimization('trust-constr', {'gtol':gtol})
 
     if pi_init is None:
-        pi_init = 0.01*np.ones((1,len(agent_vars)))
+        pi_init = -0.001*np.ones((1,len(agent_vars)))
+
+    pi_ub = np.inf*np.ones(pi_init.shape)    
+    pi_lb = -np.inf*np.ones(pi_init.shape)
+
+    print(f"pi_init: {pi_init}")
+    print(f"pi_lb: {pi_lb}")
+    print(f"pi_ub: {pi_ub}")
 
     if poolnum==1:
         print("Solving with one core...")
         results = problem.solve(
             pi=pi_init,
+            pi_bounds=(pi_lb, pi_ub),
             sigma = 0, 
             iteration = iteration_config, 
             optimization = optimization_config)
@@ -106,6 +132,7 @@ def estimate_demand(
         with pyblp.parallel(poolnum): 
             results = problem.solve(
                 pi=pi_init,
+                pi_bounds=(pi_lb, pi_ub),
                 sigma = 0, 
                 iteration = iteration_config, 
                 optimization = optimization_config)
@@ -166,6 +193,32 @@ def compute_abd(
 
 from typing import List, Tuple
 
+def write_table(results:pyblp.ProblemResults, table_path:str):
+    tablevars = results.pi_labels + results.beta_labels
+    tablevars = [v for v in tablevars if v != 'prices']
+    print("Table variables:", tablevars)
+
+    coefrows, serows, varlabels = start_table(tablevars)
+    coefrows, serows = fill_table(results, coefrows, serows, tablevars)
+
+    coefrows = [r + "\\\\ \n" for r in coefrows]
+    serows = [r + "\\\\ \n\\addlinespace\n" for r in serows]
+
+    latex = "\\begin{tabular}{lcccc}\n \\toprule\n\\midrule\n"
+    for (ii,vv) in enumerate(varlabels):
+        latex += coefrows[ii]
+        latex += serows[ii]
+
+    latex += "\\bottomrule\n\\end{tabular}"
+    
+    with open(table_path, "w") as f:
+        f.write(latex)
+
+
+    print(f"Saved table at: {table_path}")
+
+
+
 def start_table(tablevars: List[str]) -> Tuple[List[str], List[str], List[str]]:
     """
     Start table column with variable names
@@ -182,6 +235,14 @@ def start_table(tablevars: List[str]) -> Tuple[List[str], List[str], List[str]]:
         'logdistXhpi_quantile2': 'Log(Distance) * HPI Quantile 2',
         'logdistXhpi_quantile3': 'Log(Distance) * HPI Quantile 3',
         'logdistXhpi_quantile4': 'Log(Distance) * HPI Quantile 4',
+        'distbin1Xhpi_quantile1': 'Distance 1-5 * HPI Quantile 1',
+        'distbin1Xhpi_quantile2': 'Distance 1-5 * HPI Quantile 2',
+        'distbin1Xhpi_quantile3': 'Distance 1-5 * HPI Quantile 3',
+        'distbin1Xhpi_quantile4': 'Distance 1-5 * HPI Quantile 4',
+        'distbin2Xhpi_quantile1': 'Distance 5+ * HPI Quantile 1',
+        'distbin2Xhpi_quantile2': 'Distance 5+ * HPI Quantile 2',
+        'distbin2Xhpi_quantile3': 'Distance 5+ * HPI Quantile 3',
+        'distbin2Xhpi_quantile4': 'Distance 5+ * HPI Quantile 4',
         'hpi_quantile1': 'HPI Quantile 1',
         'hpi_quantile2': 'HPI Quantile 2',
         'hpi_quantile3': 'HPI Quantile 3',
@@ -207,11 +268,7 @@ def start_table(tablevars: List[str]) -> Tuple[List[str], List[str], List[str]]:
     for vv in tablevars:
         vv_fmt = format_dict[vv]
         varlabels.append(vv_fmt)
-        if 'dist' in vv:
-            # coefrows.append(f"{vv_fmt}" + "$^{\\dag}$ ")
-            coefrows.append(f"{vv_fmt}")
-        else:
-            coefrows.append(f"{vv_fmt} ")
+        coefrows.append(f"{vv_fmt} ")
         serows.append(" ")
 
     return coefrows, serows, varlabels

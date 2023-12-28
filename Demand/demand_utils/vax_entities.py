@@ -31,7 +31,7 @@ class Economy:
         self.abepsilon = [np.zeros(max_rank) for tt in range(n_geogs)] 
         # all-but-epsilon,  n_geogs x n_locs. abepsilon[tt][ll] = abd[tt] + distcoef * dists[tt][ll]. 
 
-        self.offers = [np.concatenate([[geog_pops[tt]], np.zeros(len(locs[tt])-1)]) for tt in range(n_geogs)]
+        self.offers = [np.concatenate([[geog_pops[tt]], np.zeros(len(locs[tt])-1, dtype=int)]) for tt in range(n_geogs)]
         # list of lists of location rankings offered, length n_geogs. offers[tt][ll] = number of individuals in tt offered location ranked ll
         # initialize with all individuals offered their nearest location for the first demand estimation
 
@@ -62,6 +62,11 @@ class Economy:
             epsilon_diff = [epsilon_scale * epsilon_diff[tt] for tt in range(n_geogs)]
 
         self.epsilon_diff = epsilon_diff 
+        
         # For MNL:
-        self.gumbel_draws = [[gumbel_r.rvs(size=max_rank+1) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
-        self.utils = [[np.zeros(max_rank+1) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
+        if mnl:
+            self.gumbel_draws = [[gumbel_r.rvs(size=max_rank+1) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
+            self.utils = [[np.zeros(max_rank+1) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
+        else:
+            self.gumbel_draws = None
+            self.utils = None

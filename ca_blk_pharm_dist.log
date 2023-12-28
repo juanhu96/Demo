@@ -1,0 +1,82 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-STATA-PC        https://www.stata.com
+                                   979-696-4600        stata@stata.com
+
+Stata license: 5-user 16-core network perpetual
+Serial number: 501806317788
+  Licensed to: UCLA Anderson School of Management
+               Los Angeles, CA
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 120,000; see help set_maxvar.
+
+. do /mnt/staff/zhli/VaxDemandDistance/Demand/datawork/geonear_pharmacies.do /e
+> xport/storage_covidvaccine/Data/Intermediate/blk_coords.dta /export/storage_c
+> ovidvaccine/Data/Intermediate/ca_pharmacy_locations.dta /export/storage_covid
+> vaccine/Data/Intermediate/ca_blk_pharm_dist.csv 2000 300 
+
+. // NOTE: rename the input data's latitude and longitude variables to "latitud
+> e" and "longitude" before running this script.
+. cap log close
+
+. log using "geonear.log", replace
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /mnt/staff/zhli/VaxDemandDistance/geonear.log
+  log type:  text
+ opened on:  21 Dec 2023, 13:01:09
+
+. 
+. *Pass in parameters.
+. local baselocs "`1'"
+
+. local nborlocs "`2'"
+
+. local outpath "`3'"
+
+. local within "`4'"
+
+. local limit "`5'"
+
+. 
+. if "`within'" == "" local within 200 //max distance in km to search for neigh
+> bors
+
+. if "`limit'" == "" local limit 300 //max number of neighbors to return
+
+. 
+. di "baselocs: `baselocs'"
+baselocs: /export/storage_covidvaccine/Data/Intermediate/blk_coords.dta
+
+. di "nborlocs: `nborlocs'"
+nborlocs: /export/storage_covidvaccine/Data/Intermediate/ca_pharmacy_locations.
+> dta
+
+. di "outpath: `outpath'"
+outpath: /export/storage_covidvaccine/Data/Intermediate/ca_blk_pharm_dist.csv
+
+. di "within: `within'"
+within: 2000
+
+. di "limit: `limit'"
+limit: 300
+
+. 
+. use "`baselocs'", clear
+
+. 
+. ds
+latitude   longitude  blkid
+
+. 
