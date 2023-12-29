@@ -42,14 +42,12 @@ def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, R, heuristic, constra
     if heuristic: z_file_name += '_heuristic'
     z_total = np.genfromtxt(f'{z_file_name}.csv', delimiter = ",", dtype = float)        
         
-
     compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, heuristic, path) # NOTE: JUST FOR NOW
-
 
     if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and constraint == 'vaccinated': # Pharmacy-only
         block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path, Pharmacy=True)
         run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path, Pharmacy=True)
-                
+
 
     block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path)
     run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path)

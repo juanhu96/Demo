@@ -50,7 +50,7 @@ def optimize_chain(Model, Chain, M, K, nsplits, capcoef, expdirpath, R, constrai
     print(f'Start optimization with Model={Model}, M={M}, K={K}, Chain={Chain}, nsplits={nsplits}, capcoef={capcoef}, R={R}, heuristic={heuristic}. \n Results stored at {expdirpath}\n')
     
     Population, Quartile, abd, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, _, _, C, num_tracts, num_current_stores, num_total_stores = import_basics(Chain, M, nsplits)
-    
+
     BLP_models = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP']
     LogLin_models = ['MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin']
     MNL_models = ['MNL']
@@ -65,9 +65,7 @@ def optimize_chain(Model, Chain, M, K, nsplits, capcoef, expdirpath, R, constrai
         F_DH_total = rescale_estimation(F_DH_total, Model, Chain, M, K, nsplits, capcoef, R, constraint)
     
     if Model in MNL_models:
-
         V_current, V_total = import_MNL_estimation(Chain, K, nsplits, capcoef)
-        
 
     # ================================================================================
 

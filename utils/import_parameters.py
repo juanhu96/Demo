@@ -76,13 +76,34 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     ###########################################################################
     
     ### Travel to the closest M stores only
-    Closest_current = np.ones((num_tracts, num_current_stores))
-    Closest_total = np.ones((num_tracts, num_total_stores))
-    np.put_along_axis(Closest_current, np.argpartition(C_current_mat,M,axis=1)[:,M:],0,axis=1)
-    np.put_along_axis(Closest_total, np.argpartition(C_total_mat,M,axis=1)[:,M:],0,axis=1)
+    # Closest_current = np.ones((num_tracts, num_current_stores))
+    # Closest_total = np.ones((num_tracts, num_total_stores))
+    # np.put_along_axis(Closest_current, np.argpartition(C_current_mat,M,axis=1)[:,M:],0,axis=1)
+    # np.put_along_axis(Closest_total, np.argpartition(C_total_mat,M,axis=1)[:,M:],0,axis=1)
 
-    ### C, store the indicies of the M closest site
-    C = np.argsort(C_total_mat, axis=1)[:, :M]
+    ### C, store the indicies of the M closest site (consideration set for MNL)
+    # C = np.argsort(C_total_mat, axis=1)[:, :M]
+
+    # approximately 2 miles
+    consideration_dist = 3200
+    mask_current = C_current_mat < consideration_dist
+    mask_total = C_total_mat < consideration_dist
+
+    rows_without_lower = np.all(mask_current == False, axis=1)
+    mask_current[rows_without_lower, np.argmin(C_current_mat[rows_without_lower], axis=1)] = True
+
+    rows_without_lower = np.all(mask_total == False, axis=1)
+    mask_total[rows_without_lower, np.argmin(C_total_mat[rows_without_lower], axis=1)] = True
+
+    Closest_current = mask_current.astype(int)
+    Closest_total = mask_total.astype(int)
+
+    Consideration_set = np.sum(Closest_total, axis = 1)
+
+    C = []
+    for row in range(Closest_total.shape[0]):
+        indices = np.where(Closest_total[row] == 1)[0].tolist()
+        C.append(indices)
 
     ###########################################################################
 

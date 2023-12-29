@@ -79,7 +79,7 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data"):
 
 
 
-def construct_F_BLP(Chain_type, capacity, groups, capcoef, heterogeneity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=12, resultdir='/export/storage_covidvaccine/Result/'):
+def construct_F_BLP(Chain_type, capacity, groups, capcoef, heterogeneity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=30, resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
     M here doesn't matter, because we have C_closest in the optimization constraint
