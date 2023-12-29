@@ -185,10 +185,8 @@ def run_fp(
 
         # assignment
         a0 = copy.deepcopy(economy.assignments)
-        if mnl:
-            af.random_fcfs_mnl(economy, distcoefs, abd, capacity)
-        else:
-            af.random_fcfs(economy, distcoefs, abd, capacity)
+
+        af.random_fcfs(economy, distcoefs, abd, capacity, mnl=mnl)
 
         af.assignment_stats(economy, max_rank=len(economy.offers[0]))
         converged = wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol=tol, mm_where=mm_where)

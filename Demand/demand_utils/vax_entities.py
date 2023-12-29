@@ -18,8 +18,8 @@ class Economy:
 
         np.random.seed(seed)
 
-        self.locs = [ll[:max_rank] for ll in locs] # list of location IDs, sorted by distance within each geography
-        self.dists = [dd[:max_rank] for dd in dists] # list of distances, sorted by distance within each geography
+        self.locs = locs # list of location IDs, sorted by distance within each geography
+        self.dists = dists # list of distances, sorted by distance within each geography
         n_geogs = len(geog_pops)
         self.n_geogs = n_geogs
         self.total_pop = np.sum(geog_pops)
@@ -28,7 +28,7 @@ class Economy:
         if shuffle:
             np.random.shuffle(self.ordering)
 
-        self.abepsilon = [np.zeros(max_rank) for tt in range(n_geogs)] 
+        self.abepsilon = [np.zeros(len(locs[tt])) for tt in range(n_geogs)]
         # all-but-epsilon,  n_geogs x n_locs. abepsilon[tt][ll] = abd[tt] + distcoef * dists[tt][ll]. 
 
         self.offers = [np.concatenate([[geog_pops[tt]], np.zeros(len(locs[tt])-1, dtype=int)]) for tt in range(n_geogs)]
@@ -65,8 +65,8 @@ class Economy:
         
         # For MNL:
         if mnl:
-            self.gumbel_draws = [[gumbel_r.rvs(size=max_rank+1) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
-            self.utils = [[np.zeros(max_rank+1) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
+            self.gumbel_draws = [[gumbel_r.rvs(size=max_rank) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
+            self.utils = [[np.zeros(max_rank) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
         else:
             self.gumbel_draws = None
             self.utils = None

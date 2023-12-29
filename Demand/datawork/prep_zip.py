@@ -1,4 +1,5 @@
 # this subsumes prep_demest.do and trace back to raw data.
+# this is to be run after prep_block.py
 
 import numpy as np
 import pandas as pd
@@ -194,9 +195,14 @@ cols_to_keep = ['zip', 'vaxfull', 'hpi', 'shares', 'race_black', 'race_asian',
 df = df[cols_to_keep]
 
 
-agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv")
-agent_data_read = agent_data_read.loc[agent_data_read['zip'].isin(df['zip']), :]
-df = df.loc[df['zip'].isin(agent_data_read['zip']), :]
+block_data = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv")
+block_data = block_data.loc[block_data['zip'].isin(df['zip']), :]
+block_data.to_csv(f"{datadir}/Analysis/Demand/agent_data.csv", index=False)
+cw_pop = block_data[["blkid", "market_ids", "population"]]
+cw_pop.sort_values(by=['blkid'], inplace=True)
+cw_pop.to_csv(f"{datadir}/Analysis/Demand/cw_pop.csv", index=False)
+
+df = df.loc[df['zip'].isin(block_data['zip']), :]
 
 # log of some variables
 logvars = ['medianhhincome', 'medianhomevalue', 'popdensity']

@@ -18,26 +18,22 @@ import time
 # SETTINGS
 #=================================================================
 
-testing = False 
-
 capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location.
 max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 300 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 4 #number of HPI quantiles
 hpi_level = 'zip' #zip or tract
 mnl = any([arg == 'mnl' for arg in sys.argv]) # False for original model
 distbins = any(['distbin' in arg for arg in sys.argv]) # False for original model
+flexible_consideration = any(['flex' in arg for arg in sys.argv]) # False for original model
 distbin_cuts = [1,5]
 n_distbins = len(distbin_cuts) + 1
-if mnl:
-    max_rank = 5
-    
 
 # in rundemest_assm.sh we have, e.g.:
 # nohup python3 /users/facsupport/zhli/VaxDemandDistance/Demand/demest_assm.py 10000 10 > demest_assm_10000_10.out &
 
 only_constant = any(['const' in arg for arg in sys.argv]) #if True, only estimate constant term in demand. default to False
 no_dist_heterogeneity = any(['nodisthet' in arg for arg in sys.argv]) #if True, no distance heterogeneity in demand. default to False
-cap_coefs_to0 = any(['capcoef' in arg for arg in sys.argv]) #if True, set coefficients on distance to 0 when capacity is 0. default to
+cap_coefs_to0 = any(['capcoef' in arg for arg in sys.argv]) #if True, set coefficients on distance to 0 when capacity is 0. default to False
 
 
 setting_tag = f"{capacity}_{max_rank}_{nsplits}q"
@@ -47,6 +43,7 @@ setting_tag += "_capcoefs0" if cap_coefs_to0 else ""
 setting_tag += f"_{hpi_level}hpi" if hpi_level != 'zip' else ""
 setting_tag += f"_distbins_at{str(distbin_cuts).replace(', ', '_').replace('[', '').replace(']', '')}" if distbins else ""
 setting_tag += "_mnl" if mnl else ""
+setting_tag += "_flex" if flexible_consideration else ""
 
 
 datadir = "/export/storage_covidvaccine/Data"
@@ -87,14 +84,13 @@ randomseed = 1234
 np.random.seed(randomseed)
 
 
-coefsavepath = f"{outdir}/coefs/{setting_tag}_coefs" if not testing else None
+coefsavepath = f"{outdir}/coefs/{setting_tag}_coefs"
 
 
 #=================================================================
 # Data for assignment: distances, block-market crosswalk, population
 #=================================================================
 
-print(f"Testing: {testing}")
 print(f"Capacity: {capacity}")
 print(f"MNL: {mnl}")
 print(f"np.random.seed: {randomseed}")
@@ -111,39 +107,13 @@ print(f"Setting tag: {setting_tag}")
 print(f"Coef save path: {coefsavepath}")
 sys.stdout.flush()
 
-cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=["blkid", "market_ids", "population"])
-blocks_unique = np.unique(cw_pop.blkid.values)
-markets_unique = np.unique(cw_pop.market_ids.values)
-if testing:
-    test_frac = 0.05
-    ngeog = len(blocks_unique)
-    test_ngeog = int(round(test_frac*ngeog, 0))
-    blocks_tokeep = np.random.choice(blocks_unique, size=test_ngeog, replace=False)
-    capacity = capacity * test_frac  #capacity per location. lower when testing
-    cw_pop = cw_pop.loc[cw_pop.blkid.isin(blocks_tokeep), :]
-    print("********** TESTING **********")
-    print(f"Number of geogs: {ngeog}")
-    print(f"Number of geogs to keep: {test_ngeog}")
-    print(f"Capacity: {capacity}")
-else:
-    test_frac = 1
-    blocks_tokeep = blocks_unique
-
-
-cw_pop.sort_values(by=['blkid'], inplace=True)
-
-print("Number of geogs:", cw_pop.shape[0]) # 377K
-print("Number of individuals:", cw_pop.population.sum()) # 39M
-sys.stdout.flush()
-
-
+cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/cw_pop.csv")
 
 #=================================================================
 # Data for demand estimation: market-level data, agent-level data
 #=================================================================
 
 ref_lastq = False
-
 
 controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
     'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
@@ -188,36 +158,33 @@ agent_formulation = pyblp.Formulation(agent_formulation_str)
 
 # read in product_data
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
-df = df.loc[df.market_ids.isin(markets_unique), :]
 df = df.loc[:, df_colstokeep]
 df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=True, add_dist=False)
-sys.stdout.flush()
-
 
 # read in agent_data
-agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=['blkid', 'market_ids'])
-# subset when testing
-if testing:
-    agent_data_read = agent_data_read.loc[agent_data_read.blkid.isin(blocks_tokeep), :]
+agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv", usecols=['blkid', 'market_ids'])
 
-
-# keep markets in both
-mkts_in_both = set(df['market_ids'].tolist()).intersection(set(agent_data_read['market_ids'].tolist()))
-print("Number of markets:", len(mkts_in_both))
-agent_data_read = agent_data_read.loc[agent_data_read.market_ids.isin(mkts_in_both), :]
-df = df.loc[df.market_ids.isin(mkts_in_both), :]
-
-# subset distances and crosswalk also
-cw_pop = cw_pop.loc[cw_pop.market_ids.isin(mkts_in_both), :]
-
-saved_distdf_subset = False 
-# from block_dist.py. this is in long format. sorted by blkid, then logdist
+# distdf is from block_dist.py. this is in long format. sorted by blkid, then logdist
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
-distdf = distdf.groupby('blkid').head(max_rank).reset_index(drop=True)
-distdf = distdf.loc[distdf.blkid.isin(blocks_tokeep), :]
+# check if distdf is sorted by blkid
+assert np.all(distdf.blkid.values == np.sort(distdf.blkid.values)), "distdf is not sorted by blkid"
+
+
+# consideration set:
+# thresh = 10km (TODO: eventually we want 1/2/10 miles based on urban/suburban/rural)
+if flexible_consideration:
+    distdf_maxrank = distdf.groupby('blkid').head(max_rank).reset_index(drop=True)
+    distdf_withinthresh = distdf.loc[distdf['dist'] <= 10, :]
+    # take the union of the two
+    distdf = pd.concat([distdf_maxrank, distdf_withinthresh]).drop_duplicates().reset_index(drop=True)
+    # sort by blkid, then logdist
+    distdf.sort_values(by=['blkid', 'logdist'], inplace=True)
+
+else:
+    distdf = distdf.groupby('blkid').head(max_rank).reset_index(drop=True)
+
 # keep blkids in data
 distdf = distdf.loc[distdf.blkid.isin(agent_data_read.blkid.unique()), :]
-
 
 # add HPI quantile to agent data
 if hpi_level == 'zip':
@@ -246,7 +213,6 @@ agent_data_full = agent_data_full.merge(mktpop, on='market_ids', how='left')
 
 print("agent_data_full.shape:", agent_data_full.shape)
 
-
 # Create Economy object
 print("Start creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 # create economy
@@ -259,8 +225,6 @@ geog_pops = [np.round(ll).astype(int) for ll in geog_pops]
 economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank, mnl=mnl)
 
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
-sys.stdout.flush()
-
 
 if mnl:
     print("MNL distance distribution by rank:")
@@ -272,7 +236,6 @@ if mnl:
 # a0 = copy.deepcopy(economy.assignments)
 # a1 = copy.deepcopy(economy.assignments)
 # converged = fp.wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, mm_where, tol=0.01)
-    
 #=================================================================
 
 # RUN FIXED POINT
@@ -315,20 +278,18 @@ print("Done with fixed point loop at time:", round(time.time()-time_entered, 2),
 sys.stdout.flush()
 
 # save agent_results
-
-if not testing:
-    try:
-        agent_results[['blkid', 'hpi_quantile', 'market_ids', 'abd', 'distcoef']].to_csv(f"{outdir}/agent_results_{setting_tag}.csv", index=False)
-        print(f"Saved agent_results to {outdir}/agent_results_{setting_tag}.csv")
-        results.to_pickle(f"{outdir}/results_{setting_tag}.pkl")
-        print(f"Saved results to {outdir}/results_{setting_tag}.pkl")
-        agent_loc_data.to_csv(f"{outdir}/agent_loc_data_{setting_tag}.csv", index=False)
-    except: #if no storage space 
-        agent_results[['blkid', 'market_ids', 'abd', 'distcoef']].to_csv(f"/export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv", index=False)
-        print(f"Saved agent_results to /export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv")
-        results.to_pickle(f"/export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
-        print(f"Saved results to /export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
-        agent_loc_data.to_csv(f"/export/storage_adgandhi/MiscLi/agent_loc_data_{setting_tag}.csv", index=False)
+try:
+    agent_results[['blkid', 'hpi_quantile', 'market_ids', 'abd', 'distcoef']].to_csv(f"{outdir}/agent_results_{setting_tag}.csv", index=False)
+    print(f"Saved agent_results to {outdir}/agent_results_{setting_tag}.csv")
+    results.to_pickle(f"{outdir}/results_{setting_tag}.pkl")
+    print(f"Saved results to {outdir}/results_{setting_tag}.pkl")
+    agent_loc_data.to_csv(f"{outdir}/agent_loc_data_{setting_tag}.csv", index=False)
+except: #if no storage space 
+    agent_results[['blkid', 'market_ids', 'abd', 'distcoef']].to_csv(f"/export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv", index=False)
+    print(f"Saved agent_results to /export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv")
+    results.to_pickle(f"/export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
+    print(f"Saved results to /export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
+    agent_loc_data.to_csv(f"/export/storage_adgandhi/MiscLi/agent_loc_data_{setting_tag}.csv", index=False)
 
 
 
