@@ -23,7 +23,9 @@ import time
 def random_fcfs(economy: Economy,
                 distcoefs: np.ndarray,
                 abd: np.ndarray,
-                capacity: int
+                capacity: int,
+                mnl: bool = False,
+                evaluation: bool = False
                 ):
     """
     Assign individuals to locations in random order, first-come-first-serve.
@@ -34,6 +36,11 @@ def random_fcfs(economy: Economy,
     # compute all-but-epsilon for each location for each geography
     economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)] 
     time2 = time.time()
+    if mnl:
+        for tt in range(economy.n_geogs):
+            for ii in range(len(economy.utils[tt])):
+                economy.utils[tt][ii] = economy.gumbel_draws[tt][ii] + economy.abepsilon[tt]
+
     print("Computed abepsilon in:", round(time2- time1, 3), "seconds.\nAssigning individuals...")
 
     # reset occupancies 
@@ -46,9 +53,19 @@ def random_fcfs(economy: Economy,
     print("time3 - time2:", round(time3-time2, 3))
     # Iterate over individuals in the shuffled ordering
     for (tt,ii) in economy.ordering:
-        for (jj,ll) in enumerate(economy.locs[tt]): #locs[tt] is ordered by distance from geography tt, in ascending order
-            if ll not in full_locations or jj==len(economy.locs[tt])-1:
-                # -> the individual is offered here
+
+        if mnl: # locations in preference order (sorted by utils descending)
+            preforder = np.argsort(economy.utils[tt][ii])[::-1]
+        else: # locations in existing order (sorted by distance)
+            preforder = np.arange(len(economy.locs[tt]))
+
+        for (jj,ll_ind) in enumerate(preforder):
+            ll = economy.locs[tt][ll_ind]
+            if evaluation: 
+                offer_condition = ll not in full_locations
+            else:
+                offer_condition = ll not in full_locations or jj==len(preforder)-1
+            if offer_condition:
                 economy.offers[tt][jj] += 1
                 if economy.abepsilon[tt][jj] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
                     economy.assignments[tt][jj] += 1
@@ -58,73 +75,8 @@ def random_fcfs(economy: Economy,
                 break
     time4 = time.time()
     print("time4 - time3:", round(time4-time3, 3))
-    return
-
-
-def random_fcfs_mnl(economy: Economy,
-                distcoefs: np.ndarray,
-                abd: np.ndarray,
-                capacity: int,
-                evaluation: bool = False
-                ):
-    """
-    Assign individuals to locations in random order, first-come-first-serve.
-    Individuals choose locations according to a multinomial logit model.
-    """
-    max_rank = len(economy.locs[0])
-    time1 = time.time()
-    assert len(distcoefs) == economy.n_geogs == len(abd)
-    print("MEAN ABD:", np.mean(abd))
-    # compute all-but-epsilon for each location for each geography
-    economy.abepsilon = [abd[tt] + (distcoefs[tt] * economy.dists[tt]) for tt in range(economy.n_geogs)]
-    print("MEAN ABEPSILON:", np.mean([np.mean(economy.abepsilon[tt]) for tt in range(economy.n_geogs)]))
-    for tt in range(economy.n_geogs):
-        for ii in range(len(economy.utils[tt])):
-            economy.utils[tt][ii] = economy.gumbel_draws[tt][ii] + np.concatenate([[0], economy.abepsilon[tt]])
-    time2 = time.time()
-    print("Computed utils in:", round(time2- time1, 3), "seconds.\nAssigning individuals...")
-
-    # reset occupancies 
-    economy.occupancies = dict.fromkeys(economy.occupancies.keys(), 0)
-    full_locations = set()
-    # reset offers and assignments
-    economy.offers = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
-    economy.assignments = [np.zeros(len(economy.locs[tt])) for tt in range(economy.n_geogs)]
-    time3 = time.time()
-    print("time3 - time2:", round(time3-time2, 3))
-    # Iterate over individuals in the shuffled ordering
-    n_notassigned = 0
-    for (tt,ii) in economy.ordering:
-        locs_tt = economy.locs[tt]
-
-        locs_subset_bools = [True if ll not in full_locations else False for ll in locs_tt]
-
-        #if all 5 locations full, choose from all locations for now
-        if sum(locs_subset_bools) == 0:
-            if evaluation: locs_subset_bools = np.repeat(False, len(locs_tt)) # for evaluation only
-            else: locs_subset_bools = np.repeat(True, len(locs_tt))
-
-        # every available location is "offered" (used to compute agent distances)
-        economy.offers[tt][locs_subset_bools] += 1/np.sum(locs_subset_bools)
-
-        util_subset_bools = np.concatenate([[True], locs_subset_bools]) #0th location is the outside option
-        ii_choice = np.argmax(economy.utils[tt][ii][util_subset_bools])
-        if ii_choice > 0:
-            loc_chosen = locs_tt[locs_subset_bools][ii_choice-1] #0th location is the outside option
-            jj = np.where(locs_tt == loc_chosen)[0][0]
-            economy.assignments[tt][jj] += 1
-            economy.occupancies[loc_chosen] += 1
-            if economy.occupancies[loc_chosen] == capacity:
-                full_locations.add(loc_chosen)
-        else:
-            n_notassigned += 1
-    print("Number of individuals not assigned:", n_notassigned, " out of ", len(economy.ordering))
-
     print("Number of full locations:", len(full_locations), " out of ", len(economy.occupancies))
-    time4 = time.time()
-    print("time4 - time3:", round(time4-time3, 3))
     return
-
 
 
 
