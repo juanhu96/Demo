@@ -1,0 +1,90 @@
+Start optimization with Model=MaxVaxHPIDistBLP, M=5, K=10000, Chain=Dollar, nsplits=4, capcoef=False, R=None, heuristic=False. 
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K10000_4q/Dollar/
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709016 rows, 40700958 columns and 81883176 nonzeros
+Model fingerprint: 0x825ba734
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [8e-01, 3e+04]
+  Objective range  [8e-01, 3e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.557854e+07
+Presolve removed 0 rows and 40214647 columns (presolve time = 6s) ...
+Presolve removed 40696950 rows and 40621157 columns (presolve time = 10s) ...
+Presolve removed 40697004 rows and 40621369 columns (presolve time = 15s) ...
+Presolve removed 40697004 rows and 40621369 columns (presolve time = 20s) ...
+Presolve removed 40697004 rows and 40621369 columns
+Presolve time: 23.11s
+Presolved: 12012 rows, 79589 columns, 158630 nonzeros
+Found heuristic solution: objective 2.571185e+07
+Variable types: 74575 continuous, 5014 integer (5012 binary)
+Found heuristic solution: objective 2.572185e+07
+Deterministic concurrent LP optimizer: primal and dual simplex
+Showing first log only...
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    8.8760520e+05   0.000000e+00   4.134362e+06     30s
+    7517    1.6037716e+07   0.000000e+00   5.445579e+06     30s
+   75816    2.8766552e+07   0.000000e+00   0.000000e+00     31s
+Concurrent spin time: 0.14s
+
+Solved with primal simplex
+
+Root relaxation: objective 2.876655e+07, 75816 iterations, 1.35 seconds (1.81 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.8767e+07    0  223 2.5722e+07 2.8767e+07  11.8%     -   31s
+H    0     0                    2.858070e+07 2.8767e+07  0.65%     -   32s
+H    0     0                    2.873576e+07 2.8767e+07  0.11%     -   32s
+H    0     0                    2.873775e+07 2.8767e+07  0.10%     -   32s
+H    0     0                    2.875156e+07 2.8767e+07  0.05%     -   33s
+
+Explored 1 nodes (78788 simplex iterations) in 34.82 seconds (57.14 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 7: 2.87516e+07 2.87377e+07 2.87358e+07 ... 2.55785e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 2.875156436246e+07, best bound 2.876655153266e+07, gap 0.0521%
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_model.py:63: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxHPIDistBLP; M = 5, K = 10000, R = None, Heuristic: False.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxHPIDistBLP/M5_K10000_4q/Dollar
+
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.27 seconds.
+Assigning individuals...
+Assigned individuals in: 158.86 seconds
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.26 seconds.
+Assigning individuals...
+Assigned individuals in: 161.5 seconds
