@@ -187,11 +187,15 @@ if prep_logit:
     df['delta'] = df['logshares'] - df['logshares_out']
 
 
+# population density (urban/suburban/rural)
+df['popdensity_group'] = pd.cut(df['popdensity'], bins=[0,1000,3000,np.inf], labels=['rural', 'suburban', 'urban'], right=False)
+
+
 # Subset data
 cols_to_keep = ['zip', 'vaxfull', 'hpi', 'shares', 'race_black', 'race_asian', 
                 'race_hispanic', 'race_other', 'health_employer', 'health_medicare', 'health_medicaid', 'dshare',
                 'health_other', 'collegegrad', 'unemployment', 'poverty', 'medianhhincome', 
-                'medianhomevalue', 'popdensity']
+                'medianhomevalue', 'popdensity', 'popdensity_group']
 df = df[cols_to_keep]
 
 

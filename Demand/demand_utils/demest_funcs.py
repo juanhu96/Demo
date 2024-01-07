@@ -12,20 +12,22 @@ def hpi_dist_terms(
         hpi_varname:str = 'hpi',
         dist_varname:str = 'logdist',
         nsplits:int = 4, #number of HPI quantiles
-        add_bins:bool = False, #add hpi_quantile
-        add_dummies:bool = False, #add hpi_quantile{qq}
+        add_hpi_bins:bool = False, #add hpi_quantile
+        add_hpi_dummies:bool = False, #add hpi_quantile{qq}
         add_dist:bool = False, #add logdistXhpi_quantile{qq}
         add_distbins:bool = False, #add distbin{dd}Xhpi_quantile{qq}
-        distbin_cuts:np.ndarray = [1,5] #distance quantile cuts
+        distbin_cuts:np.ndarray = [1,5], #distance quantile cuts
+        logdist_above:bool = False, #if True, add logdist_abovethreshXhpi_quantile{qq} + abovethreshXhpi_quantile{qq}. Note that abovethreshXhpi_quantile{qq} might not be used in the model.
+        logdist_above_thresh:float = 1.0 #threshold for logdist_above (this is in km not logkm)
         ) -> pd.DataFrame:
 
     # bin hpi into quantiles
-    if add_bins:
+    if add_hpi_bins:
         splits = np.linspace(0,1,nsplits+1)
         df = df.assign(hpi_quantile = pd.cut(df[hpi_varname], splits, labels=False, include_lowest=True) + 1)
 
     # add dummy variables for each quantile
-    if add_dummies:
+    if add_hpi_dummies:
         for qq in range(1, nsplits+1):
             df[f'hpi_quantile{qq}'] = (df['hpi_quantile'] == qq).astype(int)
 
@@ -48,7 +50,15 @@ def hpi_dist_terms(
         print("Distance bin interactions:")
         print(df.filter(regex='distbin').sum())
 
+    if logdist_above:
+        if dist_varname == 'logdist':
+            print(f"dist_varname is logdist, logging threshold {logdist_above_thresh}, so logdist starting from {np.log(logdist_above_thresh)}")
+            logdist_above_thresh = np.log(logdist_above_thresh)
 
+        for qq in range(1, nsplits+1):
+            df[f'abovethreshXhpi_quantile{qq}'] = (df[dist_varname] > logdist_above_thresh).astype(int) * df[f'hpi_quantile{qq}']
+            df[f'logdist_abovethreshXhpi_quantile{qq}'] = df[dist_varname] * df[f'abovethreshXhpi_quantile{qq}']
+            
     return df
 
 
@@ -113,12 +123,13 @@ def estimate_demand(
     if pi_init is None:
         pi_init = -0.001*np.ones((1,len(agent_vars)))
 
-    pi_ub = np.inf*np.ones(pi_init.shape)    
+    pi_ub = np.inf*np.ones(pi_init.shape)
     pi_lb = -np.inf*np.ones(pi_init.shape)
 
     print(f"pi_init: {pi_init}")
     print(f"pi_lb: {pi_lb}")
     print(f"pi_ub: {pi_ub}")
+
 
     if poolnum==1:
         print("Solving with one core...")
@@ -266,7 +277,10 @@ def start_table(tablevars: List[str]) -> Tuple[List[str], List[str], List[str]]:
     }
 
     for vv in tablevars:
-        vv_fmt = format_dict[vv]
+        try:
+            vv_fmt = format_dict[vv]
+        except:
+            vv_fmt = vv.replace('_', ' ').replace('X', ' X ')
         varlabels.append(vv_fmt)
         coefrows.append(f"{vv_fmt} ")
         serows.append(" ")

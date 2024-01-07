@@ -65,8 +65,9 @@ class Economy:
         
         # For MNL:
         if mnl:
-            self.gumbel_draws = [[gumbel_r.rvs(size=max_rank) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
-            self.utils = [[np.zeros(max_rank) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
+            nlocs = [len(locs[tt]) for tt in range(n_geogs)]
+            self.gumbel_draws = [[gumbel_r.rvs(size=nlocs[tt]) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
+            self.utils = [[np.zeros(nlocs[tt]) for ii in range(geog_pops[tt])] for tt in range(n_geogs)]
         else:
             self.gumbel_draws = None
             self.utils = None
