@@ -203,7 +203,8 @@ def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_store
 
     ### Constraints ###
     for i in range(num_tracts):
-        m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in range(num_stores)) == 1)
+        # m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in range(num_stores)) == 1)
+        m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in C[i]) == 1)
         
     for j in range(num_stores):
         m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
@@ -254,31 +255,6 @@ def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_store
 
 
 def optimize_rate_MNL_new(scenario, pf, v, C, K, num_current_stores, num_total_stores, num_tracts, scale_factor, path, R=None, MIPGap = 5e-2):
-    
-    """
-    Parameters
-    ----------
-    scenario : string
-        "current": current stores only
-        "total": current and dollar stores
-    
-    pf : array
-        scaled population * v
-
-    v : array
-        flatten array of v_{ij} = e^{mu_ij}
-
-    C : list
-        list of lists of sites that is within M closest to a region
-        
-    K : scalar
-        capacity of a single site
-        
-    path : string
-        directory for results
-
-    """
-
 
     env = gp.Env(empty=True)
     env.setParam("OutputFlag",0)
@@ -298,19 +274,23 @@ def optimize_rate_MNL_new(scenario, pf, v, C, K, num_current_stores, num_total_s
     y = m.addVars(num_tracts * num_stores, lb = 0, name = 'y')
     x = m.addVars(num_tracts, lb = 0, name = 'x')
 
+    T = m.addVars(num_tracts * num_stores, lb = 0, ub = 1, name = 'T')
+    t = m.addVars(num_stores, lb = 0, ub = 1, name = 't')
     
     ### Objective ###
 
     # NOTE: pf is now p_i * v_ij
-    m.setObjective(quicksum(pf[k] * y[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
+    m.setObjective(quicksum(pf[k] * T[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
     
 
     ### Constraints ###
     for i in range(num_tracts):
-        m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in range(num_stores)) == 1)
-        
+        # m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in range(num_stores)) == 1)
+        m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in C[i]) == 1)
+
     for j in range(num_stores):
-        m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+        m.addConstr(quicksum(pf[i * num_stores + j] * T[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+        m.addConstr(t[j] <= z[j])
 
     m.addConstr(z.sum() == num_current_stores, name = 'N')
     if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
@@ -321,6 +301,10 @@ def optimize_rate_MNL_new(scenario, pf, v, C, K, num_current_stores, num_total_s
             m.addConstr(y[i * num_stores + j] <= x[i])
             m.addConstr((1 + v[i * num_stores + j]) * y[i * num_stores + j] <= z[j])
 
+            m.addConstr(T[i * num_stores + j] <= t[j])
+            m.addConstr(T[i * num_stores + j] <= y[i * num_stores + j])
+            m.addConstr(T[i * num_stores + j] >= t[j] + y[i * num_stores + j] - 1)
+            
 
     print("****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************\n")
 
@@ -343,7 +327,7 @@ def optimize_rate_MNL_new(scenario, pf, v, C, K, num_current_stores, num_total_s
     if R is not None: 
         z_file_name += f'_fixR{str(R)}'
 
-    np.savetxt(f'{z_file_name}.csv', z_soln, delimiter=",")
+    np.savetxt(f'{z_file_name}_new.csv', z_soln, delimiter=",")
 
 
     ### Finished all ###

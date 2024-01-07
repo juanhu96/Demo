@@ -30,7 +30,7 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     block.sort_values(by=['blkid'], inplace=True)
     
     df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
-    df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=False, add_dist=False)
+    df = de.hpi_dist_terms(df, nsplits=nsplits, add_hpi_bins=True, add_hpi_dummies=False, add_dist=False)
     df_temp = df.copy()
     df = df.loc[df.market_ids.isin(markets_unique), :]
     mkts_in_both = set(df['market_ids'].tolist()).intersection(set(block['market_ids'].tolist()))
@@ -50,9 +50,12 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     tract_hpi['population'].fillna(tract_hpi['Raw_Population'], inplace=True)
     Population = tract_hpi['population'].astype(int)
 
+    # TODO: compute popdensity_group
+
     # ============================================================================
 
     Quartile = tract_hpi['HPIQuartile']
+    # Popdensity = tract_hpi['popdensity_group']
     
     tract_abd = pd.read_csv(f"{datadir}/Intermediate/tract_abd.csv", usecols=['tract', 'abd'])
     abd = tract_abd['abd'].values
@@ -75,35 +78,67 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     num_total_stores = num_current_stores + num_chains_stores
     ###########################################################################
     
-    ### Travel to the closest M stores only
-    # Closest_current = np.ones((num_tracts, num_current_stores))
-    # Closest_total = np.ones((num_tracts, num_total_stores))
-    # np.put_along_axis(Closest_current, np.argpartition(C_current_mat,M,axis=1)[:,M:],0,axis=1)
-    # np.put_along_axis(Closest_total, np.argpartition(C_total_mat,M,axis=1)[:,M:],0,axis=1)
+    consideration_case = 'flexible'
 
-    ### C, store the indicies of the M closest site (consideration set for MNL)
-    # C = np.argsort(C_total_mat, axis=1)[:, :M]
+    if consideration_case == 'fix_rank':
 
-    # approximately 2 miles
-    consideration_dist = 3200
-    mask_current = C_current_mat < consideration_dist
-    mask_total = C_total_mat < consideration_dist
+        Closest_current = np.ones((num_tracts, num_current_stores))
+        Closest_total = np.ones((num_tracts, num_total_stores))
+        np.put_along_axis(Closest_current, np.argpartition(C_current_mat,M,axis=1)[:,M:],0,axis=1)
+        np.put_along_axis(Closest_total, np.argpartition(C_total_mat,M,axis=1)[:,M:],0,axis=1)
+        C = np.argsort(C_total_mat, axis=1)[:, :M]
 
-    rows_without_lower = np.all(mask_current == False, axis=1)
-    mask_current[rows_without_lower, np.argmin(C_current_mat[rows_without_lower], axis=1)] = True
+    elif consideration_case == 'fix_dist':
 
-    rows_without_lower = np.all(mask_total == False, axis=1)
-    mask_total[rows_without_lower, np.argmin(C_total_mat[rows_without_lower], axis=1)] = True
+        consideration_dist = 3200 # approximately 2 miles
+        mask_current = C_current_mat < consideration_dist
+        mask_total = C_total_mat < consideration_dist
 
-    Closest_current = mask_current.astype(int)
-    Closest_total = mask_total.astype(int)
+        rows_without_lower = np.all(mask_current == False, axis=1)
+        mask_current[rows_without_lower, np.argmin(C_current_mat[rows_without_lower], axis=1)] = True
 
-    Consideration_set = np.sum(Closest_total, axis = 1)
+        rows_without_lower = np.all(mask_total == False, axis=1)
+        mask_total[rows_without_lower, np.argmin(C_total_mat[rows_without_lower], axis=1)] = True
 
-    C = []
-    for row in range(Closest_total.shape[0]):
-        indices = np.where(Closest_total[row] == 1)[0].tolist()
-        C.append(indices)
+        Closest_current = mask_current.astype(int)
+        Closest_total = mask_total.astype(int)
+
+        Consideration_set = np.sum(Closest_total, axis = 1)
+
+        C = []
+        for row in range(Closest_total.shape[0]):
+            indices = np.where(Closest_total[row] == 1)[0].tolist()
+            C.append(indices)
+
+    elif consideration_case == 'flexible':
+        
+        D_values = {3: 2000, 2: 3000, 1: 15000}
+        D = np.array([D_values[density_group] for density_group in tract_hpi['popdensity_group']])
+
+        Closest_current = np.zeros_like(C_current_mat)
+        Closest_total = np.zeros_like(C_total_mat)
+
+        for (current_row, total_row, d, i) in zip(C_current_mat, C_total_mat, D, range(len(D))):
+
+            current_mask = current_row < d
+            if np.any(current_mask):
+                Closest_current[i, current_mask] = 1
+            else:
+                Closest_current[i, np.argmin(current_row)] = 1
+
+            total_mask = total_row < d
+            if np.any(total_mask):
+                Closest_total[i, total_mask] = 1
+            else:
+                Closest_total[i, np.argmin(total_row)] = 1
+
+        C = []
+        for row in range(Closest_total.shape[0]):
+            indices = np.where(Closest_total[row] == 1)[0].tolist()
+            C.append(indices)
+
+
+    return
 
     ###########################################################################
 
