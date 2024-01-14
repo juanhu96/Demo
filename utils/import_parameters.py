@@ -19,7 +19,7 @@ except:
 
 
 
-def import_basics(Chain, M, nsplits, flexible_consideration, datadir="/export/storage_covidvaccine/Data/", MAXDIST = 100000, scale_factor = 10000):
+def import_basics(Chain, M, nsplits, flexible_consideration, scale_factor, datadir="/export/storage_covidvaccine/Data/", MAXDIST=100000):
 
     # ============================================================================
     # New population
@@ -83,7 +83,8 @@ def import_basics(Chain, M, nsplits, flexible_consideration, datadir="/export/st
     consideration_case = 'flexible' if flexible_consideration else 'fix_rank'
 
     if consideration_case == 'fix_rank':
-        print(f'fix_rank of {M}\n')
+        print(f'Closest_total and C follows fix rank of {M}\n')
+
         Closest_current = np.ones((num_tracts, num_current_stores))
         Closest_total = np.ones((num_tracts, num_total_stores))
         np.put_along_axis(Closest_current, np.argpartition(C_current_mat,M,axis=1)[:,M:],0,axis=1)
@@ -113,7 +114,8 @@ def import_basics(Chain, M, nsplits, flexible_consideration, datadir="/export/st
             C.append(indices)
 
     elif consideration_case == 'flexible':
-        print("flexible consideration set\n")
+        print(f'Closest_total and C follows flexible consideration set\n')
+
         D_values = {'urban': 2000, 'suburban': 3000, 'rural': 15000}
         D = np.array([D_values[density_group] for density_group in Popdensity])
 
@@ -197,13 +199,13 @@ def import_basics(Chain, M, nsplits, flexible_consideration, datadir="/export/st
 
 def import_BLP_estimation(Chain_type, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
 
-    print(f"import MNL estimation from file BLP_current{setting_tag}\n")
+    print(f"Import BLP estimation matrices from file BLP_current{setting_tag}...\n")
 
     F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', delimiter = ",", dtype = float) 
     F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}{setting_tag}.csv', delimiter = ",", dtype = float)
     F_DH_total = np.concatenate((F_DH_current, F_DH_chain), axis = 1)
 
-    return F_DH_current, F_DH_total, F_DH_current, F_DH_total
+    return F_DH_current, F_DH_total
 
 
 
@@ -213,11 +215,11 @@ def import_LogLin_estimation(C_total, abd, num_current_stores):
     Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
 
     # F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
-    abd = np.nan_to_num(abd, nan=Demand_parameter[0][0])
+    abd = np.nan_to_num(abd, nan=Demand_parameter[0][0]) # random error to match empirical rate
     F_D_total = abd.reshape(8057, 1) + Demand_parameter[0][1] * np.log(C_total/1000)
     F_D_current = F_D_total[:,0:num_current_stores]
 
-    return F_D_current, F_D_total, F_D_current, F_D_total
+    return F_D_current, F_D_total
 
 
 

@@ -149,7 +149,19 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
 
 
 
-def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_stores, num_tracts, scale_factor, path, setting_tag, R=None, MIPGap = 5e-2):
+def optimize_rate_MNL(scenario,
+                    pf,
+                    v,
+                    C,
+                    K,
+                    R,
+                    num_current_stores,
+                    num_total_stores,
+                    num_tracts,
+                    scale_factor,
+                    setting_tag,
+                    path,
+                    MIPGap=5e-2):
     
     """
     Parameters
@@ -253,8 +265,21 @@ def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_store
 ############################################################################## 
 
 
+def optimize_rate_MNL_partial(scenario,
+                            pf,
+                            v,
+                            C,
+                            K,
+                            R,
+                            num_current_stores,
+                            num_total_stores,
+                            num_tracts,
+                            scale_factor,
+                            setting_tag,
+                            path,
+                            MIPGap=5e-2):
 
-def optimize_rate_MNL_partial(scenario, pf, v, C, K, num_current_stores, num_total_stores, num_tracts, scale_factor, path, setting_tag, R=None, MIPGap = 5e-2):
+
 
     env = gp.Env(empty=True)
     env.setParam("OutputFlag",0)

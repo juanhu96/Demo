@@ -48,10 +48,29 @@ setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').repla
 setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
 setting_tag += f"_R{R}" if replace else ""
 
+
+params = {
+    'Model': Model,
+    'Chain': Chain,
+    'K': K,
+    'M': M,
+    'nsplits': nsplits,
+    'capcoef': capcoef,
+    'mnl': mnl, 
+    'flexible_consideration': flexible_consideration, 
+    'flex_thresh': flex_thresh, 
+    'logdist_above': logdist_above, 
+    'logdist_above_thresh': logdist_above_thresh, 
+    'replace': replace, 
+    'R': R, 
+    'setting_tag': setting_tag
+}
+
+
 #=================================================================
 
 
-def main(Model, Chain, K, M, nsplits, stage, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag):
+def main(params):
 
     '''
     BLP estimation:
@@ -64,16 +83,16 @@ def main(Model, Chain, K, M, nsplits, stage, capcoef, mnl, flexible_consideratio
     M_list = [5, 10]
     '''
 
-    print(setting_tag)
+    print(f"Start {stage} stage for setting {setting_tag}...\n")
 
-    if stage == 'optimize': optimize_main(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag)
-    elif stage == 'evaluate': 
-        evaluate_main(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag)
+    if stage == 'optimize': optimize_main(**params)
+    elif stage == 'evaluate': evaluate_main(**params)
     else: raise Exception("Stage undefined\n")
     
+    print(f"Finished {stage} stage for setting {setting_tag}!\n")
 
 
 if __name__ == "__main__":
-    main(Model, Chain, K, M, nsplits, stage, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag)
+    main(params)
 
 

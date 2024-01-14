@@ -49,22 +49,20 @@ setting_tag += f"_R{R}" if replace else ""
 
 def summary(K, M, nsplits, capcoef, R, setting_tag):
 
-    '''
-    BLP estimation:
-    Capacity_list = [8000, 10000, 12000, 15000, 20000]
+    print(f'Start creating summary table for {setting_tag}...\n')
 
-    Optimize, Evaluate, Partnership:
-    Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist']
-    Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries']
-    K_list = [8000, 10000, 12000]
-    M_list = [5, 10]
-    '''
+    partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial'],
+                         Chain_list=['Dollar'],
+                         K_list=[K],
+                         M_list=[M],
+                         nsplits=nsplits,
+                         capcoef=capcoef,
+                         R=R,
+                         setting_tag=setting_tag)
 
-    print(setting_tag)
-    partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial'], Chain_list=['Dollar'], M_list=[M], K_list=[K], nsplits=nsplits, capcoef=capcoef, R=R, setting_tag=setting_tag)
+    print(f'Finished table for {setting_tag}!\n')
     return
 
 
 if __name__ == "__main__":
-
     summary(K, M, nsplits, capcoef, R, setting_tag)

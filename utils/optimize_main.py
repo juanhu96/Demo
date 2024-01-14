@@ -18,125 +18,148 @@ from utils.import_parameters import import_basics, import_BLP_estimation, import
 # from utils.heuristic import rescale_estimation
 
 
-def optimize_main(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, 
-setting_tag, resultdir='/export/storage_covidvaccine/Result'):
+def optimize_main(Model: str,
+                Chain: str,
+                K: int,
+                M: int,
+                nsplits: int,
+                capcoef: bool,
+                mnl: bool,
+                flexible_consideration: bool,
+                flex_thresh: dict,
+                logdist_above: bool,
+                logdist_above_thresh: float,
+                replace: bool,
+                R, 
+                setting_tag: str,
+                resultdir='/export/storage_covidvaccine/Result'):
     
+
+    def create_path(Model, Chain, K, M, nsplits, resultdir):
+        
+        model_path = f'{resultdir}/{Model}'
+        if not os.path.exists(model_path): os.mkdir(model_path)
+        parameter_path = f'{model_path}/M{str(M)}_K{str(K)}_{nsplits}q'
+        if not os.path.exists(parameter_path): os.mkdir(parameter_path)
+        chain_path = f'{parameter_path}/{Chain}/'
+        if not os.path.exists(chain_path): os.mkdir(chain_path)
+        return chain_path
     
-    # Model
-    model_path = f'{resultdir}/{Model}'
-    if not os.path.exists(model_path): os.mkdir(model_path)
-
-    # Scenario
-    if capcoef: parameter_path = f'{model_path}/M{str(M)}_K{str(K)}_{nsplits}q_capcoef'
-    else: parameter_path = f'{model_path}/M{str(M)}_K{str(K)}_{nsplits}q'
-    if not os.path.exists(parameter_path): os.mkdir(parameter_path)
-
-
-    # Chain
-    chain_path = f'{parameter_path}/{Chain}/'
-    if not os.path.exists(chain_path): os.mkdir(chain_path)
-
-    optimize_chain(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, chain_path)
+    expdirpath = create_path(Model, Chain, K, M nsplits, resultdir)
+    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, expdirpath)
 
     return
 
 
 
+def optimize_chain(Model: str,
+                Chain: str,
+                K: int,
+                M: int,
+                nsplits: int,
+                capcoef: bool,
+                mnl: bool,
+                flexible_consideration: bool,
+                flex_thresh: dict,
+                logdist_above: bool,
+                logdist_above_thresh: float,
+                replace: bool,
+                R, 
+                setting_tag: str,
+                expdirpath: str,
+                constraint: str = 'vaccinated',
+                scale_factor: int = 10000):
 
-def optimize_chain(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, expdirpath,
-constraint='vaccinated', scale_factor=10000):
-
-    print(f'Start optimization with Model={Model}, Chain={Chain} and setting tag {setting_tag}. \n Results stored at {expdirpath}\n')
+    print(f'Optimization results stored at {expdirpath}...\n')
     
-    Population, Quartile, abd, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, _, _, C, num_tracts, num_current_stores, num_total_stores = import_basics(Chain, M, nsplits, flexible_consideration)
+    Facility_BLP_models = ['MaxVaxHPIDistBLP']
+    Facility_LogLin_models = ['MaxVaxDistLogLin']
+    Assortment_MNL_models = ['MNL', 'MNL_partial']
 
-    BLP_models = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP']
-    LogLin_models = ['MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin']
-    MNL_models = ['MNL', 'MNL_partial']
+    # ================================================================================
 
-    if Model in BLP_models: 
-        F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, setting_tag) # F_D_current, F_D_total are just dummy
+    (Population, Quartile, abd, p_current, p_total, pc_current, pc_total, 
+    C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
+    num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, scale_factor)
 
-    if Model in LogLin_models: 
-        F_D_current, F_D_total, F_DH_current, F_DH_total = import_LogLin_estimation(C_total, abd, num_current_stores) # F_DH_current, F_DH_total are just dummy
+
+    if Model in Facility_BLP_models: 
+        F_current, F_total = import_BLP_estimation(Chain, setting_tag)
+
+    if Model in Facility_LogLin_models: 
+        F_current, F_total = import_LogLin_estimation(C_total, abd, num_current_stores)
     
-    if Model in MNL_models:
+    if Model in Assortment_MNL_models:
         V_current, V_total = import_MNL_estimation(Chain, setting_tag)
+
 
     # ================================================================================
 
 
-    if Model in BLP_models or Model in LogLin_models:
-        
-        # willingness
-        f_d_current = F_D_current.flatten()
-        f_d_total = F_D_total.flatten()
-        
-        f_dh_current = F_DH_current.flatten()
-        f_dh_total = F_DH_total.flatten()
-        
-        
-        # population * willingness
-        pfd_current = p_current * f_d_current
-        pfd_total = p_total * f_d_total
-        
-        pfdh_current = p_current * f_dh_current
-        pfdh_total = p_total * f_dh_total
+    if Model in Facility_BLP_models or Model in Facility_LogLin_models:
 
+        # willingness vector
+        f_current = F_current.flatten()
+        f_total = F_total.flatten()
+
+        # population * willingness vector
+        pf_current = p_current * f_current
+        pf_total = p_total * f_total
 
 
     if Model in MNL_models:
 
         v_total = V_total.flatten()
-        pfdh_total = p_total * v_total
-        pfdh_total = pfdh_total * Closest_total # make sure v_ij are zero other place
-        
+        pf_total = p_total * v_total
+
+    pf_total = pf_total * Closest_total # make sure v_ij are zero other place
+
 
     # ================================================================================
 
+    path = expdirpath + constraint + '/'
+    if not os.path.exists(): os.mkdir(path)
+
+
     if Model == 'MNL':
 
-        if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
-
         optimize_rate_MNL(scenario='total', 
-                        pf=pfdh_total,
+                        pf=pf_total,
                         v=v_total,
                         C=C,
                         K=K,
+                        R=R,
                         num_current_stores=num_current_stores,
                         num_total_stores=num_total_stores,
                         num_tracts=num_tracts,
                         scale_factor=scale_factor,
-                        R=R,
-                        path=expdirpath + constraint + '/',
-                        setting_tag=setting_tag)
+                        setting_tag=setting_tag,
+                        path=path)
 
 
     if Model == 'MNL_partial':
 
-        if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
-
         optimize_rate_MNL_partial(scenario='total', 
-                        pf=pfdh_total,
+                        pf=pf_total,
                         v=v_total,
                         C=C,
                         K=K,
+                        R=R,
                         num_current_stores=num_current_stores,
                         num_total_stores=num_total_stores,
                         num_tracts=num_tracts,
                         scale_factor=scale_factor,
-                        R=R,
-                        path=expdirpath + constraint + '/',
-                        setting_tag=setting_tag)
+                        setting_tag=setting_tag,
+                        path=path)
+                        
 
+    # ================================================================================
 
-    if Model == 'MaxVaxHPIDistBLP':
-
-        if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
+    if Model == 'MaxVaxHPIDistBLP' or Model == 'MaxVaxDistLogLin':
 
         optimize_rate(scenario='total', constraint=constraint,
                     pc=pc_total,
-                    pf=pfdh_total,
+                    pf=pf_total,
                     ncp=p_total, p=Population, 
                     closest=Closest_total, K=K,
                     num_current_stores=num_current_stores,
@@ -146,64 +169,42 @@ constraint='vaccinated', scale_factor=10000):
                     path = expdirpath + constraint + '/',
                     setting_tag=setting_tag,
                     R = R)
-
-    # ================================================================================
-    
-    if Model == 'MaxVaxDistLogLin':
-
-        if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
-
-        pfd_total_zero = pfd_total * Closest_total 
-
-        optimize_rate(scenario = 'total', constraint = constraint,
-                    pc = pc_total, 
-                    pf = pfd_total_zero, 
-                    ncp = p_total, p = Population,
-                    closest = Closest_total, K=K,
-                    num_current_stores=num_current_stores, 
-                    num_total_stores=num_total_stores,
-                    num_tracts=num_tracts,
-                    scale_factor=scale_factor,
-                    path = expdirpath + constraint + '/',
-                    setting_tag=setting_tag,
-                    R = R,
-                    MIPGap = 5e-2)
   
     # ================================================================================
 
-    if Model == 'MinDist':
+    # if Model == 'MinDist':
 
-        pc_currentMinDist = p_current * c_currentMinDist
-        pc_totalMinDist = p_total * c_totalMinDist
+    #     pc_currentMinDist = p_current * c_currentMinDist
+    #     pc_totalMinDist = p_total * c_totalMinDist
        
-        optimize_dist(scenario = 'total',
-                    pc = pc_totalMinDist, ncp = p_total, p = Population, K=K,
-                    num_current_stores=num_current_stores,
-                    num_total_stores=num_total_stores, 
-                    num_tracts=num_tracts, 
-                    scale_factor=scale_factor, 
-                    path = expdirpath)   
+    #     optimize_dist(scenario = 'total',
+    #                 pc = pc_totalMinDist, ncp = p_total, p = Population, K=K,
+    #                 num_current_stores=num_current_stores,
+    #                 num_total_stores=num_total_stores, 
+    #                 num_tracts=num_tracts, 
+    #                 scale_factor=scale_factor, 
+    #                 path = expdirpath)   
         
     # ================================================================================
     
-    if Model == 'MaxVaxFixV':
+    # if Model == 'MaxVaxFixV':
         
-        # population * fix willingness/vaccination rate
-        fix_vac_rate = 0.7
-        pv_current = p_current * fix_vac_rate
-        pv_total = p_total * fix_vac_rate
+    #     # population * fix willingness/vaccination rate
+    #     fix_vac_rate = 0.7
+    #     pv_current = p_current * fix_vac_rate
+    #     pv_total = p_total * fix_vac_rate
 
-        if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
+    #     if not os.path.exists(expdirpath + constraint + '/'): os.mkdir(expdirpath + constraint + '/')
 
-        optimize_rate_fix(scenario = 'total', constraint = constraint,
-                        ncp = p_total, pv = pv_total, p = Population, 
-                        closest = Closest_total, K=K,
-                        num_current_stores=num_current_stores,
-                        num_total_stores=num_total_stores, 
-                        num_tracts=num_tracts, 
-                        scale_factor=scale_factor, 
-                        path = expdirpath + constraint + '/',
-                        R = R) 
+    #     optimize_rate_fix(scenario = 'total', constraint = constraint,
+    #                     ncp = p_total, pv = pv_total, p = Population, 
+    #                     closest = Closest_total, K=K,
+    #                     num_current_stores=num_current_stores,
+    #                     num_total_stores=num_total_stores, 
+    #                     num_tracts=num_tracts, 
+    #                     scale_factor=scale_factor, 
+    #                     path = expdirpath + constraint + '/',
+    #                     R = R) 
 
     return 
 

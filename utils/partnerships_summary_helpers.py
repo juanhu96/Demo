@@ -68,68 +68,7 @@ def import_dataset(nsplits, datadir):
 
 
 
-def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag, heuristic=False, Pharmacy=False):
-    
-    '''
-    z, y: results from first/second stage
-    locs, dists, assignment: results from second stage
-    '''
-    
-    print('Importing solution...\n')
-
-    if Pharmacy:
-        locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
-        dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
-        assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
-        # z_filename = f'{path}z_current.csv'
-        # y_filename = f'{path}y_current.csv'
-        z = np.ones(num_current_stores)
-    
-    else:
-        locs_filename = f'{path}locs_{Chain_type}{setting_tag}.csv'
-        dists_filename = f'{path}dists_{Chain_type}{setting_tag}.csv'
-        assignment_filename = f'{path}assignment_{Chain_type}{setting_tag}.csv'
-
-        z_filename = f'{path}z_total{setting_tag}.csv'
-        y_filename = f'{path}y_total{setting_tag}.csv'
-        y_eval_filename = f'{path}y_total_eval{setting_tag}.csv'
-
-        z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
-        
-        if Model == 'MNL' or Model == 'MNL_partial': y = np.zeros((num_tracts, num_total_stores)) # dummy
-        else: y = np.genfromtxt(y_filename, delimiter=",", dtype=float)
-
-    # Load data
-    locs = np.genfromtxt(locs_filename, delimiter="")
-    dists = np.genfromtxt(dists_filename, delimiter="")
-    assignment = np.genfromtxt(assignment_filename, delimiter="")
-    
-    if Pharmacy:
-        # 1. Pharmacy-only, no evaluation
-        # mat_y = np.reshape(y, (num_tracts, num_current_stores))
-        # mat_y_eval = mat_y
-        return z, locs, dists, assignment
-    
-    elif heuristic:
-        # 2. Haven't evaluted heuristic yet
-        mat_y = np.reshape(y, (num_tracts, num_total_stores))
-        mat_y_eval = mat_y
-
-    else:
-        mat_y = np.reshape(y, (num_tracts, num_total_stores))
-        mat_y_eval = mat_y
-        # y_eval = np.genfromtxt(y_eval_filename, delimiter=",", dtype=float)
-        # mat_y_eval = np.reshape(y_eval, (num_tracts, num_total_stores))
-
-    return z, mat_y, mat_y_eval, locs, dists, assignment
-
-
-
-# ====================================================================================
-
-
-
-def import_locations(df, Chain_type, Chain_name_list={'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}, datadir='/export/storage_covidvaccine/Data/'):
+def import_locations(df, Chain_type, datadir='/export/storage_covidvaccine/Data/'):
 
     '''
     Import pharmacies/chain locations and distance matrices
@@ -144,9 +83,12 @@ def import_locations(df, Chain_type, Chain_name_list={'Dollar': '01_DollarStores
     pharmacy_locations['zip_code'] = pharmacy_locations['zip_code'].astype("string")
     pharmacy_locations = pharmacy_locations.merge(df[['zip_code', 'hpi_quantile']], on='zip_code', how='left')
 
-    Chain_name = Chain_name_list[Chain_type]
+    # ====================================================================================
 
     ## NOTE: to be modified 
+    Chain_name_list={'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}
+    Chain_name = Chain_name_list[Chain_type]
+    
     if Chain_type == 'Dollar':
         chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv", usecols=['Latitude', 'Longitude', 'Zip_Code', 'State'])
         chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude', 'Zip_Code': 'zip_code'}, inplace=True)
@@ -187,6 +129,40 @@ def import_locations(df, Chain_type, Chain_name_list={'Dollar': '01_DollarStores
 
     return pharmacy_locations, chain_locations, num_tracts, num_current_stores, num_total_stores, C_current, C_total, C_current_walkable, C_total_walkable
 
+
+
+# ====================================================================================
+
+
+
+def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag, Pharmacy=False):
+    
+    '''
+    z: results from first stage
+    locs, dists, assignment: results from second stage
+    '''
+    
+    print('Importing optimization and evaluation solution...\n')
+
+    if Pharmacy:
+        locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
+        dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
+        assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
+        z = np.ones(num_current_stores)
+    
+    else:
+        locs_filename = f'{path}locs_{Chain_type}{setting_tag}.csv'
+        dists_filename = f'{path}dists_{Chain_type}{setting_tag}.csv'
+        assignment_filename = f'{path}assignment_{Chain_type}{setting_tag}.csv'
+        z_filename = f'{path}z_total{setting_tag}.csv'
+        z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+
+    # Load data
+    locs = np.genfromtxt(locs_filename, delimiter="")
+    dists = np.genfromtxt(dists_filename, delimiter="")
+    assignment = np.genfromtxt(assignment_filename, delimiter="")
+
+    return z, locs, dists, assignment
 
 
 # ====================================================================================
