@@ -19,7 +19,7 @@ except:
 
 
 
-def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/", MAXDIST = 100000, scale_factor = 10000):
+def import_basics(Chain, M, nsplits, flexible_consideration, datadir="/export/storage_covidvaccine/Data/", MAXDIST = 100000, scale_factor = 10000):
 
     # ============================================================================
     # New population
@@ -50,13 +50,15 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     tract_hpi['population'].fillna(tract_hpi['Raw_Population'], inplace=True)
     Population = tract_hpi['population'].astype(int)
 
-    # TODO: compute popdensity_group
+    tract_hpi['Popdensity'] = np.genfromtxt(f'{datadir}/CA_density.csv', delimiter = ",", dtype = int)
+    tract_hpi['Popdensity_group'] = pd.cut(tract_hpi['Popdensity'], bins=[0, 1000, 3000, np.inf], labels=['rural', 'suburban', 'urban'], right=False)
 
     # ============================================================================
 
     Quartile = tract_hpi['HPIQuartile']
-    # Popdensity = tract_hpi['popdensity_group']
+    Popdensity = tract_hpi['Popdensity_group']
     
+    # For LogLinear only
     tract_abd = pd.read_csv(f"{datadir}/Intermediate/tract_abd.csv", usecols=['tract', 'abd'])
     abd = tract_abd['abd'].values
     
@@ -77,11 +79,11 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
     C_total_mat = np.concatenate((C_current_mat, C_chains_mat), axis = 1)
     num_total_stores = num_current_stores + num_chains_stores
     ###########################################################################
-    
-    consideration_case = 'flexible'
+
+    consideration_case = 'flexible' if flexible_consideration else 'fix_rank'
 
     if consideration_case == 'fix_rank':
-
+        print(f'fix_rank of {M}\n')
         Closest_current = np.ones((num_tracts, num_current_stores))
         Closest_total = np.ones((num_tracts, num_total_stores))
         np.put_along_axis(Closest_current, np.argpartition(C_current_mat,M,axis=1)[:,M:],0,axis=1)
@@ -111,9 +113,9 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
             C.append(indices)
 
     elif consideration_case == 'flexible':
-        
-        D_values = {3: 2000, 2: 3000, 1: 15000}
-        D = np.array([D_values[density_group] for density_group in tract_hpi['popdensity_group']])
+        print("flexible consideration set\n")
+        D_values = {'urban': 2000, 'suburban': 3000, 'rural': 15000}
+        D = np.array([D_values[density_group] for density_group in Popdensity])
 
         Closest_current = np.zeros_like(C_current_mat)
         Closest_total = np.zeros_like(C_total_mat)
@@ -138,7 +140,22 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
             C.append(indices)
 
 
-    return
+    # def summary_consideration_set(C):
+
+    #     lengths = [len(sublist) for sublist in C]
+    #     quantile_50 = np.quantile(lengths, 0.50)
+    #     quantile_75 = np.quantile(lengths, 0.75)
+    #     quantile_90 = np.quantile(lengths, 0.90)
+    #     quantile_95 = np.quantile(lengths, 0.95)
+    #     quantile_97 = np.quantile(lengths, 0.97)
+    #     quantile_98 = np.quantile(lengths, 0.98)
+    #     quantile_99 = np.quantile(lengths, 0.99)
+    #     min_length = min(lengths)
+    #     max_length = max(lengths)
+
+    #     print(min_length, max_length, quantile_50, quantile_75, quantile_90, quantile_95, quantile_97, quantile_98, quantile_99)
+
+    # summary_consideration_set(C)
 
     ###########################################################################
 
@@ -178,24 +195,12 @@ def import_basics(Chain, M, nsplits, datadir="/export/storage_covidvaccine/Data/
 
 
 
-def import_BLP_estimation(Chain_type, capacity, nsplits=3, capcoef=True, heterogeneity=True, resultdir='/export/storage_covidvaccine/Result/'):
+def import_BLP_estimation(Chain_type, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
 
-    if heterogeneity:
-        if capcoef: 
-            F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float) 
-            F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float)
-        else:
-            F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float) 
-            F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float)
-    else:
-        raise Exception("Warnings: homogeneous not computed")
-        if capcoef: 
-            F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{nsplits}q_capcoefs0_nodisthet.csv', delimiter = ",", dtype = float) 
-            F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{nsplits}q_capcoefs0_nodisthet.csv', delimiter = ",", dtype = float)
-        else:
-            F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{nsplits}q_nodisthet.csv', delimiter = ",", dtype = float) 
-            F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{nsplits}q_nodisthet.csv', delimiter = ",", dtype = float)
+    print(f"import MNL estimation from file BLP_current{setting_tag}\n")
 
+    F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', delimiter = ",", dtype = float) 
+    F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}{setting_tag}.csv', delimiter = ",", dtype = float)
     F_DH_total = np.concatenate((F_DH_current, F_DH_chain), axis = 1)
 
     return F_DH_current, F_DH_total, F_DH_current, F_DH_total
@@ -203,56 +208,25 @@ def import_BLP_estimation(Chain_type, capacity, nsplits=3, capcoef=True, heterog
 
 
 
-def import_LogLin_estimation(C_total, Quartile, abd, nsplits, num_tracts, num_current_stores):
+def import_LogLin_estimation(C_total, abd, num_current_stores):
 
-    if nsplits == 3: Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
-    elif nsplits == 4: Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
-    else: raise Exception("nsplits undefined, should be 3 or 4.")
+    Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
 
     # F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
     abd = np.nan_to_num(abd, nan=Demand_parameter[0][0])
     F_D_total = abd.reshape(8057, 1) + Demand_parameter[0][1] * np.log(C_total/1000)
     F_D_current = F_D_total[:,0:num_current_stores]
 
-    F_DH_total = []
-
-    for i in range(num_tracts):
-                
-        tract_quartile = Quartile[i]
-                
-        if tract_quartile == 1:
-            tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][2]) + (Demand_parameter[1][1] + Demand_parameter[1][5]) * np.log(C_total[i,:]/1000)
-        elif tract_quartile == 2:
-            tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][3]) + (Demand_parameter[1][1] + Demand_parameter[1][6]) * np.log(C_total[i,:]/1000)
-        elif tract_quartile == 3:
-            tract_willingness = (Demand_parameter[1][0] + Demand_parameter[1][4]) + (Demand_parameter[1][1] + Demand_parameter[1][7]) * np.log(C_total[i,:]/1000)
-        elif tract_quartile == 4:
-            # if nsplits = 3, this would never show up
-            # TODO: need to change the order of the demand parameters a a bit
-            tract_willingness = Demand_parameter[1][0] + Demand_parameter[1][1] * np.log(C_total[i,:]/1000)
-        else:
-            tract_willingness = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total[i,:]/1000)
-                
-        F_DH_total.append(tract_willingness)
-                
-    F_DH_total = np.asarray(F_DH_total)
-    F_DH_current = F_DH_total[:,0:num_current_stores]
-
-    return F_D_current, F_D_total, F_DH_current, F_DH_total
+    return F_D_current, F_D_total, F_D_current, F_D_total
 
 
 
-def import_MNL_estimation(Chain_type, capacity, nsplits=4, capcoef=True, resultdir='/export/storage_covidvaccine/Result/'):
+def import_MNL_estimation(Chain, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
 
-    print("import_MNL_estimation\n")
+    print(f"import MNL estimation from file V_current{setting_tag}\n")
 
-    if capcoef: 
-        V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float) 
-        V_chain = np.genfromtxt(f'{resultdir}BLP_matrix/V_{Chain_type}_{str(capacity)}_{nsplits}q_capcoefs0.csv', delimiter = ",", dtype = float)
-    else:
-        V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float) 
-        V_chain = np.genfromtxt(f'{resultdir}BLP_matrix/V_{Chain_type}_{str(capacity)}_{nsplits}q.csv', delimiter = ",", dtype = float)
-
+    V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current{setting_tag}.csv', delimiter = ",", dtype = float) 
+    V_chain = np.genfromtxt(f'{resultdir}BLP_matrix/V_{Chain}{setting_tag}.csv', delimiter = ",", dtype = float)
     V_total = np.concatenate((V_current, V_chain), axis = 1)
     
     return V_current, V_total

@@ -22,14 +22,14 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                         nsplits=4,
                         capcoef=True,
                         R=None,
+                        setting_tag='',
                         heuristic=False,
                         constraint='vaccinated', 
                         second_stage_MIP=False,
                         export_dist=False,
                         export_utilization=False,
                         resultdir='/export/storage_covidvaccine/Result', 
-                        datadir='/export/storage_covidvaccine/Data', 
-                        filename=''):
+                        datadir='/export/storage_covidvaccine/Data'):
 
     '''
     Summary for each (Model, Chain, M, K, constraint) pair
@@ -70,25 +70,23 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                     
                     print(f'Model={Model}, M={M}, K={K}, Chain={Chain}, nsplits={nsplits}, capcoef={capcoef}, R={R}, heuristic={heuristic}\n')
                     
-                    F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, K, nsplits, capcoef)
+                    # F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, K, nsplits, capcoef)
 
                     if capcoef: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q_capcoef/{Chain}/{constraint}/'
                     else: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{constraint}/'
 
-                    z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R)
-
-                    print(np.sum(assignment), assignment)
-
+                    z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag)
+                    
                     # first stage MIP
-                    if Model != 'MNL':
-                        chain_summary_first_stage = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'first stage', tract_hpi, mat_y, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                        chain_summary_table.append(chain_summary_first_stage)
+                    # if Model != 'MNL':
+                    #     chain_summary_first_stage = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'first stage', tract_hpi, mat_y, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                    #     chain_summary_table.append(chain_summary_first_stage)
 
 
                     # second stage MIP
-                    if second_stage_MIP:
-                        chain_summary_second_stage_MIP = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'second stage MIP', tract_hpi, mat_y_eval, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                        chain_summary_table.append(chain_summary_second_stage_MIP)
+                    # if second_stage_MIP:
+                    #     chain_summary_second_stage_MIP = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'second stage MIP', tract_hpi, mat_y_eval, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                    #     chain_summary_table.append(chain_summary_second_stage_MIP)
 
 
                     # second stage FCFS
@@ -104,7 +102,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                     # heuristic results
                     if Model == "MaxVaxHPIDistBLP" and heuristic:
                                 
-                        z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, heuristic)
+                        z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag, heuristic)
 
                         # second stage MIP
                         if second_stage_MIP:
@@ -116,10 +114,10 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                         chain_summary_table.append(chain_summary_second_stage_randomFCFS)
 
 
-                    if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and constraint == 'vaccinated': # Pharmacy-only
+                    if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': # Pharmacy-only
                                 
                         # z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, heuristic=False, Pharmacy=True)
-                        z, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, heuristic=False, Pharmacy=True)
+                        z, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag, heuristic=False, Pharmacy=True)
 
                         # chain_summary_first_stage = create_row_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, 'none', 'first stage', tract_hpi, mat_y, z, F_DH_current, C_current, C_current_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
                         # chain_summary_table.append(chain_summary_first_stage)
@@ -130,6 +128,5 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
 
 
     chain_summary = pd.DataFrame(chain_summary_table)
-    if R is not None: chain_summary.to_csv(f'{resultdir}/Sensitivity_results/sensitivity_results_{filename}R{R}.csv', encoding='utf-8', index=False, header=True)
-    else: chain_summary.to_csv(f'{resultdir}/Sensitivity_results/sensitivity_results_{filename}.csv', encoding='utf-8', index=False, header=True)
+    chain_summary.to_csv(f'{resultdir}/Sensitivity_results/sensitivity_results{setting_tag}.csv', encoding='utf-8', index=False, header=True)
 

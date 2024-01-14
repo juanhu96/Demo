@@ -5,22 +5,49 @@ Created on Jul, 2022
 @author: Jingyuan Hu
 """
 
+import sys
 import os
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
-
-import sys 
-nsplits = int(sys.argv[1])
-capcoef = sys.argv[2]
-if capcoef == 'False': capcoef = False
-else: capcoef = True
-
-R = sys.argv[3]
-
 from utils.partnerships_summary import partnerships_summary
 
-def summary(nsplits, capcoef, R=None):
+#=================================================================
+# SETTINGS
+
+K = int(sys.argv[1])
+M = int(sys.argv[2])
+nsplits = int(sys.argv[3])
+
+capcoef = any(['capcoef' in arg for arg in sys.argv])
+mnl = any([arg == 'mnl' for arg in sys.argv])
+logdist_above = any(['logdistabove' in arg for arg in sys.argv])
+if logdist_above:
+    logdist_above_arg = [arg for arg in sys.argv if 'logdistabove' in arg][0]
+    logdist_above_thresh = float(logdist_above_arg.replace('logdistabove', ''))
+else: logdist_above_thresh = 0
+
+flexible_consideration = any(['flex' in arg for arg in sys.argv])
+flex_thresh = dict(zip(["urban", "suburban", "rural"], [2,3,15]))
+
+replace = any(['replace' in arg for arg in sys.argv])
+if replace:
+    replace_arg = [arg for arg in sys.argv if 'replace' in arg][0]
+    R = int(replace_arg.replace('replace', ''))
+else: R = None
+
+setting_tag = f'_{str(K)}_1_{nsplits}q' if flexible_consideration else f'_{str(K)}_{M}_{nsplits}q' 
+setting_tag += '_capcoefs0' if capcoef else ''
+setting_tag += "_mnl" if mnl else ""
+setting_tag += "_flex" if flexible_consideration else ""
+setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').replace('[', '').replace(']', '')}" if flexible_consideration else ""
+setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
+setting_tag += f"_R{R}" if replace else ""
+
+#=================================================================
+
+
+def summary(K, M, nsplits, capcoef, R, setting_tag):
 
     '''
     BLP estimation:
@@ -33,17 +60,11 @@ def summary(nsplits, capcoef, R=None):
     M_list = [5, 10]
     '''
 
-    # partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[8000, 10000], nsplits=nsplits, capcoef=capcoef, filename=str(nsplits))
-    # partnerships_summary(Model_list=['MaxVaxHPIDistBLP'], Chain_list=['Dollar', 'Coffee', 'HighSchools'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R)
-    # partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[8000], nsplits=nsplits, capcoef=capcoef, R=R, second_stage_MIP=True, filename='BLPLogLin')
-    partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin'], Chain_list=['Dollar'], M_list=[5], K_list=[10000], nsplits=nsplits, capcoef=capcoef, R=R, filename='LogLin_BLP')
-    
+    print(setting_tag)
+    partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial'], Chain_list=['Dollar'], M_list=[M], K_list=[K], nsplits=nsplits, capcoef=capcoef, R=R, setting_tag=setting_tag)
     return
 
 
 if __name__ == "__main__":
-    
-    if R != 'None':
-        summary(nsplits, capcoef, int(R))
-    else:
-        summary(nsplits, capcoef)
+
+    summary(K, M, nsplits, capcoef, R, setting_tag)

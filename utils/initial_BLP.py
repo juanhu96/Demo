@@ -11,17 +11,9 @@ import numpy as np
 import pandas as pd
 
 
-
-def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, heterogeneity=True, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
-
-    Chain_type:
-    capacity: 
-    group: quantiles, ...
-    capcoef: if the positive coefficient will be capped to 0
-
-
     tract_centroids.csv : tract info
     block_data.csv : block info (needs to be sorted), ['zip', 'blkid', 'dist', 'population', 'weights', 'market_ids', 'nodes', 'logdist']
     blk_tract.csv : block-tract pairs
@@ -30,33 +22,27 @@ def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, heterogeneity=
     ca_blk_{Chain_type}_dist.csv : block-chain, need to be precomputed from block_dist_chain.py (with geonear in STATA)
     '''
     
-    print(f'Start initializing BLP matrices from estimation for {Chain_type} under capacity {str(capacity)} with {groups} groups, and capcoef={capcoef}\n')
+    print(f'Start initializing BLP matrices from estimation for {Chain_type} under capacity {str(capacity)} with {groups} groups, with setting tag {setting_tag}\n')
     
     ### Tract-block
     tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int})
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
     block.sort_values(by=['blkid'], inplace=True)
-    blk_tract = pd.read_csv(f'{datadir}/Intermediate/blk_tract.csv', usecols=['tract', 'blkid']) 
-    
-
-    if capcoef:
-        block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_{groups}q_capcoefs0.csv', delimiter = ",")
-    else:
-        block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_{groups}q.csv', delimiter = ",")
-
+    blk_tract = pd.read_csv(f'{datadir}/Intermediate/blk_tract.csv', usecols=['tract', 'blkid'])     
+    block_utils = pd.read_csv(f'{resultdir}Demand/agent_results{setting_tag}.csv', delimiter = ",")
 
     ### Distance pairs
     distdf = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
     distdf_chain = pd.read_csv(f'{datadir}Intermediate/ca_blk_{Chain_type}_dist.csv', dtype={'locid': int, 'blkid': int})
 
-    C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type=Chain_type, M=20)
-    construct_F_BLP(Chain_type, capacity, groups, capcoef, heterogeneity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain)
+    C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type)
+    construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, setting_tag)
 
     return
 
 
 
-def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data"):
+def import_dist(Chain_type, datadir="/export/storage_covidvaccine/Data"):
 
     ### Current ###
     C_current_mat = np.genfromtxt(f'{datadir}/CA_dist_matrix_current.csv', delimiter = ",", dtype = float)
@@ -79,11 +65,11 @@ def import_dist(Chain_type, M, datadir="/export/storage_covidvaccine/Data"):
 
 
 
-def construct_F_BLP(Chain_type, capacity, groups, capcoef, heterogeneity, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, M=30, resultdir='/export/storage_covidvaccine/Result/'):
+def construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
-    M here doesn't matter, because we have C_closest in the optimization constraint
-    (as long as greater than 10)
+    M matter here because consideration set C could go up to 300
+    But setting M = 100 covers 99 quantile of the tracts, and the median is only 5
     '''
     
     if Chain_type == 'Dollar':
@@ -98,8 +84,6 @@ def construct_F_BLP(Chain_type, capacity, groups, capcoef, heterogeneity, C_tota
         start = time.time()
 
         for i in range(num_tracts):
-
-            # print(i)
 
             tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
             blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
@@ -169,19 +153,11 @@ def construct_F_BLP(Chain_type, capacity, groups, capcoef, heterogeneity, C_tota
                 V_current[i][site] = tract_site_preference
 
         print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')
+
         F_current_df = pd.DataFrame(F_current)
         V_current_df = pd.DataFrame(V_current)
-
-        if heterogeneity:
-            if capcoef: 
-                F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{groups}q_capcoefs0.csv', header=False, index=False)
-                V_current_df.to_csv(f'{resultdir}BLP_matrix/V_current_{str(capacity)}_{groups}q_capcoefs0.csv', header=False, index=False)
-            else: 
-                F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{groups}q.csv', header=False, index=False)
-                V_current_df.to_csv(f'{resultdir}BLP_matrix/V_current_{str(capacity)}_{groups}q.csv', header=False, index=False)
-        else:
-            if capcoef: F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{groups}q_capcoefs0_nodisthet.csv', header=False, index=False)
-            else: F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current_{str(capacity)}_{groups}q_nodisthet.csv', header=False, index=False)
+        F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', header=False, index=False)
+        V_current_df.to_csv(f'{resultdir}BLP_matrix/V_current{setting_tag}.csv', header=False, index=False)
 
     ######################################################################
 
@@ -251,19 +227,11 @@ def construct_F_BLP(Chain_type, capacity, groups, capcoef, heterogeneity, C_tota
             V_chains[i][site] = tract_site_preference
 
     print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')    
+    
     F_chains_df = pd.DataFrame(F_chains)
     V_chains_df = pd.DataFrame(V_chains)
-
-    if heterogeneity:
-        if capcoef: 
-            F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{groups}q_capcoefs0.csv', header=False, index=False)
-            V_chains_df.to_csv(f'{resultdir}BLP_matrix/V_{Chain_type}_{str(capacity)}_{groups}q_capcoefs0.csv', header=False, index=False)
-        else: 
-            F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{groups}q.csv', header=False, index=False)
-            V_chains_df.to_csv(f'{resultdir}BLP_matrix/V_{Chain_type}_{str(capacity)}_{groups}q.csv', header=False, index=False)
-    else:
-        if capcoef: F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{groups}q_capcoefs0_nodisthet.csv', header=False, index=False)
-        else: F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}_{str(capacity)}_{groups}q_nodisthet.csv', header=False, index=False)
+    F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}{setting_tag}.csv', header=False, index=False)
+    V_chains_df.to_csv(f'{resultdir}BLP_matrix/V_{Chain_type}{setting_tag}.csv', header=False, index=False)
 
     return
 
@@ -273,38 +241,28 @@ def construct_F_BLP(Chain_type, capacity, groups, capcoef, heterogeneity, C_tota
 
 
     
-def demand_check(Chain, capacity, groups, capcoef, level='Zip', heterogeneity=True, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
+def demand_check(Chain, capacity, groups, setting_tag, level='Zip', datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
 
     ### Tract-block
     tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int})
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
     block.sort_values(by=['blkid'], inplace=True)
     blk_tract = pd.read_csv(f'{datadir}/Intermediate/blk_tract.csv', usecols=['tract', 'blkid']) 
-
-    if heterogeneity:
-        if capcoef:
-            block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_{groups}q_capcoefs0.csv', delimiter = ",")
-        else:
-            block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_{groups}q.csv', delimiter = ",")
-    else:
-        if capcoef:
-            block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_{groups}q_capcoefs0_const_nodisthet.csv', delimiter = ",")
-        else:
-            block_utils = pd.read_csv(f'{resultdir}Demand/agent_results_{capacity}_200_{groups}q_const_nodisthet.csv', delimiter = ",")
+    block_utils = pd.read_csv(f'{resultdir}Demand/agent_results{setting_tag}.csv', delimiter = ",")
 
     ### Distance pairs
     distdf = pd.read_csv(f'{datadir}/Intermediate/ca_blk_pharm_dist.csv', dtype={'locid': int, 'blkid': int})
     C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type=Chain, M=20)
     
-    if level == 'Zip': zip_demand_checks(capacity, groups, capcoef, heterogeneity, block, block_utils, distdf)
-    elif level == 'Tract': tract_demand_check(capacity, groups, capcoef, heterogeneity, num_tracts, tract, block, blk_tract, block_utils, distdf)
+    if level == 'Zip': zip_demand_check(capacity, groups, capcoef, block, block_utils, distdf, setting_tag)
+    elif level == 'Tract': tract_demand_check(capacity, groups, capcoef, num_tracts, tract, block, blk_tract, block_utils, distdf, setting_tag)
     else: raise Exception("Level undefined, has to be Zip or Tract\n")
 
     return
 
 
 
-def tract_demand_check(capacity, groups, capcoef, heterogeneity, num_tracts, tract, block, blk_tract, block_utils, distdf, resultdir='/export/storage_covidvaccine/Result/'):
+def tract_demand_check(capacity, groups, capcoef, num_tracts, tract, block, blk_tract, block_utils, distdf, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
     
     print('Start tract-level demand check...\n')
 
@@ -346,22 +304,13 @@ def tract_demand_check(capacity, groups, capcoef, heterogeneity, num_tracts, tra
         Tract_summary.append({'Tract': i, 'GEOID': tract_id, 'Num blocks': len(common_blocks_id), 'Estimated': tract_site_willingess})
         
     Tract_summary = pd.DataFrame(Tract_summary)
-    if heterogeneity: 
-        if capcoef:
-            Tract_summary.to_csv(f'{resultdir}/Tract_demand_check_{str(capacity)}_{groups}q_capcoefs0.csv', encoding='utf-8', index=False, header=True)
-        else:
-            Tract_summary.to_csv(f'{resultdir}/Tract_demand_check_{str(capacity)}_{groups}q.csv', encoding='utf-8', index=False, header=True)
-    else: 
-        if capcoef:
-            Tract_summary.to_csv(f'{resultdir}/Tract_demand_check_{str(capacity)}_{groups}q_capcoefs0_nodisthet.csv', encoding='utf-8', index=False, header=True)
-        else:
-            Tract_summary.to_csv(f'{resultdir}/Tract_demand_check_{str(capacity)}_{groups}q_nodisthet.csv', encoding='utf-8', index=False, header=True)
+    Tract_summary.to_csv(f'{resultdir}/Tract_demand_check{setting_tag}.csv', encoding='utf-8', index=False, header=True)
 
     return
 
 
 
-def zip_demand_checks(capacity, groups, capcoef, heterogeneity, block, block_utils, distdf, resultdir='/export/storage_covidvaccine/Result/'):
+def zip_demand_check(capacity, groups, capcoef, block, block_utils, distdf, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
     
     print('Start zip-level demand check...\n')
     
@@ -395,17 +344,7 @@ def zip_demand_checks(capacity, groups, capcoef, heterogeneity, block, block_uti
         Zip_summary.append({'Zip': zip, 'Num blocks': len(common_blocks_id), 'Estimated': zip_site_willingess})
 
     Zip_summary = pd.DataFrame(Zip_summary)
-
-    if heterogeneity: 
-        if capcoef:
-            Zip_summary.to_csv(f'{resultdir}/Zip_demand_check_{str(capacity)}_{groups}q_capcoefs0.csv', encoding='utf-8', index=False, header=True)
-        else:
-            Zip_summary.to_csv(f'{resultdir}/Zip_demand_check_{str(capacity)}_{groups}q.csv', encoding='utf-8', index=False, header=True)
-    else: 
-        if capcoef:
-            Zip_summary.to_csv(f'{resultdir}/Zip_demand_check_{str(capacity)}_{groups}q_capcoefs0_nodisthet.csv', encoding='utf-8', index=False, header=True)
-        else:
-            Zip_summary.to_csv(f'{resultdir}/Zip_demand_check_{str(capacity)}_{groups}q_nodisthet.csv', encoding='utf-8', index=False, header=True)
+    Zip_summary.to_csv(f'{resultdir}/Zip_demand_check{setting_tag}.csv', encoding='utf-8', index=False, header=True)
 
     return
 

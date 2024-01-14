@@ -21,7 +21,7 @@ from gurobipy import GRB, quicksum
 
 def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
                   num_current_stores, num_total_stores, num_tracts, 
-                  scale_factor, path, R = None, heuristic=False, MIPGap = 1e-3):
+                  scale_factor, path, setting_tag, R = None, heuristic=False, MIPGap = 1e-3):
     
     """
     Parameters
@@ -134,8 +134,8 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
         z_file_name += '_heuristic'
         y_file_name += '_heuristic'
 
-    np.savetxt(f'{z_file_name}.csv', z_soln, delimiter=",")
-    np.savetxt(f'{y_file_name}.csv', y_soln, delimiter=",")
+    np.savetxt(f'{z_file_name}{setting_tag}.csv', z_soln, delimiter=",")
+    np.savetxt(f'{y_file_name}{setting_tag}.csv', y_soln, delimiter=",")
 
  
     ### Finished all ###
@@ -149,7 +149,7 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
 
 
 
-def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_stores, num_tracts, scale_factor, path, R=None, MIPGap = 5e-2):
+def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_stores, num_tracts, scale_factor, path, setting_tag, R=None, MIPGap = 5e-2):
     
     """
     Parameters
@@ -184,7 +184,7 @@ def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_store
     # m.Params.IntegralityFocus = 1
     m.Params.MIPFocus = 3 # to focus on the bound
     m.Params.MIPGap = MIPGap
-    
+    m.Params.TimeLimit=28800 # 8 hours
 
     if scenario == "total": num_stores = num_total_stores
 
@@ -240,7 +240,7 @@ def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_store
     if R is not None: 
         z_file_name += f'_fixR{str(R)}'
 
-    np.savetxt(f'{z_file_name}.csv', z_soln, delimiter=",")
+    np.savetxt(f'{z_file_name}{setting_tag}.csv', z_soln, delimiter=",")
 
 
     ### Finished all ###
@@ -254,7 +254,7 @@ def optimize_rate_MNL(scenario, pf, v, C, K, num_current_stores, num_total_store
 
 
 
-def optimize_rate_MNL_new(scenario, pf, v, C, K, num_current_stores, num_total_stores, num_tracts, scale_factor, path, R=None, MIPGap = 5e-2):
+def optimize_rate_MNL_partial(scenario, pf, v, C, K, num_current_stores, num_total_stores, num_tracts, scale_factor, path, setting_tag, R=None, MIPGap = 5e-2):
 
     env = gp.Env(empty=True)
     env.setParam("OutputFlag",0)
@@ -327,7 +327,7 @@ def optimize_rate_MNL_new(scenario, pf, v, C, K, num_current_stores, num_total_s
     if R is not None: 
         z_file_name += f'_fixR{str(R)}'
 
-    np.savetxt(f'{z_file_name}_new.csv', z_soln, delimiter=",")
+    np.savetxt(f'{z_file_name}{setting_tag}.csv', z_soln, delimiter=",")
 
 
     ### Finished all ###

@@ -16,43 +16,39 @@ os.chdir(dname)
 from utils.evaluate_model import compute_distdf, construct_blocks, run_assignment, evaluate_rate
 from utils.import_parameters import import_basics, import_BLP_estimation
 
-
-def evaluate_main(Model, Chain, M, K, nsplits, capcoef, R=None, heuristic=False, MIP=False, constraint='vaccinated', resultdir='/export/storage_covidvaccine/Result'):
+def evaluate_main(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, MIP=False, constraint='vaccinated', resultdir='/export/storage_covidvaccine/Result'):
 
 
     if capcoef: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q_capcoef/{Chain}'
     else: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}'
     
 
-    evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, R, heuristic, constraint, path)
-    if MIP: evaluate_chain_MIP(Model, Chain, M, K, nsplits, capcoef, R, heuristic, constraint, path)
+    evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, constraint, path)
+    if MIP: evaluate_chain_MIP(Model, Chain, M, K, nsplits, capcoef, R, constraint, path)
 
     return
 
 
 
 
-def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, R, heuristic, constraint, path):
+def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, constraint, path):
 
-    print(f'Evaluating random order FCFS with Chain type: {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}, Heuristic: {heuristic}.\n Results stored at {path}\n')
+    print(f'Evaluating random order FCFS with Chain type: {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}.\n Results stored at {path}\n')
     Chain_dict = {'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}
 
     z_file_name = f'{path}/{constraint}/z_total'
-    if R is not None: z_file_name += f'_fixR{str(R)}'
-    if heuristic: z_file_name += '_heuristic'
-    z_total = np.genfromtxt(f'{z_file_name}.csv', delimiter = ",", dtype = float)        
-        
-    compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, heuristic, path) # NOTE: JUST FOR NOW
+    z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)        
+    print(f"Import optimization solution from file {z_file_name}{setting_tag}\n")
+    
+    compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, setting_tag, path)
 
-    if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and constraint == 'vaccinated': # Pharmacy-only
-        block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path, Pharmacy=True)
-        run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path, Pharmacy=True)
+    if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': # Pharmacy-only
+        block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, setting_tag, constraint, path, Pharmacy=True)
+        run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path, Pharmacy=True)
 
-
-    block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, R, heuristic, constraint, path)
-    run_assignment(Chain, M, K, R, heuristic, constraint, block, block_utils, distdf, path)
+    block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, setting_tag, constraint, path)
+    run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path)
             
-
     return
 
 

@@ -18,19 +18,22 @@ K = int(sys.argv[2]) # K
 M = int(sys.argv[3]) # M
 nsplits = int(sys.argv[4])
 capcoef = sys.argv[5]
-R = sys.argv[6] # R
+R = int(sys.argv[6])
 
 
 
 def export_locations(Chain, M, K, nsplits, capcoef, R, opt_constr='vaccinated', datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result'):
 
-    Model = 'MaxVaxHPIDistBLP'
-    path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q_capcoef/{Chain}/{opt_constr}/'
-    z_BLP = np.genfromtxt(f'{path}/z_total_fixR{R}.csv', delimiter = ",", dtype = float)
+    # Model = 'MaxVaxHPIDistBLP'
+    Model = 'MNL_partial'
+    path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{opt_constr}/'
+    # z_BLP = np.genfromtxt(f'{path}/z_total_fixR{R}.csv', delimiter = ",", dtype = float)
+    z_BLP = np.genfromtxt(f'{path}/z_total.csv', delimiter = ",", dtype = float)
 
     Model = 'MaxVaxDistLogLin'
-    path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q_capcoef/{Chain}/{opt_constr}/'
-    z_LogLin = np.genfromtxt(f'{path}/z_total_fixR{R}.csv', delimiter = ",", dtype = float)
+    path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{opt_constr}/'
+    # z_LogLin = np.genfromtxt(f'{path}/z_total_fixR{R}.csv', delimiter = ",", dtype = float)
+    z_LogLin = np.genfromtxt(f'{path}/z_total.csv', delimiter = ",", dtype = float)
 
     # ====================================================================================
 
@@ -62,4 +65,4 @@ def export_locations(Chain, M, K, nsplits, capcoef, R, opt_constr='vaccinated', 
 
 
 if __name__ == "__main__":
-    export_locations(Chain, M, K, nsplits, capcoef, int(R))
+    export_locations(Chain, M, K, nsplits, capcoef, R)

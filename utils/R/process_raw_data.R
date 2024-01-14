@@ -49,7 +49,6 @@ write.table(POPULATION_CENTROIDS$POPULATION, file=paste("Data/CA_demand.csv", se
 write.table(POPULATION_CENTROIDS$GEOID, file="Data/CA_tractID.csv", row.names = F, col.names = F)
 write.csv(POPULATION_CENTROIDS, file=paste("Data/tract_centroids.csv", sep = ""), row.names = F)
 
-
 ################################################################################
 ################################################################################
 ################################################################################
@@ -58,12 +57,14 @@ write.csv(POPULATION_CENTROIDS, file=paste("Data/tract_centroids.csv", sep = "")
 ### Obtain demand/population for 5+ only
 DEMOGRAPHIC <- read.csv("Data/Raw/Census/pdb2020trv2_us.csv")
 ## Tot_Population_CEN_2010 matches the population from population centroid
-DEMOGRAPHIC <- DEMOGRAPHIC %>% filter(State == 6) %>% dplyr::select(c(GIDTR, State, State_name, County, County_name, Tract,
+DEMOGRAPHIC <- DEMOGRAPHIC %>% filter(State == 6) %>% dplyr::select(c(GIDTR, State, State_name, County, County_name, Tract, LAND_AREA,
                                                                       Tot_Population_CEN_2010, Tot_Population_ACS_14_18, Tot_Population_ACSMOE_14_18,
                                                                       Pop_under_5_CEN_2010, Pop_under_5_ACS_14_18, Pop_under_5_ACSMOE_14_18)) %>%
-  mutate(Pop_over_5_CEN_2010 = Tot_Population_CEN_2010 - Pop_under_5_CEN_2010)
+  dplyr::mutate(Pop_over_5_CEN_2010 = Tot_Population_CEN_2010 - Pop_under_5_CEN_2010,
+         Density = round(Pop_over_5_CEN_2010/LAND_AREA))
 
-DUP <- DEMOGRAPHIC %>% filter(GIDTR == 6037800204)
+DUP <- DEMOGRAPHIC %>% dplyr::filter(GIDTR == 6037800204)
+# DUP <- DUP %>% janitor::adorn_totals("row") # not working
 DUP <- DUP %>% adorn_totals("row")
 DUP = DUP[-1:-2,]
 DUP <- DUP %>% mutate(GIDTR = 6037800204, State = 6, State_name = 'California', County = 37, County_name = 'Los Angeles County', Tract = 800204)
@@ -74,6 +75,9 @@ POPULATION_CENTROIDS <- read.csv("Data/tract_centroids.csv")
 POPULATION_CENTROIDS <- left_join(POPULATION_CENTROIDS, DEMOGRAPHIC, by = c('GEOID' = 'GIDTR'))
 
 write.table(POPULATION_CENTROIDS$Pop_over_5_CEN_2010, file=paste("Data/CA_demand_over_5.csv", sep = ""), row.names = F, col.names = F) # model input: vector of demand
+
+POPULATION_CENTROIDS$Density[is.nan(POPULATION_CENTROIDS$Density)]<-0
+write.table(POPULATION_CENTROIDS$Density, file=paste("Data/CA_density.csv", sep = ""), row.names = F, col.names = F) # model input: vector of density
 
 
 ################################################################################

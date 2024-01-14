@@ -35,7 +35,7 @@ def import_dataset(nsplits, datadir):
     
     ### Keep markets in both
     df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
-    df = de.hpi_dist_terms(df, nsplits=nsplits, add_bins=True, add_dummies=False, add_dist=False)
+    df = de.hpi_dist_terms(df, nsplits=nsplits, add_hpi_bins=True, add_hpi_dummies=False, add_dist=False)
     df_temp = df.copy()
     df = df.loc[df.market_ids.isin(markets_unique), :]
     mkts_in_both = set(df['market_ids'].tolist()).intersection(set(block['market_ids'].tolist()))
@@ -68,7 +68,7 @@ def import_dataset(nsplits, datadir):
 
 
 
-def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, R=None, heuristic=False, Pharmacy=False):
+def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag, heuristic=False, Pharmacy=False):
     
     '''
     z, y: results from first/second stage
@@ -78,35 +78,31 @@ def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, nu
     print('Importing solution...\n')
 
     if Pharmacy:
-        locs_filename = f'{path}locs_{K}_Pharmacy.csv'
-        dists_filename = f'{path}dists_{K}_Pharmacy.csv'
-        assignment_filename = f'{path}assignment_{K}_Pharmacy.csv'
+        locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
+        dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
+        assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
         # z_filename = f'{path}z_current.csv'
         # y_filename = f'{path}y_current.csv'
         z = np.ones(num_current_stores)
     
     else:
-        suffix = f"_fixR{str(R)}_heuristic" if R is not None and heuristic else f"_fixR{str(R)}" if R is not None else "_heuristic" if heuristic else ""
-        
-        print(f'suffix: {suffix}')
+        locs_filename = f'{path}locs_{Chain_type}{setting_tag}.csv'
+        dists_filename = f'{path}dists_{Chain_type}{setting_tag}.csv'
+        assignment_filename = f'{path}assignment_{Chain_type}{setting_tag}.csv'
 
-        locs_filename = f'{path}locs_{K}_{Chain_type}{suffix}.csv'
-        dists_filename = f'{path}dists_{K}_{Chain_type}{suffix}.csv'
-        assignment_filename = f'{path}assignment_{K}_{Chain_type}{suffix}.csv'
-        z_filename = f'{path}z_total{suffix}.csv'
-        y_filename = f'{path}y_total{suffix}.csv'
-        y_eval_filename = f'{path}y_total_eval{suffix}.csv'
+        z_filename = f'{path}z_total{setting_tag}.csv'
+        y_filename = f'{path}y_total{setting_tag}.csv'
+        y_eval_filename = f'{path}y_total_eval{setting_tag}.csv'
 
         z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
         
-        if Model == 'MNL': y = np.zeros((num_tracts, num_total_stores)) # dummy
+        if Model == 'MNL' or Model == 'MNL_partial': y = np.zeros((num_tracts, num_total_stores)) # dummy
         else: y = np.genfromtxt(y_filename, delimiter=",", dtype=float)
 
     # Load data
     locs = np.genfromtxt(locs_filename, delimiter="")
     dists = np.genfromtxt(dists_filename, delimiter="")
     assignment = np.genfromtxt(assignment_filename, delimiter="")
-
     
     if Pharmacy:
         # 1. Pharmacy-only, no evaluation
