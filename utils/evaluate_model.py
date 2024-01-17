@@ -109,7 +109,9 @@ def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, 
 
 
     # Block estimation
-    block_utils = pd.read_csv(f'{resultdir}/Demand/agent_results{setting_tag}.csv', delimiter = ",")
+    temp_setting_tag = setting_tag.replace('_norandomterm', '') # estimation independent of random term
+    temp_setting_tag = temp_setting_tag.replace('_loglintemp', '') # estimation independent of random term
+    block_utils = pd.read_csv(f'{resultdir}/Demand/agent_results{temp_setting_tag}.csv', delimiter = ",")
     block_utils = block_utils.loc[block_utils.blkid.isin(blocks_unique), :]
 
 

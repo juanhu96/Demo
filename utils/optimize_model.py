@@ -21,7 +21,7 @@ from gurobipy import GRB, quicksum
 
 def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
                   num_current_stores, num_total_stores, num_tracts, 
-                  scale_factor, path, setting_tag, R = None, heuristic=False, MIPGap = 1e-3):
+                  scale_factor, path, setting_tag, R = None, heuristic=False, MIPGap=5e-2):
     
     """
     Parameters
@@ -289,6 +289,7 @@ def optimize_rate_MNL_partial(scenario,
     # m.Params.IntegralityFocus = 1
     m.Params.MIPFocus = 3 # to focus on the bound
     m.Params.MIPGap = MIPGap
+    m.Params.TimeLimit=28800 # 8 hours
     
 
     if scenario == "total": num_stores = num_total_stores
@@ -300,7 +301,9 @@ def optimize_rate_MNL_partial(scenario,
     x = m.addVars(num_tracts, lb = 0, name = 'x')
 
     T = m.addVars(num_tracts * num_stores, lb = 0, ub = 1, name = 'T')
-    t = m.addVars(num_stores, lb = 0, ub = 1, name = 't')
+    # t = m.addVars(num_stores, lb = 0, ub = 1, name = 't') # proportion allocation
+    t = m.addVars(num_tracts * num_stores, lb = 0, ub = 1, name = 't') # priority allocation
+
     
     ### Objective ###
 
@@ -315,7 +318,8 @@ def optimize_rate_MNL_partial(scenario,
 
     for j in range(num_stores):
         m.addConstr(quicksum(pf[i * num_stores + j] * T[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
-        m.addConstr(t[j] <= z[j])
+        # m.addConstr(t[j] <= z[j])
+        m.addConstrs(t[i * num_stores + j] <= z[j] for i in range(num_tracts))
 
     m.addConstr(z.sum() == num_current_stores, name = 'N')
     if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
@@ -326,9 +330,12 @@ def optimize_rate_MNL_partial(scenario,
             m.addConstr(y[i * num_stores + j] <= x[i])
             m.addConstr((1 + v[i * num_stores + j]) * y[i * num_stores + j] <= z[j])
 
-            m.addConstr(T[i * num_stores + j] <= t[j])
+            # m.addConstr(T[i * num_stores + j] <= t[j])
+            # m.addConstr(T[i * num_stores + j] <= y[i * num_stores + j])
+            # m.addConstr(T[i * num_stores + j] >= t[j] + y[i * num_stores + j] - 1)
+            m.addConstr(T[i * num_stores + j] <= t[i * num_stores + j])
             m.addConstr(T[i * num_stores + j] <= y[i * num_stores + j])
-            m.addConstr(T[i * num_stores + j] >= t[j] + y[i * num_stores + j] - 1)
+            m.addConstr(T[i * num_stores + j] >= t[i * num_stores + j] + y[i * num_stores + j] - 1)
             
 
     print("****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************\n")

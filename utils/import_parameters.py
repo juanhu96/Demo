@@ -141,21 +141,23 @@ def import_basics(Chain, M, nsplits, flexible_consideration, scale_factor, datad
             indices = np.where(Closest_total[row] == 1)[0].tolist()
             C.append(indices)
 
+    else: raise ValueError("Consideration set not defined")
 
-    # def summary_consideration_set(C):
 
-    #     lengths = [len(sublist) for sublist in C]
-    #     quantile_50 = np.quantile(lengths, 0.50)
-    #     quantile_75 = np.quantile(lengths, 0.75)
-    #     quantile_90 = np.quantile(lengths, 0.90)
-    #     quantile_95 = np.quantile(lengths, 0.95)
-    #     quantile_97 = np.quantile(lengths, 0.97)
-    #     quantile_98 = np.quantile(lengths, 0.98)
-    #     quantile_99 = np.quantile(lengths, 0.99)
-    #     min_length = min(lengths)
-    #     max_length = max(lengths)
+    def summary_consideration_set(C):
 
-    #     print(min_length, max_length, quantile_50, quantile_75, quantile_90, quantile_95, quantile_97, quantile_98, quantile_99)
+        lengths_with_indices = [(len(sublist), i) for i, sublist in enumerate(C)]
+        lengths = [length for length, _ in lengths_with_indices]
+        five_greatest_indices = [index for _, index in sorted(lengths_with_indices, key=lambda x: x[0], reverse=True)[:5]]
+
+        min_length, max_length = min(lengths), max(lengths)
+        quantile_list = [np.quantile(lengths, 0.50), np.quantile(lengths, 0.75), np.quantile(lengths, 0.90), np.quantile(lengths, 0.95), np.quantile(lengths, 0.99)]
+        print(f'Min: {min_length}; Max: {max_length}')
+        print("="*60)
+        print(quantile_list)
+        print("="*60)
+        print(five_greatest_indices, tract_hpi.iloc[five_greatest_indices])
+        print("="*60)
 
     # summary_consideration_set(C)
 
@@ -210,13 +212,23 @@ def import_BLP_estimation(Chain_type, setting_tag, resultdir='/export/storage_co
 
 
 
-def import_LogLin_estimation(C_total, abd, num_current_stores):
+def import_LogLin_estimation(C_total, abd, num_current_stores, norandomterm, loglintemp):
 
     Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
-
-    # F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
-    abd = np.nan_to_num(abd, nan=Demand_parameter[0][0]) # random error to match empirical rate
-    F_D_total = abd.reshape(8057, 1) + Demand_parameter[0][1] * np.log(C_total/1000)
+    
+    if norandomterm:
+        print("No random terms considered in LogLinear estimation!\n")
+        F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
+    elif loglintemp:
+        print("Replace distance less than 1km with 1km\n")
+        C_total[C_total < 1000] = 1000
+        abd = np.nan_to_num(abd, nan=Demand_parameter[0][0]) # random error to match empirical rate
+        F_D_total = abd.reshape(8057, 1) + Demand_parameter[0][1] * np.log(C_total/1000)
+    else:
+        print("LogLinear estimation with random terms \n")
+        abd = np.nan_to_num(abd, nan=Demand_parameter[0][0]) # random error to match empirical rate
+        F_D_total = abd.reshape(8057, 1) + Demand_parameter[0][1] * np.log(C_total/1000)
+    
     F_D_current = F_D_total[:,0:num_current_stores]
 
     return F_D_current, F_D_total

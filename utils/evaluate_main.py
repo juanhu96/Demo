@@ -16,22 +16,40 @@ os.chdir(dname)
 from utils.evaluate_model import compute_distdf, construct_blocks, run_assignment, evaluate_rate
 from utils.import_parameters import import_basics, import_BLP_estimation
 
-def evaluate_main(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, MIP=False, constraint='vaccinated', resultdir='/export/storage_covidvaccine/Result'):
 
+def evaluate_main(Model: str,
+                  Chain: str,
+                  K: int,
+                  M: int,
+                  nsplits: int,
+                  capcoef: bool,
+                  mnl: bool,
+                  flexible_consideration: bool,
+                  flex_thresh: dict,
+                  logdist_above: bool,
+                  logdist_above_thresh: float,
+                  replace: bool,
+                  R, 
+                  norandomterm: bool,
+                  loglintemp: bool,
+                  setting_tag: str,
+                  MIP: bool = False,
+                  constraint='vaccinated',
+                  resultdir='/export/storage_covidvaccine/Result'):
 
-    if capcoef: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q_capcoef/{Chain}'
-    else: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}'
-    
+    path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}'
 
-    evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, constraint, path)
-    if MIP: evaluate_chain_MIP(Model, Chain, M, K, nsplits, capcoef, R, constraint, path)
+    evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, norandomterm, setting_tag, constraint, path)
+    if MIP: 
+        raise Exception("Warnings: MIP not updated yet \n")
+        evaluate_chain_MIP(Model, Chain, M, K, nsplits, capcoef, R, constraint, path)
 
     return
 
 
 
 
-def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, constraint, path):
+def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, norandomterm, setting_tag, constraint, path):
 
     print(f'Evaluating random order FCFS with Chain type: {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}.\n Results stored at {path}\n')
     Chain_dict = {'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}
@@ -40,7 +58,9 @@ def evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexibl
     z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)        
     print(f"Import optimization solution from file {z_file_name}{setting_tag}\n")
     
-    compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, setting_tag, path)
+    if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
+        print("Distdf not computed for current setting, start computing...\n")
+        compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, R, setting_tag, path)
 
     if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': # Pharmacy-only
         block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, setting_tag, constraint, path, Pharmacy=True)

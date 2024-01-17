@@ -1,0 +1,27 @@
+Start evaluate stage for setting _10000_1_4q_mnl_flexthresh2_3_15_logdistabove1.0_loglintemp...
+
+Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000, R = None.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar
+
+Import optimization solution from file /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/z_total_10000_1_4q_mnl_flexthresh2_3_15_logdistabove1.0_loglintemp
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.436 seconds.
+Assigning individuals...
+time3 - time2: 29.055
+time4 - time3: 304.625
+Number of full locations: 914  out of  4035
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.522 seconds.
+Assigning individuals...
+time3 - time2: 32.295
+time4 - time3: 310.647
+Number of full locations: 784  out of  4035
+Finished evaluate stage for setting _10000_1_4q_mnl_flexthresh2_3_15_logdistabove1.0_loglintemp!
+

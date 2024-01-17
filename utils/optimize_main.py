@@ -19,20 +19,22 @@ from utils.import_parameters import import_basics, import_BLP_estimation, import
 
 
 def optimize_main(Model: str,
-                Chain: str,
-                K: int,
-                M: int,
-                nsplits: int,
-                capcoef: bool,
-                mnl: bool,
-                flexible_consideration: bool,
-                flex_thresh: dict,
-                logdist_above: bool,
-                logdist_above_thresh: float,
-                replace: bool,
-                R, 
-                setting_tag: str,
-                resultdir='/export/storage_covidvaccine/Result'):
+                  Chain: str,
+                  K: int,
+                  M: int,
+                  nsplits: int,
+                  capcoef: bool,
+                  mnl: bool,
+                  flexible_consideration: bool,
+                  flex_thresh: dict,
+                  logdist_above: bool,
+                  logdist_above_thresh: float,
+                  replace: bool,
+                  R, 
+                  norandomterm: bool,
+                  loglintemp: bool,
+                  setting_tag: str,
+                  resultdir='/export/storage_covidvaccine/Result'):
     
 
     def create_path(Model, Chain, K, M, nsplits, resultdir):
@@ -45,8 +47,8 @@ def optimize_main(Model: str,
         if not os.path.exists(chain_path): os.mkdir(chain_path)
         return chain_path
     
-    expdirpath = create_path(Model, Chain, K, M nsplits, resultdir)
-    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, setting_tag, expdirpath)
+    expdirpath = create_path(Model, Chain, K, M, nsplits, resultdir)
+    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, norandomterm, loglintemp, setting_tag, expdirpath)
 
     return
 
@@ -65,6 +67,8 @@ def optimize_chain(Model: str,
                 logdist_above_thresh: float,
                 replace: bool,
                 R, 
+                norandomterm: bool,
+                loglintemp: bool,
                 setting_tag: str,
                 expdirpath: str,
                 constraint: str = 'vaccinated',
@@ -81,13 +85,13 @@ def optimize_chain(Model: str,
     (Population, Quartile, abd, p_current, p_total, pc_current, pc_total, 
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, scale_factor)
-
+    
 
     if Model in Facility_BLP_models: 
         F_current, F_total = import_BLP_estimation(Chain, setting_tag)
 
     if Model in Facility_LogLin_models: 
-        F_current, F_total = import_LogLin_estimation(C_total, abd, num_current_stores)
+        F_current, F_total = import_LogLin_estimation(C_total, abd, num_current_stores, norandomterm, loglintemp)
     
     if Model in Assortment_MNL_models:
         V_current, V_total = import_MNL_estimation(Chain, setting_tag)
@@ -107,18 +111,18 @@ def optimize_chain(Model: str,
         pf_total = p_total * f_total
 
 
-    if Model in MNL_models:
+    if Model in Assortment_MNL_models:
 
         v_total = V_total.flatten()
         pf_total = p_total * v_total
 
-    pf_total = pf_total * Closest_total # make sure v_ij are zero other place
+    pf_total = pf_total * Closest_total # make sure zero at other place
 
 
     # ================================================================================
 
     path = expdirpath + constraint + '/'
-    if not os.path.exists(): os.mkdir(path)
+    if not os.path.exists(path): os.mkdir(path)
 
 
     if Model == 'MNL':
@@ -134,7 +138,8 @@ def optimize_chain(Model: str,
                         num_tracts=num_tracts,
                         scale_factor=scale_factor,
                         setting_tag=setting_tag,
-                        path=path)
+                        path=path,
+                        MIPGap=1e-2)
 
 
     if Model == 'MNL_partial':
@@ -150,7 +155,8 @@ def optimize_chain(Model: str,
                         num_tracts=num_tracts,
                         scale_factor=scale_factor,
                         setting_tag=setting_tag,
-                        path=path)
+                        path=path,
+                        MIPGap=1e-2)
                         
 
     # ================================================================================
@@ -166,9 +172,9 @@ def optimize_chain(Model: str,
                     num_total_stores=num_total_stores,
                     num_tracts=num_tracts,
                     scale_factor=scale_factor,
-                    path = expdirpath + constraint + '/',
+                    path=path,
                     setting_tag=setting_tag,
-                    R = R)
+                    R=R)
   
     # ================================================================================
 

@@ -36,7 +36,12 @@ def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, mnl, flexible_
     distdf_chain = pd.read_csv(f'{datadir}Intermediate/ca_blk_{Chain_type}_dist.csv', dtype={'locid': int, 'blkid': int})
 
     C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type)
-    construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, setting_tag)
+    
+    if flexible_consideration:
+        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, setting_tag)
+    else:
+        print("Change M to 30 as we are not considering flexible consideration set\n")
+        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, setting_tag, M=30)
 
     return
 

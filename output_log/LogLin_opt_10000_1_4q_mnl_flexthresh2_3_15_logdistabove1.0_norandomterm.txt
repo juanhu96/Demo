@@ -1,0 +1,81 @@
+Start optimize stage for setting _10000_1_4q_mnl_flexthresh2_3_15_logdistabove1.0_norandomterm...
+
+Optimization results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/...
+
+Closest_total and C follows flexible consideration set
+
+No random terms considered in LogLinear estimation!
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.001
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709016 rows, 40700958 columns and 81480134 nonzeros
+Model fingerprint: 0x44b3258f
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 2e+04]
+  Objective range  [1e+00, 2e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.516530e+07
+Presolve removed 0 rows and 40617689 columns (presolve time = 6s) ...
+Presolve removed 40696832 rows and 40618005 columns (presolve time = 10s) ...
+Presolve removed 40696862 rows and 40618080 columns (presolve time = 15s) ...
+Presolve removed 40696862 rows and 40618080 columns (presolve time = 20s) ...
+Presolve removed 40696862 rows and 40618080 columns
+Presolve time: 21.94s
+Presolved: 12154 rows, 82878 columns, 165182 nonzeros
+Variable types: 77827 continuous, 5051 integer (5050 binary)
+Found heuristic solution: objective 2.521296e+07
+Deterministic concurrent LP optimizer: primal and dual simplex
+Showing first log only...
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    1.6125709e+05   0.000000e+00   3.577284e+06     29s
+   50460    2.9298327e+07   0.000000e+00   0.000000e+00     30s
+Concurrent spin time: 0.03s
+
+Solved with primal simplex
+
+Root relaxation: objective 2.929833e+07, 50460 iterations, 0.95 seconds (1.22 work units)
+Total elapsed time = 30.13s
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.9298e+07    0  307 2.5213e+07 2.9298e+07  16.2%     -   30s
+H    0     0                    2.911167e+07 2.9298e+07  0.64%     -   30s
+H    0     0                    2.926168e+07 2.9298e+07  0.13%     -   31s
+H    0     0                    2.926229e+07 2.9298e+07  0.12%     -   31s
+H    0     0                    2.926825e+07 2.9298e+07  0.10%     -   31s
+H    0     0                    2.926894e+07 2.9298e+07  0.10%     -   32s
+H    0     0                    2.927000e+07 2.9298e+07  0.10%     -   32s
+     0     0 2.9298e+07    0  325 2.9270e+07 2.9298e+07  0.10%     -   32s
+
+Cutting planes:
+  Gomory: 56
+  Implied bound: 326
+  Flow cover: 40
+  RLT: 4
+  Relax-and-lift: 41
+
+Explored 1 nodes (54966 simplex iterations) in 34.53 seconds (50.04 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 8: 2.927e+07 2.92689e+07 2.92683e+07 ... 2.51653e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 2.926999936504e+07, best bound 2.929832726175e+07, gap 0.0968%
+Finished optimize stage for setting _10000_1_4q_mnl_flexthresh2_3_15_logdistabove1.0_norandomterm!
+

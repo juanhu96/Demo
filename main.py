@@ -40,6 +40,9 @@ if replace:
     R = int(replace_arg.replace('replace', ''))
 else: R = None
 
+norandomterm = any(['norandomterm' in arg for arg in sys.argv]) # for log linear intercept
+loglintemp = any(['loglintemp' in arg for arg in sys.argv]) # for log linear dist replace
+
 setting_tag = f'_{str(K)}_1_{nsplits}q' if flexible_consideration else f'_{str(K)}_{M}_{nsplits}q' 
 setting_tag += '_capcoefs0' if capcoef else ''
 setting_tag += "_mnl" if mnl else ""
@@ -47,7 +50,8 @@ setting_tag += "_flex" if flexible_consideration else ""
 setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').replace('[', '').replace(']', '')}" if flexible_consideration else ""
 setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
 setting_tag += f"_R{R}" if replace else ""
-
+setting_tag += f"_norandomterm" if norandomterm else ""
+setting_tag += f"_loglintemp" if loglintemp else ""
 
 params = {
     'Model': Model,
@@ -63,6 +67,8 @@ params = {
     'logdist_above_thresh': logdist_above_thresh, 
     'replace': replace, 
     'R': R, 
+    'norandomterm': norandomterm,
+    'loglintemp': loglintemp,
     'setting_tag': setting_tag
 }
 
