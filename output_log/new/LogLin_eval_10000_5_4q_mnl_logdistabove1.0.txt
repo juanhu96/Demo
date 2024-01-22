@@ -1,0 +1,27 @@
+Start evaluate stage for setting _10000_5_4q_mnl_logdistabove1.0...
+
+Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000, R = None.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar
+
+Import optimization solution from file /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/z_total_10000_5_4q_mnl_logdistabove1.0
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.663 seconds.
+Assigning individuals...
+time3 - time2: 29.247
+time4 - time3: 312.898
+Number of full locations: 1009  out of  4035
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.448 seconds.
+Assigning individuals...
+time3 - time2: 27.575
+time4 - time3: 309.257
+Number of full locations: 774  out of  4035
+Finished evaluate stage for setting _10000_5_4q_mnl_logdistabove1.0!
+

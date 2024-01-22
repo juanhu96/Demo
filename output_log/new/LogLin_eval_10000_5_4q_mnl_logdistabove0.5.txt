@@ -1,0 +1,37 @@
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_model.py:63: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+Start evaluate stage for setting _10000_5_4q_mnl_logdistabove0.5...
+
+Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000, R = None.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar
+
+Import optimization solution from file /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/z_total_10000_5_4q_mnl_logdistabove0.5
+
+Distdf not computed for current setting, start computing...
+
+Start computing distdf...
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.443 seconds.
+Assigning individuals...
+time3 - time2: 31.809
+time4 - time3: 329.791
+Number of full locations: 996  out of  4035
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.415 seconds.
+Assigning individuals...
+time3 - time2: 27.531
+time4 - time3: 297.78
+Number of full locations: 778  out of  4035
+Finished evaluate stage for setting _10000_5_4q_mnl_logdistabove0.5!
+

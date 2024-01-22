@@ -36,6 +36,12 @@ if replace:
     R = int(replace_arg.replace('replace', ''))
 else: R = None
 
+add = any(['add' in arg for arg in sys.argv])
+if add:
+    add_arg = [arg for arg in sys.argv if 'add' in arg][0]
+    A = int(add_arg.replace('add', ''))
+else: A = None
+
 norandomterm = any(['norandomterm' in arg for arg in sys.argv]) # for log linear intercept
 loglintemp = any(['loglintemp' in arg for arg in sys.argv]) # for log linear dist replace
 
@@ -52,19 +58,19 @@ setting_tag += f"_loglintemp" if loglintemp else ""
 #=================================================================
 
 
-def summary(K, M, nsplits, capcoef, R, setting_tag):
+def summary(K, M, nsplits, capcoef, setting_tag):
 
     print(f'Start creating summary table for {setting_tag}...\n')
 
-    # Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
-    Model_list = ['MaxVaxDistLogLin'] # norandomterm # loglintemp
+    Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
+    # Model_list = ['MaxVaxDistLogLin', 'MNL_partial'] # norandomterm # loglintemp
+    # Model_list = ['MaxVaxDistLogLin'] # norandomterm # loglintemp
     partnerships_summary(Model_list=Model_list,
                          Chain_list=['Dollar'],
                          K_list=[K],
                          M_list=[M],
                          nsplits=nsplits,
                          capcoef=capcoef,
-                         R=R,
                          setting_tag=setting_tag)
 
     print(f'Finished table for {setting_tag}!\n')
@@ -72,4 +78,4 @@ def summary(K, M, nsplits, capcoef, R, setting_tag):
 
 
 if __name__ == "__main__":
-    summary(K, M, nsplits, capcoef, R, setting_tag)
+    summary(K, M, nsplits, capcoef, setting_tag)

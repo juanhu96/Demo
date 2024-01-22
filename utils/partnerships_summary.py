@@ -21,7 +21,6 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                         M_list=[5, 10], 
                         nsplits=4,
                         capcoef=True,
-                        R=None,
                         setting_tag='',
                         heuristic=False,
                         constraint='vaccinated', 
@@ -75,7 +74,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
 
                     path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{constraint}/'
 
-                    z, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag)
+                    z, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag)
                     
 
                     # ====================================================================================
@@ -104,7 +103,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
 
                     if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': # Pharmacy-only
                                 
-                        z, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag, Pharmacy=True)
+                        z, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, Pharmacy=True)
 
                         chain_summary = create_row_randomFCFS('Pharmacy-only', Model, Chain, M, K, nsplits, 'none', 'Evaluation', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
                         chain_summary_table.append(chain_summary)

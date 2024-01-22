@@ -1,0 +1,69 @@
+Start optimize stage for setting _10000_5_4q_mnl_logdistabove0.5_R100...
+
+Optimization results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/...
+
+        tract       hpi       abd    abd0.5      abd1    abd1.6
+0  6001400100  0.996662  0.816029  0.850794  0.897504  0.942588
+1  6001400200  0.998331  0.894032  0.895677  0.897683  0.938533
+2  6001400300  0.987933  0.878173  0.878226  0.882309  0.923690
+3  6001400400  0.964056  0.820456  0.819663  0.835978  0.879558
+4  6001400500  0.901284  0.769428  0.767763  0.794498  0.839986
+Imported abd0.5
+Closest_total and C follows fix rank of 5
+
+The demand parameter imported is: 
+[0.768, -0.076]
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.05
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 40709017 rows, 40700958 columns and 81446106 nonzeros
+Model fingerprint: 0x479b2b73
+Variable types: 40695907 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [2e-01, 3e+04]
+  Objective range  [2e-01, 3e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.658260e+07
+Presolve removed 0 rows and 0 columns (presolve time = 5s) ...
+Presolve removed 0 rows and 40655752 columns (presolve time = 10s) ...
+Presolve removed 40695936 rows and 40655753 columns (presolve time = 17s) ...
+Presolve removed 40695936 rows and 40655753 columns (presolve time = 21s) ...
+Presolve removed 40695936 rows and 40655753 columns (presolve time = 25s) ...
+Presolve removed 40695936 rows and 40655753 columns (presolve time = 32s) ...
+Presolve removed 40695936 rows and 40655753 columns
+Presolve time: 33.73s
+Presolved: 13081 rows, 45205 columns, 90408 nonzeros
+Variable types: 40155 continuous, 5050 integer (5049 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.0652057e+07   2.513240e+05   0.000000e+00     47s
+   15567    2.9839603e+07   0.000000e+00   0.000000e+00     48s
+
+Root relaxation: objective 2.983960e+07, 15567 iterations, 0.88 seconds (1.11 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.9840e+07    0   22 2.6583e+07 2.9840e+07  12.3%     -   48s
+H    0     0                    2.979249e+07 2.9840e+07  0.16%     -   48s
+
+Explored 1 nodes (18492 simplex iterations) in 52.29 seconds (41.45 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 2: 2.97925e+07 2.65826e+07 
+
+Optimal solution found (tolerance 5.00e-02)
+Best objective 2.979249059100e+07, best bound 2.983960282966e+07, gap 0.1581%
+Finished optimize stage for setting _10000_5_4q_mnl_logdistabove0.5_R100!
+

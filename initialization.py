@@ -44,8 +44,6 @@ setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
 def initialization(Chain, K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag, mode='initial'):
 
     print(setting_tag)    
-    # setting_tag = '_10000_300_4q_logdistabove1.0'
-    # setting_tag = '_10000_1_4q_mnl_flexthresh2_3_15_logdistabove1.0'
 
     if mode == 'initial': initial_BLP_estimation(Chain, K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag)
     elif mode == 'check': demand_check(Chain, K, nsplits, setting_tag)

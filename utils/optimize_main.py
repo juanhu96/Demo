@@ -13,7 +13,7 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix, optimize_rate_MNL, optimize_rate_MNL_partial
+from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix, optimize_rate_MNL, optimize_rate_MNL_partial, optimize_rate_MNL_partial_test
 from utils.import_parameters import import_basics, import_BLP_estimation, import_LogLin_estimation, import_MNL_estimation
 # from utils.heuristic import rescale_estimation
 
@@ -31,6 +31,7 @@ def optimize_main(Model: str,
                   logdist_above_thresh: float,
                   replace: bool,
                   R, 
+                  A,
                   norandomterm: bool,
                   loglintemp: bool,
                   setting_tag: str,
@@ -48,7 +49,7 @@ def optimize_main(Model: str,
         return chain_path
     
     expdirpath = create_path(Model, Chain, K, M, nsplits, resultdir)
-    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, norandomterm, loglintemp, setting_tag, expdirpath)
+    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, A, norandomterm, loglintemp, setting_tag, expdirpath)
 
     return
 
@@ -67,6 +68,7 @@ def optimize_chain(Model: str,
                 logdist_above_thresh: float,
                 replace: bool,
                 R, 
+                A,
                 norandomterm: bool,
                 loglintemp: bool,
                 setting_tag: str,
@@ -78,23 +80,23 @@ def optimize_chain(Model: str,
     
     Facility_BLP_models = ['MaxVaxHPIDistBLP']
     Facility_LogLin_models = ['MaxVaxDistLogLin']
-    Assortment_MNL_models = ['MNL', 'MNL_partial']
+    Assortment_MNL_models = ['MNL', 'MNL_partial', 'MNL_partial_test']
 
     # ================================================================================
 
     (Population, Quartile, abd, p_current, p_total, pc_current, pc_total, 
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
-    num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, scale_factor)
-    
+    num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
+
 
     if Model in Facility_BLP_models: 
-        F_current, F_total = import_BLP_estimation(Chain, setting_tag)
+        F_current, F_total = import_BLP_estimation(Chain, R, A, setting_tag)
 
     if Model in Facility_LogLin_models: 
-        F_current, F_total = import_LogLin_estimation(C_total, abd, num_current_stores, norandomterm, loglintemp)
+        F_current, F_total = import_LogLin_estimation(C_total, abd, num_current_stores, logdist_above, logdist_above_thresh)
     
     if Model in Assortment_MNL_models:
-        V_current, V_total = import_MNL_estimation(Chain, setting_tag)
+        V_current, V_total = import_MNL_estimation(Chain, R, A, setting_tag)
 
 
     # ================================================================================
@@ -109,14 +111,15 @@ def optimize_chain(Model: str,
         # population * willingness vector
         pf_current = p_current * f_current
         pf_total = p_total * f_total
+        pf_total = pf_total * Closest_total
 
 
     if Model in Assortment_MNL_models:
-
         v_total = V_total.flatten()
         pf_total = p_total * v_total
 
-    pf_total = pf_total * Closest_total # make sure zero at other place
+        v_total = v_total * Closest_total
+        pf_total = pf_total * Closest_total # make sure zero at other place
 
 
     # ================================================================================
@@ -133,6 +136,8 @@ def optimize_chain(Model: str,
                         C=C,
                         K=K,
                         R=R,
+                        A=A,
+                        closest=Closest_total,
                         num_current_stores=num_current_stores,
                         num_total_stores=num_total_stores,
                         num_tracts=num_tracts,
@@ -150,6 +155,8 @@ def optimize_chain(Model: str,
                         C=C,
                         K=K,
                         R=R,
+                        A=A,
+                        closest=Closest_total,
                         num_current_stores=num_current_stores,
                         num_total_stores=num_total_stores,
                         num_tracts=num_tracts,
@@ -158,6 +165,26 @@ def optimize_chain(Model: str,
                         path=path,
                         MIPGap=1e-2)
                         
+    # if Model == 'MNL_partial_test':
+
+    #     z_file_name = '/export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/z_total_10000_5_4q_mnl'
+    #     z_total = np.genfromtxt(f'{z_file_name}.csv', delimiter = ",", dtype = float) 
+    #     print("WE'RE HERE SUCCESSFULLY IMPORTED\n")
+    #     optimize_rate_MNL_partial_test(z=z_total,
+    #                     scenario='total', 
+    #                     pf=pf_total,
+    #                     v=v_total,
+    #                     C=C,
+    #                     K=K,
+    #                     R=R,
+    #                     closest=Closest_total,
+    #                     num_current_stores=num_current_stores,
+    #                     num_total_stores=num_total_stores,
+    #                     num_tracts=num_tracts,
+    #                     scale_factor=scale_factor,
+    #                     setting_tag=setting_tag,
+    #                     path=path,
+    #                     MIPGap=1e-2)
 
     # ================================================================================
 
@@ -174,7 +201,9 @@ def optimize_chain(Model: str,
                     scale_factor=scale_factor,
                     path=path,
                     setting_tag=setting_tag,
-                    R=R)
+                    R=R, A=A)
+
+        
   
     # ================================================================================
 

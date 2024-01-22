@@ -23,7 +23,7 @@ def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, mnl, flexible_
     '''
     
     print(f'Start initializing BLP matrices from estimation for {Chain_type} under capacity {str(capacity)} with {groups} groups, with setting tag {setting_tag}\n')
-    
+
     ### Tract-block
     tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int})
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
@@ -38,10 +38,10 @@ def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, mnl, flexible_
     C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type)
     
     if flexible_consideration:
-        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, setting_tag)
+        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag)
     else:
         print("Change M to 30 as we are not considering flexible consideration set\n")
-        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, setting_tag, M=30)
+        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag, M=30)
 
     return
 
@@ -70,7 +70,9 @@ def import_dist(Chain_type, datadir="/export/storage_covidvaccine/Data"):
 
 
 
-def construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
+def construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores,
+tract, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag,
+M=100, resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
     M matter here because consideration set C could go up to 300
@@ -137,6 +139,7 @@ def construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, 
                     temp_tract_pop = np.sum(temp_blocks_pop)
                     
                     logdists = temp_block_distdf[temp_block_distdf.locid == site].logdist.to_numpy()
+                    if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))    
 
                     blocks_utility = temp_blocks_abd + temp_blocks_distcoef * logdists
                     tract_site_willingess = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
@@ -147,6 +150,7 @@ def construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, 
                 else:
                     
                     logdists = block_distdf[block_distdf.locid == site].logdist.to_numpy()
+                    if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
 
                     blocks_utility = blocks_abd + blocks_distcoef * logdists
                     tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
@@ -213,6 +217,7 @@ def construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, 
                 temp_tract_pop = np.sum(temp_blocks_pop)
                     
                 logdists = temp_block_distdf[temp_block_distdf.locid == site].logdist.to_numpy()
+                if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
 
                 blocks_utility = temp_blocks_abd + temp_blocks_distcoef * logdists
                 tract_site_willingess = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
@@ -222,6 +227,7 @@ def construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, 
             else:
                     
                 logdists = block_distdf[block_distdf.locid == site].logdist.to_numpy()
+                if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
 
                 blocks_utility = blocks_abd + blocks_distcoef * logdists
                 tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))

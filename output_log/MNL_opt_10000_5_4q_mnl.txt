@@ -14,3 +14,116 @@ Set parameter TokenServer to value "164.67.163.231"
 Set parameter MIPFocus to value 3
 Set parameter MIPGap to value 0.01
 Set parameter TimeLimit to value 28800
+****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 133964 rows, 40709015 columns and 380364 nonzeros
+Model fingerprint: 0x5ec4ad01
+Variable types: 40703964 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [5e-02, 6e+05]
+  Objective range  [1e+00, 6e+05]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Presolve removed 1004 rows and 40655794 columns (presolve time = 5s) ...
+Presolve removed 1490 rows and 40655840 columns (presolve time = 13s) ...
+Presolve removed 1490 rows and 40655840 columns (presolve time = 15s) ...
+Presolve removed 1490 rows and 40655840 columns
+Presolve time: 18.89s
+Presolved: 132474 rows, 53175 columns, 376433 nonzeros
+Variable types: 48126 continuous, 5049 integer (5048 binary)
+
+Deterministic concurrent LP optimizer: primal and dual simplex (primal and dual model)
+Showing first log only...
+
+Root relaxation presolved: 132474 rows, 53175 columns, 376433 nonzeros
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.7122312e+07   4.226318e+05   9.429025e+11     21s
+  129073    3.1956816e+07   1.180044e+03   2.671644e+09     25s
+  167261    3.1579696e+07   7.646477e+02   3.474475e+09     30s
+  182370    3.1478586e+07   5.641536e+02   2.318537e+09     35s
+  191718    3.1362390e+07   4.536944e+02   1.818701e+09     40s
+  200507    3.1225608e+07   3.717934e+02   4.399832e+09     45s
+  211000    3.0968715e+07   2.546126e+02   7.112940e+09     50s
+  220623    3.0600389e+07   1.693344e+02   6.655367e+08     55s
+  228087    3.0518158e+07   1.425936e+02   1.606794e+10     60s
+  235624    3.0503322e+07   1.180446e+02   5.990140e+08     65s
+  242088    3.0448317e+07   1.046380e+02   4.533416e+08     70s
+  249860    3.0204998e+07   7.637784e+01   1.983841e+09     75s
+  258158    3.0004503e+07   4.772426e+01   5.678662e+09     80s
+  265267    2.9924131e+07   3.782414e+01   2.108392e+10     85s
+  271751    2.9914677e+07   2.720938e+01   9.850713e+08     90s
+  278221    2.9863774e+07   1.543115e+01   2.417923e+09     95s
+  285491    2.9766955e+07   1.118415e+01   4.505059e+08    100s
+  290945    2.9765581e+07   1.109239e+01   1.304180e+08    105s
+Concurrent spin time: 30.24s
+
+Solved with primal simplex (dual model)
+
+Root relaxation: objective 2.957212e+07, 279071 iterations, 109.12 seconds (119.87 work units)
+Total elapsed time = 138.44s
+Total elapsed time = 144.79s
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 2.9342e+07    0 1737          - 2.9342e+07      -     -  147s
+     0     0 2.9304e+07    0 1724          - 2.9304e+07      -     -  147s
+     0     0 2.8337e+07    0 1483          - 2.8337e+07      -     -  174s
+     0     0 2.8070e+07    0 1402          - 2.8070e+07      -     -  185s
+     0     0 2.7756e+07    0 1547          - 2.7756e+07      -     -  191s
+     0     0 2.7744e+07    0 1571          - 2.7744e+07      -     -  192s
+     0     0 2.7742e+07    0 1571          - 2.7742e+07      -     -  193s
+     0     0 2.7742e+07    0 1571          - 2.7742e+07      -     -  193s
+     0     0 2.7099e+07    0 1326          - 2.7099e+07      -     -  225s
+     0     0 2.7033e+07    0 1285          - 2.7033e+07      -     -  235s
+     0     0 2.6756e+07    0 1416          - 2.6756e+07      -     -  245s
+     0     0 2.6722e+07    0 1435          - 2.6722e+07      -     -  247s
+     0     0 2.6718e+07    0 1441          - 2.6718e+07      -     -  248s
+     0     0 2.6717e+07    0 1444          - 2.6717e+07      -     -  249s
+     0     0 2.6717e+07    0 1444          - 2.6717e+07      -     -  249s
+     0     0 infeasible    0               - infeasible      -     -  581s
+
+Cutting planes:
+  Gomory: 243
+  Lift-and-project: 5
+  Implied bound: 210
+  MIR: 2086
+  StrongCG: 1
+  Flow cover: 3018
+  RLT: 4606
+  Relax-and-lift: 318
+  BQP: 1
+  PSD: 30
+
+Explored 1 nodes (811840 simplex iterations) in 581.59 seconds (669.89 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 0
+No other solutions better than -1e+100
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+Traceback (most recent call last):
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 102, in <module>
+    main(params)
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 94, in main
+    if stage == 'optimize': optimize_main(**params)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/optimize_main.py", line 51, in optimize_main
+    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, replace, R, norandomterm, loglintemp, setting_tag, expdirpath)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/optimize_main.py", line 133, in optimize_chain
+    optimize_rate_MNL(scenario='total', 
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/optimize_model.py", line 246, in optimize_rate_MNL
+    z_soln[j] = z[j].X
+  File "src/gurobipy/var.pxi", line 125, in gurobipy.Var.__getattr__
+  File "src/gurobipy/var.pxi", line 153, in gurobipy.Var.getAttr
+  File "src/gurobipy/attrutil.pxi", line 100, in gurobipy.__getattr
+AttributeError: Unable to retrieve attribute 'X'

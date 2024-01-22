@@ -135,7 +135,7 @@ def import_locations(df, Chain_type, datadir='/export/storage_covidvaccine/Data/
 
 
 
-def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag, Pharmacy=False):
+def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, setting_tag, Pharmacy=False):
     
     '''
     z: results from first stage

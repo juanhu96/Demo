@@ -32,7 +32,7 @@ except:
 
 
 
-def compute_distdf(Chain_type, Chain, constraint, z, R, setting_tag, path, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
+def compute_distdf(Chain_type, Chain, constraint, z, setting_tag, path, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
     
     print('Start computing distdf...\n')
     path = f'{path}/{constraint}'
@@ -87,7 +87,7 @@ def compute_distdf(Chain_type, Chain, constraint, z, R, setting_tag, path, datad
 # ===========================================================================
 
 
-def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, setting_tag, constraint, path, Pharmacy=False, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
+def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path, Pharmacy=False, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
 
     print('Start constructing blocks...\n')
     if constraint != 'None': path = f'{path}/{constraint}'
@@ -111,6 +111,9 @@ def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, 
     # Block estimation
     temp_setting_tag = setting_tag.replace('_norandomterm', '') # estimation independent of random term
     temp_setting_tag = temp_setting_tag.replace('_loglintemp', '') # estimation independent of random term
+    if R is not None: temp_setting_tag = temp_setting_tag.replace(f'_R{R}', '')
+    if A is not None: temp_setting_tag = temp_setting_tag.replace(f'_A{A}', '')
+
     block_utils = pd.read_csv(f'{resultdir}/Demand/agent_results{temp_setting_tag}.csv', delimiter = ",")
     block_utils = block_utils.loc[block_utils.blkid.isin(blocks_unique), :]
 

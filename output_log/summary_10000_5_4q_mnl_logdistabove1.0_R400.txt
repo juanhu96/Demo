@@ -1,0 +1,24 @@
+Start creating summary table for _10000_5_4q_mnl_logdistabove1.0_R400...
+
+Importing dataset...
+
+Model = MaxVaxDistLogLin,Chain = Dollar, K = 10000, M = 5, with setting tag _10000_5_4q_mnl_logdistabove1.0_R400...
+
+Importing optimization and evaluation solution...
+
+Traceback (most recent call last):
+  File "/mnt/phd/jihu/VaxDemandDistance/summary.py", line 76, in <module>
+    summary(K, M, nsplits, capcoef, R, setting_tag)
+  File "/mnt/phd/jihu/VaxDemandDistance/summary.py", line 62, in summary
+    partnerships_summary(Model_list=Model_list,
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary.py", line 78, in partnerships_summary
+    z, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, setting_tag)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary_helpers.py", line 161, in import_solution
+    locs = np.genfromtxt(locs_filename, delimiter="")
+  File "/users/phd/jihu/anaconda3/lib/python3.9/site-packages/numpy/lib/npyio.py", line 1793, in genfromtxt
+    fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+  File "/users/phd/jihu/anaconda3/lib/python3.9/site-packages/numpy/lib/_datasource.py", line 193, in open
+    return ds.open(path, mode, encoding=encoding, newline=newline)
+  File "/users/phd/jihu/anaconda3/lib/python3.9/site-packages/numpy/lib/_datasource.py", line 533, in open
+    raise IOError("%s not found." % path)
+OSError: /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/locs_Dollar_10000_5_4q_mnl_logdistabove1.0_R400.csv not found.

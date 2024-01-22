@@ -19,7 +19,7 @@ except:
 
 
 
-def import_basics(Chain, M, nsplits, flexible_consideration, scale_factor, datadir="/export/storage_covidvaccine/Data/", MAXDIST=100000):
+def import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor, datadir="/export/storage_covidvaccine/Data/", MAXDIST=100000):
 
     # ============================================================================
     # New population
@@ -59,8 +59,13 @@ def import_basics(Chain, M, nsplits, flexible_consideration, scale_factor, datad
     Popdensity = tract_hpi['Popdensity_group']
     
     # For LogLinear only
-    tract_abd = pd.read_csv(f"{datadir}/Intermediate/tract_abd.csv", usecols=['tract', 'abd'])
-    abd = tract_abd['abd'].values
+    tract_abd = pd.read_csv(f"{datadir}/Intermediate/tract_abd.csv")
+    if logdist_above:
+        print(f'Imported abd{logdist_above_thresh}')
+        if logdist_above_thresh == 1: logdist_above_thresh = int(logdist_above_thresh)
+        abd = tract_abd[f'abd{logdist_above_thresh}'].values
+    else:    
+        abd = tract_abd['abd'].values
     
     ### Current ###
     C_current_mat = np.genfromtxt(f'{datadir}/CA_dist_matrix_current.csv', delimiter = ",", dtype = float)
@@ -199,8 +204,10 @@ def import_basics(Chain, M, nsplits, flexible_consideration, scale_factor, datad
 
 
 
-def import_BLP_estimation(Chain_type, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
+def import_BLP_estimation(Chain_type, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
 
+    if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
+    if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
     print(f"Import BLP estimation matrices from file BLP_current{setting_tag}...\n")
 
     F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', delimiter = ",", dtype = float) 
@@ -212,31 +219,32 @@ def import_BLP_estimation(Chain_type, setting_tag, resultdir='/export/storage_co
 
 
 
-def import_LogLin_estimation(C_total, abd, num_current_stores, norandomterm, loglintemp):
-
-    Demand_parameter=[[0.755, -0.069], [0.826, -0.016, -0.146, -0.097, -0.077, -0.053, -0.047, -0.039]]
+def import_LogLin_estimation(C_total, abd, num_current_stores, logdist_above, logdist_above_thresh):
     
-    if norandomterm:
-        print("No random terms considered in LogLinear estimation!\n")
-        F_D_total = Demand_parameter[0][0] + Demand_parameter[0][1] * np.log(C_total/1000)
-    elif loglintemp:
-        print("Replace distance less than 1km with 1km\n")
-        C_total[C_total < 1000] = 1000
-        abd = np.nan_to_num(abd, nan=Demand_parameter[0][0]) # random error to match empirical rate
-        F_D_total = abd.reshape(8057, 1) + Demand_parameter[0][1] * np.log(C_total/1000)
+    if logdist_above:
+        C_total[C_total < (logdist_above_thresh*1000)] = (logdist_above_thresh*1000)
+        if logdist_above_thresh == 0.5: Demand_parameter = [0.768, -0.076]
+        if logdist_above_thresh == 1: Demand_parameter = [0.788, -0.084]
+        if logdist_above_thresh == 1.6: Demand_parameter = [0.818, -0.095]
     else:
-        print("LogLinear estimation with random terms \n")
-        abd = np.nan_to_num(abd, nan=Demand_parameter[0][0]) # random error to match empirical rate
-        F_D_total = abd.reshape(8057, 1) + Demand_parameter[0][1] * np.log(C_total/1000)
-    
+        Demand_parameter = [0.755, -0.069]
+
+    print("The demand parameter imported is: ")
+    print(Demand_parameter)
+
+    abd = np.nan_to_num(abd, nan=Demand_parameter[0]) # random error to match empirical rate
+    F_D_total = abd.reshape(8057, 1) + Demand_parameter[1] * np.log(C_total/1000)
     F_D_current = F_D_total[:,0:num_current_stores]
 
     return F_D_current, F_D_total
 
 
 
-def import_MNL_estimation(Chain, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
 
+def import_MNL_estimation(Chain, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
+
+    if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
+    if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
     print(f"import MNL estimation from file V_current{setting_tag}\n")
 
     V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current{setting_tag}.csv', delimiter = ",", dtype = float) 

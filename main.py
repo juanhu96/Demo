@@ -40,6 +40,12 @@ if replace:
     R = int(replace_arg.replace('replace', ''))
 else: R = None
 
+add = any(['add' in arg for arg in sys.argv])
+if add:
+    add_arg = [arg for arg in sys.argv if 'add' in arg][0]
+    A = int(add_arg.replace('add', ''))
+else: A = None
+
 norandomterm = any(['norandomterm' in arg for arg in sys.argv]) # for log linear intercept
 loglintemp = any(['loglintemp' in arg for arg in sys.argv]) # for log linear dist replace
 
@@ -50,6 +56,7 @@ setting_tag += "_flex" if flexible_consideration else ""
 setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').replace('[', '').replace(']', '')}" if flexible_consideration else ""
 setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
 setting_tag += f"_R{R}" if replace else ""
+setting_tag += f"_A{A}" if add else ""
 setting_tag += f"_norandomterm" if norandomterm else ""
 setting_tag += f"_loglintemp" if loglintemp else ""
 
@@ -67,6 +74,7 @@ params = {
     'logdist_above_thresh': logdist_above_thresh, 
     'replace': replace, 
     'R': R, 
+    'A': A,
     'norandomterm': norandomterm,
     'loglintemp': loglintemp,
     'setting_tag': setting_tag

@@ -21,7 +21,7 @@ from gurobipy import GRB, quicksum
 
 def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
                   num_current_stores, num_total_stores, num_tracts, 
-                  scale_factor, path, setting_tag, R = None, heuristic=False, MIPGap=5e-2):
+                  scale_factor, path, setting_tag, R = None, A=None, heuristic=False, MIPGap=5e-2):
     
     """
     Parameters
@@ -102,7 +102,12 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     for k in range(num_tracts * num_stores):
         m.addConstr(y[k] <= closest[k])
 
-    m.addConstr(z.sum() == num_current_stores, name = 'N')
+    if A is not None:
+        print(f"Keep all current locations and add {A} locations")
+        m.addConstr(z.sum() == num_current_stores + A, name = 'N')
+        m.addConstr(quicksum(z[i] for i in range(num_current_stores)) == num_current_stores)
+    else:
+        m.addConstr(z.sum() == num_current_stores, name = 'N')
 
     if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
 
@@ -125,10 +130,6 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     ### Summary ###
     z_file_name = f'{path}z_{scenario}'
     y_file_name = f'{path}y_{scenario}'
-    
-    if R is not None: 
-        z_file_name += f'_fixR{str(R)}'
-        y_file_name += f'_fixR{str(R)}'
 
     if heuristic:
         z_file_name += '_heuristic'
@@ -155,6 +156,8 @@ def optimize_rate_MNL(scenario,
                     C,
                     K,
                     R,
+                    A,
+                    closest,
                     num_current_stores,
                     num_total_stores,
                     num_tracts,
@@ -196,7 +199,7 @@ def optimize_rate_MNL(scenario,
     # m.Params.IntegralityFocus = 1
     m.Params.MIPFocus = 3 # to focus on the bound
     m.Params.MIPGap = MIPGap
-    m.Params.TimeLimit=28800 # 8 hours
+    m.Params.TimeLimit = 21600 # 6 hours
 
     if scenario == "total": num_stores = num_total_stores
 
@@ -215,13 +218,22 @@ def optimize_rate_MNL(scenario,
 
     ### Constraints ###
     for i in range(num_tracts):
-        # m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in range(num_stores)) == 1)
-        m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in C[i]) == 1)
+        m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in range(num_stores)) == 1)
+        # m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in C[i]) == 1)
         
     for j in range(num_stores):
         m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
 
-    m.addConstr(z.sum() == num_current_stores, name = 'N')
+    # for k in range(num_tracts * num_stores):
+    #     m.addConstr(y[k] <= closest[k])
+
+    if A is not None:
+        print(f"Keep all current locations and add {A} locations")
+        m.addConstr(z.sum() == num_current_stores + A, name = 'N')
+        m.addConstr(quicksum(z[i] for i in range(num_current_stores)) == num_current_stores)
+    else:
+        m.addConstr(z.sum() == num_current_stores, name = 'N')
+
     if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
 
     for i in range(num_tracts):
@@ -248,10 +260,6 @@ def optimize_rate_MNL(scenario,
     
     ### Summary ###
     z_file_name = f'{path}z_{scenario}'
-    
-    if R is not None: 
-        z_file_name += f'_fixR{str(R)}'
-
     np.savetxt(f'{z_file_name}{setting_tag}.csv', z_soln, delimiter=",")
 
 
@@ -271,6 +279,8 @@ def optimize_rate_MNL_partial(scenario,
                             C,
                             K,
                             R,
+                            A,
+                            closest,
                             num_current_stores,
                             num_total_stores,
                             num_tracts,
@@ -289,7 +299,7 @@ def optimize_rate_MNL_partial(scenario,
     # m.Params.IntegralityFocus = 1
     m.Params.MIPFocus = 3 # to focus on the bound
     m.Params.MIPGap = MIPGap
-    m.Params.TimeLimit=28800 # 8 hours
+    m.Params.TimeLimit=21600 # 6 hours
     
 
     if scenario == "total": num_stores = num_total_stores
@@ -321,7 +331,13 @@ def optimize_rate_MNL_partial(scenario,
         # m.addConstr(t[j] <= z[j])
         m.addConstrs(t[i * num_stores + j] <= z[j] for i in range(num_tracts))
 
-    m.addConstr(z.sum() == num_current_stores, name = 'N')
+    if A is not None:
+        print(f"Keep all current locations and add {A} locations")
+        m.addConstr(z.sum() == num_current_stores + A, name = 'N')
+        m.addConstr(quicksum(z[i] for i in range(num_current_stores)) == num_current_stores)
+    else:
+        m.addConstr(z.sum() == num_current_stores, name = 'N')
+
     if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
 
     for i in range(num_tracts):
@@ -337,6 +353,8 @@ def optimize_rate_MNL_partial(scenario,
             m.addConstr(T[i * num_stores + j] <= y[i * num_stores + j])
             m.addConstr(T[i * num_stores + j] >= t[i * num_stores + j] + y[i * num_stores + j] - 1)
             
+    for k in range(num_tracts * num_stores):
+        m.addConstr(t[k] <= closest[k])
 
     print("****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************\n")
 
@@ -355,10 +373,6 @@ def optimize_rate_MNL_partial(scenario,
     
     ### Summary ###
     z_file_name = f'{path}z_{scenario}'
-    
-    if R is not None: 
-        z_file_name += f'_fixR{str(R)}'
-
     np.savetxt(f'{z_file_name}{setting_tag}.csv', z_soln, delimiter=",")
 
 
@@ -371,7 +385,112 @@ def optimize_rate_MNL_partial(scenario,
 ##############################################################################
 ##############################################################################   
     
+def optimize_rate_MNL_partial_test(z,
+                            scenario,
+                            pf,
+                            v,
+                            C,
+                            K,
+                            R,
+                            closest,
+                            num_current_stores,
+                            num_total_stores,
+                            num_tracts,
+                            scale_factor,
+                            setting_tag,
+                            path,
+                            MIPGap=5e-2):
 
+
+
+    env = gp.Env(empty=True)
+    env.setParam("OutputFlag",0)
+    env.start()
+
+    m = gp.Model("Vaccination")
+    # m.Params.IntegralityFocus = 1
+    m.Params.MIPFocus = 3 # to focus on the bound
+    m.Params.MIPGap = MIPGap
+    m.Params.TimeLimit=21600 # 6 hours
+    
+
+    if scenario == "total": num_stores = num_total_stores
+
+    
+    ### Variables ###
+    # z = m.addVars(num_stores, vtype=GRB.BINARY, name = 'z')
+    y = m.addVars(num_tracts * num_stores, lb = 0, name = 'y')
+    x = m.addVars(num_tracts, lb = 0, name = 'x')
+
+    T = m.addVars(num_tracts * num_stores, lb = 0, ub = 1, name = 'T')
+    # t = m.addVars(num_stores, lb = 0, ub = 1, name = 't') # proportion allocation
+    t = m.addVars(num_tracts * num_stores, lb = 0, ub = 1, name = 't') # priority allocation
+
+    
+    ### Objective ###
+
+    # NOTE: pf is now p_i * v_ij
+    m.setObjective(quicksum(pf[k] * T[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
+    
+
+    ### Constraints ###
+    for i in range(num_tracts):
+        # m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in range(num_stores)) == 1)
+        m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in C[i]) == 1)
+
+    for j in range(num_stores):
+        m.addConstr(quicksum(pf[i * num_stores + j] * T[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+        # m.addConstr(t[j] <= z[j])
+        m.addConstrs(t[i * num_stores + j] <= z[j] for i in range(num_tracts))
+
+    # m.addConstr(z.sum() == num_current_stores, name = 'N')
+    if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
+
+    for i in range(num_tracts):
+        for j in C[i]:
+            m.addConstr(x[i] - y[i * num_stores + j] <= 1 - z[j])
+            m.addConstr(y[i * num_stores + j] <= x[i])
+            m.addConstr((1 + v[i * num_stores + j]) * y[i * num_stores + j] <= z[j])
+
+            # m.addConstr(T[i * num_stores + j] <= t[j])
+            # m.addConstr(T[i * num_stores + j] <= y[i * num_stores + j])
+            # m.addConstr(T[i * num_stores + j] >= t[j] + y[i * num_stores + j] - 1)
+            m.addConstr(T[i * num_stores + j] <= t[i * num_stores + j])
+            m.addConstr(T[i * num_stores + j] <= y[i * num_stores + j])
+            m.addConstr(T[i * num_stores + j] >= t[i * num_stores + j] + y[i * num_stores + j] - 1)
+            
+    for k in range(num_tracts * num_stores):
+        m.addConstr(t[k] <= closest[k])
+
+    print("****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************\n")
+
+
+    ## Solve ###
+    m.update()
+    start = time.time()
+    m.optimize()
+    end = time.time()
+
+    ### Export ###
+    # z_soln = np.zeros(num_stores)
+    # for j in range(num_stores):
+    #     z_soln[j] = z[j].X
+    
+    
+    ### Summary ###
+    # z_file_name = f'{path}z_{scenario}'
+    # np.savetxt(f'{z_file_name}{setting_tag}.csv', z_soln, delimiter=",")
+
+
+    ### Finished all ###
+    m.dispose()
+
+
+
+##############################################################################  
+##############################################################################
+##############################################################################   
+    
 
 def optimize_dist(scenario, pc, ncp, p, K,
                   num_current_stores, num_total_stores, num_tracts,
