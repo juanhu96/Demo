@@ -204,6 +204,26 @@ def import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logd
 
 
 
+def import_estimation(Model_name, Chain, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
+    
+    if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
+    if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
+
+    print(f"Importing estimation from {Model_name}_{Chain}{setting_tag}.csv\n")
+
+    F_current = np.genfromtxt(f'{resultdir}BLP_matrix/{Model_name}_current{setting_tag}.csv', delimiter = ",", dtype = float) 
+    F_chain = np.genfromtxt(f'{resultdir}BLP_matrix/{Model_name}_{Chain}{setting_tag}.csv', delimiter = ",", dtype = float)
+    F_total = np.concatenate((F_current, F_chain), axis = 1)
+
+    return F_current, F_total
+
+
+
+
+# ====================================================================================================
+
+
+
 def import_BLP_estimation(Chain_type, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
 
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')

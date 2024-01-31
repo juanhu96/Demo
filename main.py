@@ -90,12 +90,10 @@ def main(params):
     'evaluate': evaluate_main
     }
 
-    if stage in stage_functions: 
-        print(f"Start {stage} stage for setting {setting_tag}...\n")
-        stage_functions[stage](**params)
-        print(f"Finished {stage} stage for setting {setting_tag}!\n")
-
-    else: raise Exception("Stage undefined\n")
+    assert stage in stage_functions, "Stage undefined"
+    print(f"Start {stage} stage for setting {setting_tag}...\n")
+    stage_functions[stage](**params)
+    print(f"Finished {stage} stage for setting {setting_tag}!\n")
 
 
 

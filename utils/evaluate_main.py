@@ -34,15 +34,17 @@ def evaluate_main(Model: str,
                   norandomterm: bool,
                   loglintemp: bool,
                   setting_tag: str,
+                  RandomFCFS: bool = False,
                   MIP: bool = False,
                   constraint='vaccinated',
                   resultdir='/export/storage_covidvaccine/Result'):
 
     path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}'
 
-    # evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, setting_tag, constraint, path)
     evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, setting_tag, constraint, path)
 
+    if RandomFCFS:
+        evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, setting_tag, constraint, path)
     if MIP: 
         raise Exception("Warnings: MIP not updated yet \n")
         evaluate_chain_MIP(Model, Chain, M, K, nsplits, capcoef, R, constraint, path)

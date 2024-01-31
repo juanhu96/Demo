@@ -62,7 +62,7 @@
 # nohup python3 main.py MaxVaxDistLogLin Dollar 10000 5 4 evaluate mnl 'add200' > output_log/jan22/LogLin_eval_10000_5_4q_mnl_A200.txt &
 # nohup python3 main.py MaxVaxHPIDistBLP Dollar 10000 5 4 evaluate mnl 'add200' > output_log/jan22/BLP_eval_10000_5_4q_mnl_A200.txt & 
 
-nohup python3 summary.py 10000 5 4 mnl 'add200' > output_log/jan22/summary_10000_5_4q_mnl_A200.txt & 
+# nohup python3 summary.py 10000 5 4 mnl 'add200' > output_log/jan22/summary_10000_5_4q_mnl_A200.txt & 
 # python3 utils/export_locations.py 10000 5 4 mnl 'add200'
 
 
