@@ -26,6 +26,10 @@ def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, mnl, flexible_
 
     ### Tract-block
     tract = pd.read_csv(f'{datadir}tract_centroids.csv', delimiter = ",", dtype={'GEOID': int, 'POPULATION': int})
+    tract_abd_df = pd.read_csv(f"{datadir}/Intermediate/tract_abd.csv")
+    tract = pd.merge(tract, tract_abd_df, left_on='GEOID', right_on='tract')
+    tract_abd_values, loglin_coef = import_loglin_results(tract, logdist_above, logdist_above_thresh)
+
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv') 
     block.sort_values(by=['blkid'], inplace=True)
     blk_tract = pd.read_csv(f'{datadir}/Intermediate/blk_tract.csv', usecols=['tract', 'blkid'])     
@@ -38,12 +42,33 @@ def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, mnl, flexible_
     C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type)
     
     if flexible_consideration:
-        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag)
+        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, tract_abd_values, loglin_coef, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag)
     else:
-        print("Change M to 30 as we are not considering flexible consideration set\n")
-        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag, M=30)
+        print("Change M to 10 as we are not considering flexible consideration set\n")
+        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, tract_abd_values, loglin_coef, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag, M=10)
 
     return
+
+
+
+def import_loglin_results(tract, logdist_above, logdist_above_thresh):
+
+    if logdist_above:
+        print(f'Imported abd{logdist_above_thresh}')
+        if logdist_above_thresh == 1: logdist_above_thresh = int(logdist_above_thresh)
+        tract_abd_values = tract[f'abd{logdist_above_thresh}'].values
+    else: 
+        tract_abd_values = tract['abd'].values
+
+    if logdist_above:
+        if logdist_above_thresh == 0.5: loglin_coef = [0.768, -0.076]
+        if logdist_above_thresh == 1: loglin_coef = [0.788, -0.084]
+        if logdist_above_thresh == 1.6: loglin_coef = [0.818, -0.095]
+    else:
+        loglin_coef = [0.755, -0.069]
+    print("The demand parameter imported is: ", loglin_coef)
+
+    return tract_abd_values, loglin_coef[1]
 
 
 
@@ -71,8 +96,8 @@ def import_dist(Chain_type, datadir="/export/storage_covidvaccine/Data"):
 
 
 def construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores,
-tract, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag,
-M=100, resultdir='/export/storage_covidvaccine/Result/'):
+tract, tract_abd_values, loglin_coef, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh,
+setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
     
     '''
     M matter here because consideration set C could go up to 300
@@ -87,19 +112,21 @@ M=100, resultdir='/export/storage_covidvaccine/Result/'):
         M_closest_current = np.argpartition(C_current, M, axis=1)[:,:M]
         F_current = np.zeros((num_tracts, num_current_stores))
         V_current = np.zeros((num_tracts, num_current_stores))
+        LogLin_current = np.zeros((num_tracts, num_current_stores))
 
         start = time.time()
 
         for i in range(num_tracts):
+        # for i in range(1):
 
-            tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
+            tract_id, tract_pop, tract_abd = tract['GEOID'][i], tract['POPULATION'][i], tract_abd_values[i]
             blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
             block_id = block[block.blkid.isin(blk_tract_id)].blkid.to_list()
             block_utils_id = block_utils[block_utils.blkid.isin(blk_tract_id)].blkid.to_list()
 
 
             if len(blk_tract_id) != len(block_id) or len(block_id) != len(block_utils_id) or len(block_utils_id) != len(blk_tract_id):
-                print(i, len(blk_tract_id), len(block_id), len(block_utils_id))
+                # print(i, len(blk_tract_id), len(block_id), len(block_utils_id))
                 common_blocks_id = set(blk_tract_id) & set(block_id) & set(block_utils_id)
             else:
                 common_blocks_id = blk_tract_id
@@ -114,9 +141,9 @@ M=100, resultdir='/export/storage_covidvaccine/Result/'):
             
             for site in M_closest_current[i]:
                 
-                tract_site_willingess = 0    
+                tract_site_willingness = 0    
                 dist_blocks_id = block_distdf[block_distdf.locid == site].blkid.to_list()
-
+                
                 ############################################################
                 # Tract 361 and site 8: 85 block ids, but 87 logdists
                 # e.g., 18545 is in blk_tract and distdf, but not in block and block_utils, so we need to take the subset
@@ -142,10 +169,13 @@ M=100, resultdir='/export/storage_covidvaccine/Result/'):
                     if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))    
 
                     blocks_utility = temp_blocks_abd + temp_blocks_distcoef * logdists
-                    tract_site_willingess = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+                    tract_site_willingness = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
 
                     # NOTE: v_ij = e^{mu_ij]}
-                    tract_site_preference = np.sum((temp_blocks_pop / temp_tract_pop) * np.exp(blocks_utility))
+                    # tract_site_preference = np.sum((temp_blocks_pop / temp_tract_pop) * np.exp(blocks_utility))
+                    tract_site_preference = np.exp(np.sum((temp_blocks_pop / temp_tract_pop) * blocks_utility))
+
+                    loglin_willingness = tract_abd + loglin_coef * np.sum((temp_blocks_pop / temp_tract_pop) * logdists)
 
                 else:
                     
@@ -153,20 +183,28 @@ M=100, resultdir='/export/storage_covidvaccine/Result/'):
                     if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
 
                     blocks_utility = blocks_abd + blocks_distcoef * logdists
-                    tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
 
-                    tract_site_preference = np.sum((blocks_pop / tract_pop) * np.exp(blocks_utility))
+                    tract_site_willingness = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
 
-                
-                F_current[i][site] = tract_site_willingess
+                    # tract_site_preference = np.sum((blocks_pop / tract_pop) * np.exp(blocks_utility))
+                    tract_site_preference = np.exp(np.sum((blocks_pop / tract_pop) * blocks_utility))
+                    
+                    loglin_willingness = tract_abd + loglin_coef * np.sum((blocks_pop / tract_pop) * logdists)
+
+
+                F_current[i][site] = tract_site_willingness
                 V_current[i][site] = tract_site_preference
+                LogLin_current[i][site] = loglin_willingness
 
         print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')
 
         F_current_df = pd.DataFrame(F_current)
         V_current_df = pd.DataFrame(V_current)
+        LogLin_current_df = pd.DataFrame(LogLin_current)
+
         F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', header=False, index=False)
         V_current_df.to_csv(f'{resultdir}BLP_matrix/V_current{setting_tag}.csv', header=False, index=False)
+        LogLin_current_df.to_csv(f'{resultdir}BLP_matrix/LogLin_current{setting_tag}.csv', header=False, index=False)
 
     ######################################################################
 
@@ -177,6 +215,7 @@ M=100, resultdir='/export/storage_covidvaccine/Result/'):
     M_closest_chains = np.argpartition(C_chains, M, axis=1)[:,:M]
     F_chains = np.zeros((num_tracts, num_total_stores-num_current_stores))
     V_chains = np.zeros((num_tracts, num_total_stores-num_current_stores))
+    LogLin_chains = np.zeros((num_tracts, num_total_stores-num_current_stores))
 
     start = time.time()
 
@@ -204,7 +243,7 @@ M=100, resultdir='/export/storage_covidvaccine/Result/'):
             
         for site in M_closest_chains[i]:
 
-            tract_site_willingess = 0    
+            tract_site_willingness = 0    
             dist_blocks_id = block_distdf[block_distdf.locid == site].blkid.to_list()
 
             if len(dist_blocks_id) != len(common_blocks_id):
@@ -220,9 +259,11 @@ M=100, resultdir='/export/storage_covidvaccine/Result/'):
                 if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
 
                 blocks_utility = temp_blocks_abd + temp_blocks_distcoef * logdists
-                tract_site_willingess = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+                tract_site_willingness = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
 
-                tract_site_preference = np.sum((temp_blocks_pop / temp_tract_pop) * np.exp(blocks_utility))
+                tract_site_preference = np.exp(np.sum((temp_blocks_pop / temp_tract_pop) * blocks_utility))
+
+                loglin_willingness = tract_abd + loglin_coef * np.sum((temp_blocks_pop / temp_tract_pop) * logdists)
 
             else:
                     
@@ -230,19 +271,25 @@ M=100, resultdir='/export/storage_covidvaccine/Result/'):
                 if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
 
                 blocks_utility = blocks_abd + blocks_distcoef * logdists
-                tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+                tract_site_willingness = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
 
-                tract_site_preference = np.sum((blocks_pop / tract_pop) * np.exp(blocks_utility))
+                tract_site_preference = np.exp(np.sum((blocks_pop / tract_pop) * blocks_utility))
 
-            F_chains[i][site] = tract_site_willingess
+                loglin_willingness = tract_abd + loglin_coef * np.sum((blocks_pop / tract_pop) * logdists)
+
+            F_chains[i][site] = tract_site_willingness
             V_chains[i][site] = tract_site_preference
+            LogLin_chains[i][site] = loglin_willingness
 
     print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')    
     
     F_chains_df = pd.DataFrame(F_chains)
     V_chains_df = pd.DataFrame(V_chains)
+    LogLin_chains_df = pd.DataFrame(LogLin_chains)
+
     F_chains_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}{setting_tag}.csv', header=False, index=False)
     V_chains_df.to_csv(f'{resultdir}BLP_matrix/V_{Chain_type}{setting_tag}.csv', header=False, index=False)
+    LogLin_chains_df.to_csv(f'{resultdir}BLP_matrix/LogLin_{Chain_type}{setting_tag}.csv', header=False, index=False)
 
     return
 
@@ -280,7 +327,7 @@ def tract_demand_check(capacity, groups, capcoef, num_tracts, tract, block, blk_
     Tract_summary = []
     for i in range(num_tracts):
 
-        tract_site_willingess = 0
+        tract_site_willingness = 0
 
         tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
         blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
@@ -310,9 +357,9 @@ def tract_demand_check(capacity, groups, capcoef, num_tracts, tract, block, blk_
 
 
         blocks_utility = blocks_abd + blocks_distcoef * logdists
-        tract_site_willingess = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+        tract_site_willingness = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
         
-        Tract_summary.append({'Tract': i, 'GEOID': tract_id, 'Num blocks': len(common_blocks_id), 'Estimated': tract_site_willingess})
+        Tract_summary.append({'Tract': i, 'GEOID': tract_id, 'Num blocks': len(common_blocks_id), 'Estimated': tract_site_willingness})
         
     Tract_summary = pd.DataFrame(Tract_summary)
     Tract_summary.to_csv(f'{resultdir}/Tract_demand_check{setting_tag}.csv', encoding='utf-8', index=False, header=True)
@@ -329,7 +376,7 @@ def zip_demand_check(capacity, groups, capcoef, block, block_utils, distdf, sett
     Zip_summary = []
     for zip in zips:
 
-        zip_site_willingess = 0
+        zip_site_willingness = 0
 
         block_zip_id = block[block.zip == zip].blkid.unique()
         block_id = block[block.blkid.isin(block_zip_id)].blkid.to_list()
@@ -350,9 +397,9 @@ def zip_demand_check(capacity, groups, capcoef, block, block_utils, distdf, sett
         logdists = block_distdf.groupby(['blkid'])['logdist'].min()
 
         blocks_utility = blocks_abd + blocks_distcoef * logdists
-        zip_site_willingess = np.sum((blocks_pop / zip_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
+        zip_site_willingness = np.sum((blocks_pop / zip_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
 
-        Zip_summary.append({'Zip': zip, 'Num blocks': len(common_blocks_id), 'Estimated': zip_site_willingess})
+        Zip_summary.append({'Zip': zip, 'Num blocks': len(common_blocks_id), 'Estimated': zip_site_willingness})
 
     Zip_summary = pd.DataFrame(Zip_summary)
     Zip_summary.to_csv(f'{resultdir}/Zip_demand_check{setting_tag}.csv', encoding='utf-8', index=False, header=True)

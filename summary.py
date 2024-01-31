@@ -52,13 +52,14 @@ setting_tag += "_flex" if flexible_consideration else ""
 setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').replace('[', '').replace(']', '')}" if flexible_consideration else ""
 setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
 setting_tag += f"_R{R}" if replace else ""
+setting_tag += f"_A{A}" if add else ""
 setting_tag += f"_norandomterm" if norandomterm else ""
 setting_tag += f"_loglintemp" if loglintemp else ""
 
 #=================================================================
 
 
-def summary(K, M, nsplits, capcoef, setting_tag):
+def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, setting_tag):
 
     print(f'Start creating summary table for {setting_tag}...\n')
 
@@ -66,16 +67,21 @@ def summary(K, M, nsplits, capcoef, setting_tag):
     # Model_list = ['MaxVaxDistLogLin', 'MNL_partial'] # norandomterm # loglintemp
     # Model_list = ['MaxVaxDistLogLin'] # norandomterm # loglintemp
     partnerships_summary(Model_list=Model_list,
-                         Chain_list=['Dollar'],
-                         K_list=[K],
-                         M_list=[M],
+                         Chain='Dollar',
+                         K=K,
+                         M=M,
                          nsplits=nsplits,
                          capcoef=capcoef,
-                         setting_tag=setting_tag)
+                         flexible_consideration=flexible_consideration,
+                         replace=replace,
+                         R=R,
+                         A=A,
+                         setting_tag=setting_tag,
+                         suffix='_mip')
 
     print(f'Finished table for {setting_tag}!\n')
     return
 
 
 if __name__ == "__main__":
-    summary(K, M, nsplits, capcoef, setting_tag)
+    summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, setting_tag)

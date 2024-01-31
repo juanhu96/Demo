@@ -1,0 +1,95 @@
+Start optimize stage for setting _10000_5_4q_mnl_logdistabove1.0_A100...
+
+Optimization results stored at /export/storage_covidvaccine/Result/MNL_partial/M5_K10000_4q/Dollar/...
+
+Imported abd1.0
+Closest_total and C follows fix rank of 5
+
+import MNL estimation from file V_current_10000_5_4q_mnl_logdistabove1.0
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter TimeLimit to value 21600
+Set parameter MIPGap to value 0.001
+Keep all current locations and add 100 locations
+****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81646634 rows, 122100829 columns and 122754299 nonzeros
+Model fingerprint: 0xb8b6a876
+Variable types: 122095778 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [5e-02, 6e+05]
+  Objective range  [2e+00, 6e+05]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 0 rows and 121966828 columns (presolve time = 16s) ...
+Presolve removed 81417557 rows and 121970956 columns (presolve time = 22s) ...
+Presolve removed 81450373 rows and 121970957 columns (presolve time = 26s) ...
+Presolve removed 81459286 rows and 121980000 columns (presolve time = 30s) ...
+Presolve removed 81595019 rows and 122059768 columns (presolve time = 35s) ...
+Presolve removed 81611166 rows and 122076006 columns (presolve time = 42s) ...
+Presolve removed 81612275 rows and 122077126 columns (presolve time = 45s) ...
+Presolve removed 81612398 rows and 122077238 columns (presolve time = 50s) ...
+Presolve removed 81612398 rows and 122077238 columns (presolve time = 55s) ...
+Presolve removed 81612398 rows and 122077238 columns (presolve time = 60s) ...
+Presolve removed 81612398 rows and 122077239 columns (presolve time = 66s) ...
+Presolve removed 81614318 rows and 122079101 columns (presolve time = 85s) ...
+Presolve removed 81614318 rows and 122079101 columns
+Presolve time: 87.88s
+Presolved: 32316 rows, 21728 columns, 87821 nonzeros
+Variable types: 20712 continuous, 1016 integer (1016 binary)
+Found heuristic solution: objective 3.163865e+07
+Root relaxation presolved: 32316 rows, 21728 columns, 87821 nonzeros
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    4.2922828e+07   1.897146e+05   0.000000e+00    107s
+   39488    3.1874228e+07   0.000000e+00   0.000000e+00    109s
+   39488    3.1874228e+07   0.000000e+00   0.000000e+00    109s
+
+Root relaxation: objective 3.187423e+07, 39488 iterations, 1.65 seconds (1.49 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 3.1874e+07    0   83 3.1639e+07 3.1874e+07  0.74%     -  109s
+H    0     0                    3.182263e+07 3.1874e+07  0.16%     -  110s
+H    0     0                    3.182341e+07 3.1866e+07  0.13%     -  113s
+H    0     0                    3.182400e+07 3.1866e+07  0.13%     -  114s
+H    0     0                    3.183138e+07 3.1866e+07  0.11%     -  115s
+     0     0 3.1865e+07    0   80 3.1831e+07 3.1865e+07  0.10%     -  116s
+H    0     0                    3.183525e+07 3.1865e+07  0.09%     -  117s
+
+Cutting planes:
+  Gomory: 50
+  Lift-and-project: 62
+  Implied bound: 84
+  Projected implied bound: 11
+  MIR: 66
+  Flow cover: 224
+  RLT: 114
+  Relax-and-lift: 40
+  BQP: 3
+  PSD: 26
+
+Explored 1 nodes (41432 simplex iterations) in 122.11 seconds (172.22 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 6: 3.18352e+07 3.18314e+07 3.1824e+07 ... 3.16387e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 3.183524888341e+07, best bound 3.186459603518e+07, gap 0.0922%
+Finished optimize stage for setting _10000_5_4q_mnl_logdistabove1.0_A100!
+

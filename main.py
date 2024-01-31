@@ -72,7 +72,6 @@ params = {
     'flex_thresh': flex_thresh, 
     'logdist_above': logdist_above, 
     'logdist_above_thresh': logdist_above_thresh, 
-    'replace': replace, 
     'R': R, 
     'A': A,
     'norandomterm': norandomterm,
@@ -86,24 +85,18 @@ params = {
 
 def main(params):
 
-    '''
-    BLP estimation:
-    Capacity_list = [8000, 10000, 12000, 15000, 20000]
+    stage_functions = {
+    'optimize': optimize_main,
+    'evaluate': evaluate_main
+    }
 
-    Optimize, Evaluate, Partnership:
-    Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist']
-    Chain_list = ['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries']
-    K_list = [8000, 10000, 12000]
-    M_list = [5, 10]
-    '''
+    if stage in stage_functions: 
+        print(f"Start {stage} stage for setting {setting_tag}...\n")
+        stage_functions[stage](**params)
+        print(f"Finished {stage} stage for setting {setting_tag}!\n")
 
-    print(f"Start {stage} stage for setting {setting_tag}...\n")
-
-    if stage == 'optimize': optimize_main(**params)
-    elif stage == 'evaluate': evaluate_main(**params)
     else: raise Exception("Stage undefined\n")
-    
-    print(f"Finished {stage} stage for setting {setting_tag}!\n")
+
 
 
 if __name__ == "__main__":

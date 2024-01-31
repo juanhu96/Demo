@@ -219,22 +219,30 @@ def import_BLP_estimation(Chain_type, R, A, setting_tag, resultdir='/export/stor
 
 
 
-def import_LogLin_estimation(C_total, abd, num_current_stores, logdist_above, logdist_above_thresh):
+def import_LogLin_estimation(Chain, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
     
-    if logdist_above:
-        C_total[C_total < (logdist_above_thresh*1000)] = (logdist_above_thresh*1000)
-        if logdist_above_thresh == 0.5: Demand_parameter = [0.768, -0.076]
-        if logdist_above_thresh == 1: Demand_parameter = [0.788, -0.084]
-        if logdist_above_thresh == 1.6: Demand_parameter = [0.818, -0.095]
-    else:
-        Demand_parameter = [0.755, -0.069]
+    # if logdist_above:
+    #     C_total[C_total < (logdist_above_thresh*1000)] = (logdist_above_thresh*1000)
+    #     if logdist_above_thresh == 0.5: Demand_parameter = [0.768, -0.076]
+    #     if logdist_above_thresh == 1: Demand_parameter = [0.788, -0.084]
+    #     if logdist_above_thresh == 1.6: Demand_parameter = [0.818, -0.095]
+    # else:
+    #     Demand_parameter = [0.755, -0.069]
 
-    print("The demand parameter imported is: ")
-    print(Demand_parameter)
+    # print("The demand parameter imported is: ")
+    # print(Demand_parameter)
 
-    abd = np.nan_to_num(abd, nan=Demand_parameter[0]) # random error to match empirical rate
-    F_D_total = abd.reshape(8057, 1) + Demand_parameter[1] * np.log(C_total/1000)
-    F_D_current = F_D_total[:,0:num_current_stores]
+    # abd = np.nan_to_num(abd, nan=Demand_parameter[0]) # random error to match empirical rate
+    # F_D_total = abd.reshape(8057, 1) + Demand_parameter[1] * np.log(C_total/1000)
+    # F_D_current = F_D_total[:,0:num_current_stores]
+
+    # import directly at block-level
+    if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
+    if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
+    print(f"import LogLin estimation from file LogLin_current{setting_tag}\n")
+    F_D_current = np.genfromtxt(f'{resultdir}BLP_matrix/LogLin_current{setting_tag}.csv', delimiter = ",", dtype = float) 
+    F_D_chain = np.genfromtxt(f'{resultdir}BLP_matrix/LogLin_{Chain}{setting_tag}.csv', delimiter = ",", dtype = float)
+    F_D_total = np.concatenate((F_D_current, F_D_chain), axis = 1)
 
     return F_D_current, F_D_total
 

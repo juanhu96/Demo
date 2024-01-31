@@ -1,0 +1,46 @@
+Start evaluate stage for setting _10000_5_4q_mnl_A100...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl_A100.
+ Results stored at /export/storage_covidvaccine/Result/MNL_partial/M5_K10000_4q/Dollar
+
+Closest_total and C follows fix rank of 5
+
+import MNL estimation from file V_current_10000_5_4q_mnl
+
+Import optimization solution from file /export/storage_covidvaccine/Result/MNL_partial/M5_K10000_4q/Dollar/vaccinated/z_total_10000_5_4q_mnl_A100
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81425763 nonzeros
+Model fingerprint: 0xf3eea385
+Coefficient statistics:
+  Matrix range     [4e-01, 1e+04]
+  Objective range  [4e-01, 1e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 918 rows and 0 columns (presolve time = 5s) ...
+Presolve removed 81395552 rows and 40680105 columns (presolve time = 10s) ...
+Presolve removed 81396865 rows and 40695907 columns (presolve time = 16s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 18.49s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.1561133e+07   0.000000e+00   0.000000e+00     42s
+
+Solved in 0 iterations and 42.01 seconds (48.52 work units)
+Optimal objective  3.156113344e+07
+Evaluation finished!
+
+Finished evaluate stage for setting _10000_5_4q_mnl_A100!
+

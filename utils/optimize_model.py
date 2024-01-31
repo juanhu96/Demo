@@ -19,9 +19,23 @@ from gurobipy import GRB, quicksum
 
 
 
-def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
-                  num_current_stores, num_total_stores, num_tracts, 
-                  scale_factor, path, setting_tag, R = None, A=None, heuristic=False, MIPGap=5e-2):
+def optimize_rate(scenario,
+                  constraint,
+                  pc,
+                  pf,
+                  ncp,
+                  p,
+                  closest,
+                  K,
+                  R,
+                  A,
+                  num_current_stores,
+                  num_total_stores,
+                  num_tracts, 
+                  path,
+                  setting_tag,
+                  scale_factor,
+                  MIPGap=5e-2):
     
     """
     Parameters
@@ -33,11 +47,6 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     constraint : string
         'assigned', 'vaccinated'
         whether the capacity constraint is based on assignments or vaccinations
-
-    Demand_estimation : string
-        "BLP":
-        "Logit":
-        "Linear":
         
     pc : array
         scaled population * distance
@@ -71,7 +80,6 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     env.start()
 
     m = gp.Model("Vaccination")
-    # m.Params.IntegralityFocus = 1
     m.Params.MIPGap = MIPGap
     
 
@@ -103,13 +111,16 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
         m.addConstr(y[k] <= closest[k])
 
     if A is not None:
-        print(f"Keep all current locations and add {A} locations")
+        print(f"Keep all current locations and add {A} locations\n")
         m.addConstr(z.sum() == num_current_stores + A, name = 'N')
         m.addConstr(quicksum(z[i] for i in range(num_current_stores)) == num_current_stores)
     else:
         m.addConstr(z.sum() == num_current_stores, name = 'N')
 
-    if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
+    if R is not None: 
+        print(f"Repalce {R} locations only\n")
+        m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
+
 
     ## Solve ###
     m.update()
@@ -117,26 +128,22 @@ def optimize_rate(scenario, constraint, pc, pf, ncp, p, K, closest,
     m.optimize()
     end = time.time()
 
+
     ### Export ###
     z_soln = np.zeros(num_stores)
     for j in range(num_stores):
         z_soln[j] = z[j].X
     
-    y_soln = np.zeros(num_tracts * num_stores)
-    for k in range(num_tracts * num_stores):
-        y_soln[k] = y[k].X    
+    # y_soln = np.zeros(num_tracts * num_stores)
+    # for k in range(num_tracts * num_stores):
+    #     y_soln[k] = y[k].X    
     
     
     ### Summary ###
     z_file_name = f'{path}z_{scenario}'
-    y_file_name = f'{path}y_{scenario}'
-
-    if heuristic:
-        z_file_name += '_heuristic'
-        y_file_name += '_heuristic'
-
+    # y_file_name = f'{path}y_{scenario}'
     np.savetxt(f'{z_file_name}{setting_tag}.csv', z_soln, delimiter=",")
-    np.savetxt(f'{y_file_name}{setting_tag}.csv', y_soln, delimiter=",")
+    # np.savetxt(f'{y_file_name}{setting_tag}.csv', y_soln, delimiter=",")
 
  
     ### Finished all ###
@@ -277,31 +284,57 @@ def optimize_rate_MNL_partial(scenario,
                             pf,
                             v,
                             C,
+                            closest,
                             K,
                             R,
                             A,
-                            closest,
                             num_current_stores,
                             num_total_stores,
                             num_tracts,
-                            scale_factor,
-                            setting_tag,
                             path,
+                            setting_tag,
+                            scale_factor,
                             MIPGap=5e-2):
 
 
+    """
+    Parameters
+    ----------
+    scenario : string
+        "current": current stores only
+        "total": current and dollar stores
+    
+    pf : array
+        scaled population * v
+
+    v : array
+        flatten array of v_{ij} = e^{mu_ij}
+
+    C : list
+        list of lists of sites that is within M closest to a region
+        
+    K : scalar
+        capacity of a single site
+        
+    path : string
+        directory for results
+
+    """
 
     env = gp.Env(empty=True)
     env.setParam("OutputFlag",0)
     env.start()
 
     m = gp.Model("Vaccination")
-    # m.Params.IntegralityFocus = 1
     m.Params.MIPFocus = 3 # to focus on the bound
-    m.Params.MIPGap = MIPGap
-    m.Params.TimeLimit=21600 # 6 hours
+    m.Params.TimeLimit = 21600 # 6 hours
+    # small problems require higher accuracy (also easier to solve)
+    if (A is not None) or (R is not None): 
+        m.Params.MIPGap = 1e-3
+    else: 
+        m.Params.MIPGap = MIPGap
     
-
+    if scenario == "current": num_stores = num_current_stores
     if scenario == "total": num_stores = num_total_stores
 
     
@@ -316,8 +349,7 @@ def optimize_rate_MNL_partial(scenario,
 
     
     ### Objective ###
-
-    # NOTE: pf is now p_i * v_ij
+    # pf is now p_i * v_ij
     m.setObjective(quicksum(pf[k] * T[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
     
 
@@ -338,7 +370,9 @@ def optimize_rate_MNL_partial(scenario,
     else:
         m.addConstr(z.sum() == num_current_stores, name = 'N')
 
-    if R is not None: m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
+    if R is not None: 
+        print(f"Repalce {R} locations only\n")
+        m.addConstr(quicksum(z[j] for j in range(num_current_stores)) == num_current_stores - R)
 
     for i in range(num_tracts):
         for j in C[i]:

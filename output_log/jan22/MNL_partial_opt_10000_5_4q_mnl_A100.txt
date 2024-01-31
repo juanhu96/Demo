@@ -1,0 +1,95 @@
+Start optimize stage for setting _10000_5_4q_mnl_A100...
+
+Optimization results stored at /export/storage_covidvaccine/Result/MNL_partial/M5_K10000_4q/Dollar/...
+
+Closest_total and C follows fix rank of 5
+
+import MNL estimation from file V_current_10000_5_4q_mnl
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter TimeLimit to value 21600
+Set parameter MIPGap to value 0.001
+Keep all current locations and add 100 locations
+****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81646634 rows, 122100829 columns and 122754299 nonzeros
+Model fingerprint: 0x734f47a5
+Variable types: 122095778 continuous, 5051 integer (5051 binary)
+Coefficient statistics:
+  Matrix range     [5e-02, 6e+05]
+  Objective range  [1e+00, 6e+05]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 0 rows and 4 columns (presolve time = 11s) ...
+Presolve removed 0 rows and 121966824 columns (presolve time = 19s) ...
+Presolve removed 81351486 rows and 121966824 columns (presolve time = 20s) ...
+Presolve removed 81417591 rows and 121970952 columns (presolve time = 25s) ...
+Presolve removed 81450407 rows and 121971087 columns (presolve time = 33s) ...
+Presolve removed 81523208 rows and 122044027 columns (presolve time = 35s) ...
+Presolve removed 81602691 rows and 122069218 columns (presolve time = 41s) ...
+Presolve removed 81611215 rows and 122076290 columns (presolve time = 46s) ...
+Presolve removed 81612523 rows and 122077598 columns (presolve time = 51s) ...
+Presolve removed 81612523 rows and 122077598 columns (presolve time = 55s) ...
+Presolve removed 81612523 rows and 122077598 columns (presolve time = 61s) ...
+Presolve removed 81612523 rows and 122077598 columns (presolve time = 65s) ...
+Presolve removed 81612540 rows and 122077613 columns (presolve time = 70s) ...
+Presolve removed 81614375 rows and 122079398 columns (presolve time = 87s) ...
+Presolve removed 81614375 rows and 122079398 columns
+Presolve time: 89.98s
+Presolved: 32259 rows, 21431 columns, 87346 nonzeros
+Variable types: 20415 continuous, 1016 integer (1016 binary)
+Found heuristic solution: objective 3.145100e+07
+Root relaxation presolved: 32259 rows, 21431 columns, 87346 nonzeros
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    4.0061435e+07   1.899012e+05   0.000000e+00    110s
+   37220    3.1685948e+07   0.000000e+00   0.000000e+00    112s
+   37220    3.1685948e+07   0.000000e+00   0.000000e+00    112s
+
+Root relaxation: objective 3.168595e+07, 37220 iterations, 1.45 seconds (1.36 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 3.1686e+07    0   87 3.1451e+07 3.1686e+07  0.75%     -  112s
+H    0     0                    3.161840e+07 3.1686e+07  0.21%     -  113s
+H    0     0                    3.162714e+07 3.1686e+07  0.19%     -  114s
+H    0     0                    3.163674e+07 3.1679e+07  0.13%     -  117s
+H    0     0                    3.164278e+07 3.1679e+07  0.12%     -  118s
+H    0     0                    3.164925e+07 3.1679e+07  0.09%     -  119s
+     0     0 3.1677e+07    0   79 3.1649e+07 3.1677e+07  0.09%     -  119s
+
+Cutting planes:
+  Gomory: 83
+  Lift-and-project: 113
+  Implied bound: 104
+  Projected implied bound: 5
+  MIR: 372
+  Flow cover: 593
+  RLT: 207
+  Relax-and-lift: 76
+  PSD: 73
+
+Explored 1 nodes (39167 simplex iterations) in 124.52 seconds (171.11 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 6: 3.16492e+07 3.16428e+07 3.16367e+07 ... 3.1451e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 3.164924520653e+07, best bound 3.167745014938e+07, gap 0.0891%
+Finished optimize stage for setting _10000_5_4q_mnl_A100!
+

@@ -1,0 +1,77 @@
+Start evaluate stage for setting _10000_5_4q_mnl_A200...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl_A200.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar
+
+Closest_total and C follows fix rank of 5
+
+import MNL estimation from file V_current_10000_5_4q_mnl
+
+Import optimization solution from file /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/z_total_10000_5_4q_mnl_A200
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81426449 nonzeros
+Model fingerprint: 0x66a72e82
+Coefficient statistics:
+  Matrix range     [4e-01, 1e+04]
+  Objective range  [4e-01, 1e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 818 rows and 0 columns (presolve time = 11s) ...
+Presolve removed 81395603 rows and 40661272 columns (presolve time = 19s) ...
+Presolve removed 81395603 rows and 40680539 columns (presolve time = 21s) ...
+Presolve removed 81395603 rows and 40694645 columns (presolve time = 26s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 30.73s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.1782577e+07   0.000000e+00   0.000000e+00     69s
+
+Solved in 0 iterations and 69.44 seconds (48.52 work units)
+Optimal objective  3.178257675e+07
+Start evaluating for pharmacies only...
+
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81424512 nonzeros
+Model fingerprint: 0xf91d43f6
+Coefficient statistics:
+  Matrix range     [4e-01, 1e+04]
+  Objective range  [4e-01, 1e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 1018 rows and 0 columns (presolve time = 13s) ...
+Presolve removed 81395596 rows and 40663209 columns (presolve time = 22s) ...
+Presolve removed 81395596 rows and 40680891 columns (presolve time = 26s) ...
+Presolve removed 81395596 rows and 40694638 columns (presolve time = 32s) ...
+Presolve removed 81396865 rows and 40695907 columns (presolve time = 36s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 40.98s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.0633103e+07   0.000000e+00   0.000000e+00     83s
+
+Solved in 0 iterations and 82.87 seconds (48.52 work units)
+Optimal objective  3.063310262e+07
+Evaluation finished!
+
+Finished evaluate stage for setting _10000_5_4q_mnl_A200!
+

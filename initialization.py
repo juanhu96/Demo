@@ -45,8 +45,10 @@ def initialization(Chain, K, nsplits, capcoef, mnl, flexible_consideration, logd
 
     print(setting_tag)    
 
-    if mode == 'initial': initial_BLP_estimation(Chain, K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag)
-    elif mode == 'check': demand_check(Chain, K, nsplits, setting_tag)
+    if mode == 'initial': 
+        initial_BLP_estimation(Chain, K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag)
+    elif mode == 'check': 
+        demand_check(Chain, K, nsplits, setting_tag) # TODO: need to update
     else: raise Exception("Mode undefined, has to be initial or check\n")
 
     return

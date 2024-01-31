@@ -67,7 +67,6 @@ def import_dataset(nsplits, datadir):
 # ====================================================================================
 
 
-
 def import_locations(df, Chain_type, datadir='/export/storage_covidvaccine/Data/'):
 
     '''
@@ -135,39 +134,141 @@ def import_locations(df, Chain_type, datadir='/export/storage_covidvaccine/Data/
 
 
 
-def import_solution(path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, setting_tag, Pharmacy=False):
+def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf=None, v=None, C=None, Pharmacy=False):
     
     '''
     z: results from first stage
-    locs, dists, assignment: results from second stage
+    locs, dists, assignment: results from second stage (random fcfs)
+    t: result from second stage (mnl mip)
     '''
     
     print('Importing optimization and evaluation solution...\n')
 
-    if Pharmacy:
-        locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
-        dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
-        assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
-        z = np.ones(num_current_stores)
+    if evaluation == 'random_fcfs':
+
+        if Pharmacy:
+            locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
+            dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
+            assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
+            z = np.ones(num_current_stores)
+        
+        else:
+            locs_filename = f'{path}locs_{Chain_type}{setting_tag}.csv'
+            dists_filename = f'{path}dists_{Chain_type}{setting_tag}.csv'
+            assignment_filename = f'{path}assignment_{Chain_type}{setting_tag}.csv'
+            z_filename = f'{path}z_total{setting_tag}.csv'
+            z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+
+        # Load data
+        locs = np.genfromtxt(locs_filename, delimiter="")
+        dists = np.genfromtxt(dists_filename, delimiter="")
+        assignment = np.genfromtxt(assignment_filename, delimiter="")
+
+        return z, locs, dists, assignment
+
+    elif evaluation == 'mnl_mip':
+
+        if Pharmacy:
+            t_filename = f'{path}t_Pharmacy{setting_tag}.csv'
+            # z = np.ones(num_current_stores)
+            z = np.concatenate((np.ones(num_current_stores), np.zeros(num_total_stores - num_current_stores)))
+        else:
+            t_filename = f'{path}t{setting_tag}.csv'
+            z_filename = f'{path}z_total{setting_tag}.csv'
+            z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+        
+        t = np.genfromtxt(t_filename, delimiter="")
+        mat_t = np.reshape(t, (num_tracts, num_total_stores))
+
+        # import C and v
+        x = np.zeros(num_tracts)
+        for i in range(num_tracts):
+            index_range = i * num_total_stores + np.array(C[i])
+            denom = np.sum(v[index_range] * z[C[i]])
+            x[i] = 1 / (1 + denom)
     
+        x_reshaped = x.repeat(num_total_stores)
+        z_reshaped = np.tile(z, num_tracts)
+        f = pf * x_reshaped * z_reshaped
+        mat_f = np.reshape(f, (num_tracts, num_total_stores))
+
+        return z, mat_t, mat_f
+
     else:
-        locs_filename = f'{path}locs_{Chain_type}{setting_tag}.csv'
-        dists_filename = f'{path}dists_{Chain_type}{setting_tag}.csv'
-        assignment_filename = f'{path}assignment_{Chain_type}{setting_tag}.csv'
-        z_filename = f'{path}z_total{setting_tag}.csv'
-        z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+        raise Exception("Evaluation type undefined")
 
-    # Load data
-    locs = np.genfromtxt(locs_filename, delimiter="")
-    dists = np.genfromtxt(dists_filename, delimiter="")
-    assignment = np.genfromtxt(assignment_filename, delimiter="")
-
-    return z, locs, dists, assignment
 
 
 # ====================================================================================
 
 
+def import_MNL_basics(tract_hpi, C_current, C_total, M, flexible_consideration, datadir='/export/storage_covidvaccine/Data/'):
+
+    tract_hpi['Popdensity'] = np.genfromtxt(f'{datadir}/CA_density.csv', delimiter = ",", dtype = int)
+    tract_hpi['Popdensity_group'] = pd.cut(tract_hpi['Popdensity'], bins=[0, 1000, 3000, np.inf], labels=['rural', 'suburban', 'urban'], right=False)
+    Popdensity = tract_hpi['Popdensity_group']
+
+    num_tracts, num_current_stores = np.shape(C_current)
+    num_tracts, num_total_stores = np.shape(C_total)
+
+    # ==============================================
+
+    Population = tract_hpi['population'].astype(int)
+    p_total = np.tile(Population, num_total_stores)
+    p_total = np.reshape(p_total, (num_total_stores, num_tracts))
+    p_total = p_total.T.flatten()
+
+    # ==============================================
+
+    consideration_case = 'flexible' if flexible_consideration else 'fix_rank'
+
+    if consideration_case == 'fix_rank':
+        print(f'Closest_total and C follows fix rank of {M}\n')
+
+        Closest_current = np.ones((num_tracts, num_current_stores))
+        Closest_total = np.ones((num_tracts, num_total_stores))
+        np.put_along_axis(Closest_current, np.argpartition(C_current,M,axis=1)[:,M:],0,axis=1)
+        np.put_along_axis(Closest_total, np.argpartition(C_total,M,axis=1)[:,M:],0,axis=1)
+        C = np.argsort(C_total, axis=1)[:, :M]
+
+    elif consideration_case == 'flexible':
+        print(f'Closest_total and C follows flexible consideration set\n')
+
+        D_values = {'urban': 2000, 'suburban': 3000, 'rural': 15000}
+        D = np.array([D_values[density_group] for density_group in Popdensity])
+
+        Closest_current = np.zeros_like(C_current)
+        Closest_total = np.zeros_like(C_total)
+
+        for (current_row, total_row, d, i) in zip(C_current, C_total, D, range(len(D))):
+
+            current_mask = current_row < d
+            if np.any(current_mask):
+                Closest_current[i, current_mask] = 1
+            else:
+                Closest_current[i, np.argmin(current_row)] = 1
+
+            total_mask = total_row < d
+            if np.any(total_mask):
+                Closest_total[i, total_mask] = 1
+            else:
+                Closest_total[i, np.argmin(total_row)] = 1
+
+        C = []
+        for row in range(Closest_total.shape[0]):
+            indices = np.where(Closest_total[row] == 1)[0].tolist()
+            C.append(indices)
+
+    # ==============================================
+
+
+    return p_total, C, Closest_total.flatten()
+
+
+
+
+
+# ====================================================================================
 
 def create_row_randomFCFS(Scenario, Model, Chain_type, M, K, nsplits, opt_constr, stage, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores, output='Full'):
 
@@ -262,6 +363,101 @@ def create_row_randomFCFS(Scenario, Model, Chain_type, M, K, nsplits, opt_constr
     ## Summary
     chain_summary = create_chain_summary(Model, Scenario, opt_constr, stage, M, K, nsplits, R, output, pharmacy, chains, total_vaccination, total_rate, total_vaccination_walkable, total_rate_walkable,
     total_vaccination_pharmacy, total_pharmacy_rate, total_vaccination_chain, total_chain_rate, total_vaccination_pharmacy_walkable, total_vaccination_chain_walkable, total_avg_dist)   
+    return chain_summary
+
+
+
+# ====================================================================================
+
+def create_row_MNL_MIP(Scenario, Model, Chain_type, M, K, nsplits, opt_constr, stage, CA_TRACT, mat_t, z, mat_f, C, C_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores, output='Full'):
+    
+    # mat_y_hpi, z, F_DH
+    # mat_t, z, mat_f where now mat_f is the actual vaccination instead of proportion
+
+    '''
+    Computing summary statistics for results from optimization, which are tract-level results
+    '''
+
+
+    ## Stores breakdown
+    if opt_constr != 'none':
+        R = num_current_stores - sum(z[0 : num_current_stores])
+        closed_pharmacy = pharmacy_locations[z[0:num_current_stores] != 1]
+        selected_chains = chain_locations[z[num_current_stores:] == 1]
+
+        pharmacy = [len(closed_pharmacy[closed_pharmacy.hpi_quantile == i].index) for i in range(1, nsplits+1)]
+        chains = [selected_chains[selected_chains.hpi_quantile == i].shape[0] for i in range(1, nsplits+1)]
+
+    else:
+        R = 0
+        pharmacy = [0 for i in range(1, nsplits+1)]
+        chains = [0 for i in range(1, nsplits+1)]
+
+
+    ## Population
+    total_population = sum(CA_TRACT['population'])
+    population_hpi = [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == i]['population'].values) for i in range(1, nsplits+1)]
+    population_vec = [total_population] + population_hpi
+
+
+    # ## Total vaccination
+    CA_TRACT['Vaccinated_Population'] = np.sum(np.multiply(mat_f, mat_t), axis = 1)
+    total_rate = np.array([[sum(CA_TRACT['Vaccinated_Population'].values) / total_population] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccinated_Population'].values) / population_hpi[i] for i in range(nsplits)]])
+    total_vaccination = np.round(total_rate * population_vec / 1000000,2)[0]
+    total_rate = np.round(total_rate * 100)[0]
+
+
+    ## Total vaccination by pharmacy
+    CA_TRACT['Pharmacy_Vaccinated_Population'] = np.sum(np.multiply(mat_f[:, 0:num_current_stores], mat_t[:, 0:num_current_stores]), axis = 1)
+    pharmacy_rate = np.array([[sum(CA_TRACT['Pharmacy_Vaccinated_Population'].values) / total_population] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Pharmacy_Vaccinated_Population'].values) / population_hpi[i] for i in range(nsplits)]])
+    pharmacy_vaccination = np.round(pharmacy_rate * population_vec / 1000000,2)[0]
+    pharmacy_rate = np.round(pharmacy_rate * 100)[0]
+    
+
+    ## Total vaccination by chain
+    CA_TRACT['Chain_Vaccinated_Population'] = np.sum(np.multiply(mat_f[:, num_current_stores:num_total_stores], mat_t[:, num_current_stores:num_total_stores]), axis = 1)
+    chain_rate = np.array([[sum(CA_TRACT['Chain_Vaccinated_Population'].values) / total_population] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Chain_Vaccinated_Population'].values) / population_hpi[i] for i in range(nsplits)]])
+    chain_vaccination = np.round(chain_rate * population_vec / 1000000,2)[0]
+    chain_rate = np.round(chain_rate * 100)[0]
+
+
+    ## Walkable vaccination
+    CA_TRACT['Vaccination_Walkable'] = np.sum(np.multiply(C_walkable, np.multiply(mat_f, mat_t)), axis =1) 
+    rate_walkable_list = np.array([[sum(CA_TRACT['Vaccination_Walkable'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccination_Walkable'].values) for i in range(nsplits)]])
+    total_vaccination_walkable = np.round(rate_walkable_list / 1000000, 2)[0]
+    total_rate_walkable = np.round(rate_walkable_list[0] / population_vec * 100)
+
+
+    ## Walkable vaccination by pharmacy
+    CA_TRACT['Pharmacy_Vaccination_Walkable'] = np.sum(np.multiply(C_walkable[:, 0:num_current_stores], np.multiply(mat_f[:, 0:num_current_stores], mat_t[:, 0:num_current_stores])), axis =1) 
+    pharmacy_rate_walkable_list = np.array([[sum(CA_TRACT['Pharmacy_Vaccination_Walkable'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Pharmacy_Vaccination_Walkable'].values) for i in range(nsplits)]])
+    pharmacy_vaccination_walkable = np.round(pharmacy_rate_walkable_list / 1000000, 2)[0]
+    pharmacy_rate_walkable = np.round(pharmacy_rate_walkable_list[0] / population_vec * 100)
+
+
+    ## Walkable vaccination by chain
+    CA_TRACT['Chain_Vaccination_Walkable'] = np.sum(np.multiply(C_walkable[:, num_current_stores:num_total_stores], np.multiply(mat_f[:, num_current_stores:num_total_stores], mat_t[:, num_current_stores:num_total_stores])), axis =1) 
+    chain_rate_walkable_list = np.array([[sum(CA_TRACT['Chain_Vaccination_Walkable'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Chain_Vaccination_Walkable'].values) for i in range(nsplits)]])
+    chain_vaccination_walkable = np.round(chain_rate_walkable_list / 1000000, 2)[0]
+    chain_rate_walkable = np.round(chain_rate_walkable_list[0] / population_vec * 100)
+
+
+    ## Distance among vaccinated
+    # assigned_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, mat_y_hpi), axis = 1) / np.sum(mat_y_hpi, axis = 1), posinf=0)
+    # assigned_dist_hpi = np.nan_to_num(np.sum(np.multiply(C, np.multiply(mat_f, mat_t)), axis = 1) / np.sum(np.multiply(mat_f, mat_t), axis = 1), posinf=0)
+    # CA_TRACT['Dist_Vaccinated'] = assigned_dist_hpi
+    # CA_TRACT['Vaccinated_Population'] = CA_TRACT['population'] * np.sum(mat_y_hpi, axis = 1)
+    # CA_TRACT['Dist_weighted'] = CA_TRACT['Dist_Vaccinated'] * CA_TRACT['Vaccinated_Population']
+
+    CA_TRACT['Dist_weighted'] = np.sum(np.multiply(C, np.multiply(mat_f, mat_t)), axis = 1)
+    assigned_dist_actual = np.array([[sum(CA_TRACT['Dist_weighted'].values) / sum(CA_TRACT['Vaccinated_Population'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Dist_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccinated_Population']) for i in range(nsplits)]])
+    total_avg_dist = np.round(assigned_dist_actual/1000, 2)[0]
+
+
+    ## Summary
+    chain_summary = create_chain_summary(Model, Scenario, opt_constr, stage, M, K, nsplits, R, output, pharmacy, chains, total_vaccination, total_rate, total_vaccination_walkable, total_rate_walkable,
+    pharmacy_vaccination, pharmacy_rate, chain_vaccination, chain_rate, pharmacy_vaccination_walkable, chain_vaccination_walkable, total_avg_dist) 
+
     return chain_summary
 
 

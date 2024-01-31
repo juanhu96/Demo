@@ -32,7 +32,16 @@ except:
 
 
 
-def compute_distdf(Chain_type, Chain, constraint, z, setting_tag, path, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
+def compute_distdf(Chain_type: str,
+                   Chain: str,
+                   constraint: str,
+                   z: np.ndarray,
+                   setting_tag: str,
+                   path: str,
+                   datadir: str = '/export/storage_covidvaccine/Data',
+                   resultdir: str = '/export/storage_covidvaccine/Result',
+                   within: int = 3000,
+                   limit: int = 50):
     
     print('Start computing distdf...\n')
     path = f'{path}/{constraint}'
@@ -247,19 +256,94 @@ def run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, 
 # ===========================================================================
 
 
-# def summary_statistics(assignment, locs, dists, block, nsplits, setting_tag, path):
+def summary_statistics(assignment, locs, dists, block, nsplits, setting_tag, path):
 
-#     assignment_hpi = [[assignment[j] for j in block[block.hpi_quantile == i].index] for i in range(1, nsplits+1)]
-#     total_vaccination = sum(np.sum(arr) for arr in assignment)
-#     total_vaccination_list = [np.sum(assignment_hpi_i) for assignment_hpi_i in assignment_hpi]
-#     total_vaccination_list = np.round(np.array(total_vaccination_list) / 1000000, 4)
-#     summary = {'Vaccination': total_vaccination, 
-#         'Vaccination HPI1': total_vaccination_list[0], 'Vaccination HPI2': total_vaccination_list[1], 
-#         'Vaccination HPI3': total_vaccination_list[2], 'Vaccination HPI4': total_vaccination_list[3]}
-#     summary_df = pd.DataFrame([summary])
-#     summary_df.to_csv(f'{path}/results{setting_tag}.csv', index=False)
+    assignment_hpi = [[assignment[j] for j in block[block.hpi_quantile == i].index] for i in range(1, nsplits+1)]
+    total_vaccination = sum(np.sum(arr) for arr in assignment)
+    total_vaccination_list = [np.sum(assignment_hpi_i) for assignment_hpi_i in assignment_hpi]
+    total_vaccination_list = np.round(np.array(total_vaccination_list) / 1000000, 4)
+    summary = {'Vaccination': total_vaccination, 
+        'Vaccination HPI1': total_vaccination_list[0], 'Vaccination HPI2': total_vaccination_list[1], 
+        'Vaccination HPI3': total_vaccination_list[2], 'Vaccination HPI4': total_vaccination_list[3]}
+    summary_df = pd.DataFrame([summary])
+    summary_df.to_csv(f'{path}/results{setting_tag}.csv', index=False)
 
-#     return 
+    return 
+
+
+
+# ===========================================================================
+
+
+
+def evaluate_rate_MNL_partial(C_total,
+                              z,
+                              pf,
+                              v,
+                              C,
+                              K,
+                              closest,
+                              num_current_stores,
+                              num_total_stores,
+                              num_tracts,
+                              scale_factor,
+                              setting_tag,
+                              path,
+                              Pharmacy=False,
+                              MIPGap=5e-3):
+
+
+    ### Compute x ###
+    num_stores = num_total_stores
+    x = np.zeros(num_tracts)
+    for i in range(num_tracts):
+        index_range = i * num_stores + np.array(C[i])
+        denom = np.sum(v[index_range] * z[C[i]])
+        x[i] = 1 / (1 + denom)
+
+    # pf_ij = p_i * v_ij, f_ij = pf_ij * z_j * x_i
+    x_reshaped = x.repeat(num_stores)
+    z_reshaped = np.tile(z, num_tracts)
+    f = pf * x_reshaped * z_reshaped
+    
+    # ======================================================================
+
+    env = gp.Env(empty=True)
+    env.setParam("OutputFlag",0)
+    env.start()
+
+    m = gp.Model("Vaccination")
+    m.Params.MIPFocus = 3 # to focus on the bound
+    m.Params.MIPGap = MIPGap
+    m.Params.TimeLimit = 21600 # 6 hours
+
+    t = m.addVars(num_tracts * num_stores, lb = 0, ub = 1, name = 't')    
+    m.setObjective(quicksum(f[k] * t[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
+    
+    for j in range(num_stores):
+        m.addConstr(quicksum(f[i * num_stores + j] * t[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+        m.addConstrs(t[i * num_stores + j] <= z[j] for i in range(num_tracts))
+
+    m.addConstrs(t[k] <= closest[k] for k in range(num_tracts * num_stores))
+
+    ## Solve ###
+    m.update()
+    start = time.time()
+    m.optimize()
+    end = time.time()
+
+    ### Export ###    
+    t_soln = np.zeros(num_tracts * num_stores)
+    for j in range(num_tracts * num_stores):
+        t_soln[j] = t[j].X
+
+    ### Summary ###
+    if Pharmacy: np.savetxt(f'{path}t_Pharmacy{setting_tag}.csv', t_soln, delimiter=",")
+    else: np.savetxt(f'{path}t{setting_tag}.csv', t_soln, delimiter=",")
+
+    ### Finished all ###
+    m.dispose()
+
 
 
 # ===========================================================================
