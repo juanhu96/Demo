@@ -85,16 +85,27 @@ params = {
 
 def main(params):
 
+    # stage_functions = {
+    # 'optimize': optimize_main,
+    # 'evaluate': evaluate_main
+    # }
+
+    # assert stage in stage_functions, "Stage undefined"
+    # print(f"Start {stage} stage for setting {setting_tag}...\n")
+    # stage_functions[stage](**params)
+    # print(f"Finished {stage} stage for setting {setting_tag}!\n")
+
     stage_functions = {
     'optimize': optimize_main,
     'evaluate': evaluate_main
     }
 
-    assert stage in stage_functions, "Stage undefined"
-    print(f"Start {stage} stage for setting {setting_tag}...\n")
-    stage_functions[stage](**params)
-    print(f"Finished {stage} stage for setting {setting_tag}!\n")
+    if stage in stage_functions: 
+        print(f"Start {stage} stage for setting {setting_tag}...\n")
+        stage_functions[stage](**params)
+        print(f"Finished {stage} stage for setting {setting_tag}!\n")
 
+    else: raise Exception("Stage undefined\n")
 
 
 if __name__ == "__main__":

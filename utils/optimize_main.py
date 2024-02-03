@@ -86,30 +86,30 @@ def optimize_chain(Model: str,
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
 
 
-    model_mapping = {
-    'Facility_BLP_models': ('BLP_matrix',),
-    'Facility_LogLin_models': ('LogLin',),
-    'Assortment_MNL_models': ('V',)
-    }
+    # model_mapping = {
+    # 'Facility_BLP_models': ('BLP_matrix',),
+    # 'Facility_LogLin_models': ('LogLin',),
+    # 'Assortment_MNL_models': ('V',)
+    # }
 
-    model_key = next((k for k in model_mapping if Model in k), None)
-    if model_key:
-        args = model_mapping[model_key]
-        if model_key == 'Assortment_MNL_models':
-            V_current, V_total = import_estimation(*args, Chain, R, A, setting_tag)
-        else:
-            F_current, F_total = import_estimation(*args, Chain, R, A, setting_tag)
-    else:
-        raise ValueError("Model not recognized")
+    # model_key = next((k for k in model_mapping if Model in k), None)
+    # if model_key:
+    #     args = model_mapping[model_key]
+    #     if model_key == 'Assortment_MNL_models':
+    #         V_current, V_total = import_estimation(*args, Chain, R, A, setting_tag)
+    #     else:
+    #         F_current, F_total = import_estimation(*args, Chain, R, A, setting_tag)
+    # else:
+    #     raise ValueError("Model not recognized")
 
-    # if Model in Facility_BLP_models: 
-    #     F_current, F_total = import_estimation('BLP_matrix', Chain, R, A, setting_tag)
+    if Model in Facility_BLP_models: 
+        F_current, F_total = import_estimation('BLP_matrix', Chain, R, A, setting_tag)
 
-    # if Model in Facility_LogLin_models: 
-    #     F_current, F_total = import_estimation('LogLin', Chain, R, A, setting_tag)
+    if Model in Facility_LogLin_models: 
+        F_current, F_total = import_estimation('LogLin', Chain, R, A, setting_tag)
     
-    # if Model in Assortment_MNL_models:
-    #     V_current, V_total = import_estimation('V', Chain, R, A, setting_tag)
+    if Model in Assortment_MNL_models:
+        V_current, V_total = import_estimation('V', Chain, R, A, setting_tag)
 
 
     # ================================================================================
