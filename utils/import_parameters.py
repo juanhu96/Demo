@@ -88,7 +88,7 @@ def import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logd
     consideration_case = 'flexible' if flexible_consideration else 'fix_rank'
 
     if consideration_case == 'fix_rank':
-        print(f'Closest_total and C follows fix rank of {M}\n')
+        # print(f'Closest_total and C follows fix rank of {M}\n')
 
         Closest_current = np.ones((num_tracts, num_current_stores))
         Closest_total = np.ones((num_tracts, num_total_stores))
@@ -228,7 +228,7 @@ def import_BLP_estimation(Chain_type, R, A, setting_tag, resultdir='/export/stor
 
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
     if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
-    print(f"Import BLP estimation matrices from file BLP_current{setting_tag}...\n")
+    # print(f"Import BLP estimation matrices from file BLP_current{setting_tag}...\n")
 
     F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', delimiter = ",", dtype = float) 
     F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}{setting_tag}.csv', delimiter = ",", dtype = float)
@@ -259,7 +259,7 @@ def import_LogLin_estimation(Chain, R, A, setting_tag, resultdir='/export/storag
     # import directly at block-level
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
     if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
-    print(f"import LogLin estimation from file LogLin_current{setting_tag}\n")
+    # print(f"import LogLin estimation from file LogLin_current{setting_tag}\n")
     F_D_current = np.genfromtxt(f'{resultdir}BLP_matrix/LogLin_current{setting_tag}.csv', delimiter = ",", dtype = float) 
     F_D_chain = np.genfromtxt(f'{resultdir}BLP_matrix/LogLin_{Chain}{setting_tag}.csv', delimiter = ",", dtype = float)
     F_D_total = np.concatenate((F_D_current, F_D_chain), axis = 1)
@@ -273,7 +273,7 @@ def import_MNL_estimation(Chain, R, A, setting_tag, resultdir='/export/storage_c
 
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
     if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
-    print(f"import MNL estimation from file V_current{setting_tag}\n")
+    # print(f"import MNL estimation from file V_current{setting_tag}\n")
 
     V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current{setting_tag}.csv', delimiter = ",", dtype = float) 
     V_chain = np.genfromtxt(f'{resultdir}BLP_matrix/V_{Chain}{setting_tag}.csv', delimiter = ",", dtype = float)

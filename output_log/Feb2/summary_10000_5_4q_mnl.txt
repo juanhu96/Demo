@@ -1,0 +1,2 @@
+/mnt/phd/jihu/VaxDemandDistance/utils/partnerships_summary_helpers.py:479: RuntimeWarning: invalid value encountered in double_scalars
+  assigned_dist_actual = np.array([[sum(CA_TRACT['Dist_weighted'].values) / sum(CA_TRACT['Vaccinated_Population'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Dist_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccinated_Population']) for i in range(nsplits)]])

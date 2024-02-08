@@ -198,6 +198,32 @@ def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_tota
         raise Exception("Evaluation type undefined")
 
 
+def import_solution_leftover(evaluation, path, rank, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf=None, v=None, C=None, Pharmacy=False):
+    
+    if evaluation == 'mnl_mip':
+
+        if Pharmacy:
+            t_filename = f'{path}t_Pharmacy_round{rank}{setting_tag}.csv'
+            f_filename = f'{path}f_Pharmacy_round{rank}{setting_tag}.csv'
+            # z = np.ones(num_current_stores)
+            z = np.concatenate((np.ones(num_current_stores), np.zeros(num_total_stores - num_current_stores)))
+        else:
+            t_filename = f'{path}t_round{rank}{setting_tag}.csv'
+            f_filename = f'{path}f_round{rank}{setting_tag}.csv'
+
+            z_filename = f'{path}z_total_round{rank}{setting_tag}.csv'
+            z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+        
+        t = np.genfromtxt(t_filename, delimiter="", dtype=float)
+        f = np.genfromtxt(f_filename, delimiter="", dtype=float)
+        mat_t = np.reshape(t, (num_tracts, num_total_stores))
+        mat_f = np.reshape(f, (num_tracts, num_total_stores)) # 
+
+        return z, mat_t, mat_f
+
+    else:
+        raise Exception("Leftover only works for MNL MIP evaluation")
+
 
 # ====================================================================================
 

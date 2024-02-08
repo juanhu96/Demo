@@ -21,9 +21,7 @@ from gurobipy import GRB, quicksum
 
 def optimize_rate(scenario,
                   constraint,
-                  pc,
-                  pf,
-                  ncp,
+                  pv,
                   p,
                   closest,
                   K,
@@ -47,15 +45,9 @@ def optimize_rate(scenario,
     constraint : string
         'assigned', 'vaccinated'
         whether the capacity constraint is based on assignments or vaccinations
-        
-    pc : array
-        scaled population * distance
     
-    pf : array
+    pv : array
         scaled population * willingness
-        
-    ncp : array
-        n copies of population vector
         
     p : array
         population vector
@@ -93,7 +85,7 @@ def optimize_rate(scenario,
     
     
     ### Objective ###
-    m.setObjective(quicksum(pf[k] * y[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
+    m.setObjective(quicksum(pv[k] * y[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
     
     
     ### Constraints ###
@@ -102,7 +94,7 @@ def optimize_rate(scenario,
             m.addConstr(quicksum(p[i] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
     elif constraint == 'vaccinated':
         for j in range(num_stores):
-            m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+            m.addConstr(quicksum(pv[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
 
     for i in range(num_tracts):
         m.addConstr(quicksum(y[i * num_stores + j] for j in range(num_stores)) <= 1)
@@ -158,7 +150,7 @@ def optimize_rate(scenario,
 
 
 def optimize_rate_MNL(scenario,
-                    pf,
+                    pv,
                     v,
                     C,
                     K,
@@ -180,7 +172,7 @@ def optimize_rate_MNL(scenario,
         "current": current stores only
         "total": current and dollar stores
     
-    pf : array
+    pv : array
         scaled population * v
 
     v : array
@@ -219,8 +211,8 @@ def optimize_rate_MNL(scenario,
     
     ### Objective ###
 
-    # NOTE: pf is now p_i * v_ij
-    m.setObjective(quicksum(pf[k] * y[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
+    # NOTE: pv is now p_i * v_ij
+    m.setObjective(quicksum(pv[k] * y[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
     
 
     ### Constraints ###
@@ -229,7 +221,7 @@ def optimize_rate_MNL(scenario,
         # m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in C[i]) == 1)
         
     for j in range(num_stores):
-        m.addConstr(quicksum(pf[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+        m.addConstr(quicksum(pv[i * num_stores + j] * y[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
 
     # for k in range(num_tracts * num_stores):
     #     m.addConstr(y[k] <= closest[k])
@@ -281,7 +273,7 @@ def optimize_rate_MNL(scenario,
 
 
 def optimize_rate_MNL_partial(scenario,
-                            pf,
+                            pv,
                             v,
                             C,
                             closest,
@@ -304,7 +296,7 @@ def optimize_rate_MNL_partial(scenario,
         "current": current stores only
         "total": current and dollar stores
     
-    pf : array
+    pv : array
         scaled population * v
 
     v : array
@@ -349,8 +341,8 @@ def optimize_rate_MNL_partial(scenario,
 
     
     ### Objective ###
-    # pf is now p_i * v_ij
-    m.setObjective(quicksum(pf[k] * T[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
+    # pv is now p_i * v_ij
+    m.setObjective(quicksum(pv[k] * T[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
     
 
     ### Constraints ###
@@ -359,7 +351,7 @@ def optimize_rate_MNL_partial(scenario,
         m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in C[i]) == 1)
 
     for j in range(num_stores):
-        m.addConstr(quicksum(pf[i * num_stores + j] * T[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+        m.addConstr(quicksum(pv[i * num_stores + j] * T[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
         # m.addConstr(t[j] <= z[j])
         m.addConstrs(t[i * num_stores + j] <= z[j] for i in range(num_tracts))
 
@@ -421,7 +413,7 @@ def optimize_rate_MNL_partial(scenario,
     
 def optimize_rate_MNL_partial_test(z,
                             scenario,
-                            pf,
+                            pv,
                             v,
                             C,
                             K,
@@ -463,8 +455,8 @@ def optimize_rate_MNL_partial_test(z,
     
     ### Objective ###
 
-    # NOTE: pf is now p_i * v_ij
-    m.setObjective(quicksum(pf[k] * T[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
+    # NOTE: pv is now p_i * v_ij
+    m.setObjective(quicksum(pv[k] * T[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
     
 
     ### Constraints ###
@@ -473,7 +465,7 @@ def optimize_rate_MNL_partial_test(z,
         m.addConstr(x[i] + quicksum(v[i * num_stores + j] * y[i * num_stores + j] for j in C[i]) == 1)
 
     for j in range(num_stores):
-        m.addConstr(quicksum(pf[i * num_stores + j] * T[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
+        m.addConstr(quicksum(pv[i * num_stores + j] * T[i * num_stores + j] for i in range(num_tracts)) <= K * z[j])
         # m.addConstr(t[j] <= z[j])
         m.addConstrs(t[i * num_stores + j] <= z[j] for i in range(num_tracts))
 
@@ -609,7 +601,7 @@ def optimize_rate_fix(scenario, constraint, ncp, pv, p, closest, K,
     
     See optimize_rate(), except
     
-    pf : array
+    pv : array
         scaled population * willingness
         
     ncp : array

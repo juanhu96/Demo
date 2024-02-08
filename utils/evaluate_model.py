@@ -275,36 +275,97 @@ def summary_statistics(assignment, locs, dists, block, nsplits, setting_tag, pat
 # ===========================================================================
 
 
+def compute_f(z, pf, v, C, num_total_stores, num_tracts):
+    
+    '''
+    First-round evaluation only
+    '''
 
-def evaluate_rate_MNL_partial(C_total,
+    ### Compute x ###
+    x = np.zeros(num_tracts)
+    for i in range(num_tracts):
+        index_range = i * num_total_stores + np.array(C[i])
+        denom = np.sum(v[index_range] * z[C[i]])
+        x[i] = 1 / (1 + denom)
+
+    # f = pf * z * x
+    x_reshaped = x.repeat(num_total_stores)
+    z_reshaped = np.tile(z, num_tracts)
+    f = pf * x_reshaped * z_reshaped
+
+    return f
+
+
+def update_f(f, z, t, v, C, Kz, num_total_stores, num_tracts):
+
+    '''
+    f, z, t are all from previous round and requires update
+
+    f from first round is from compute_f()
+    z from first round is z_total from evalution
+    t from first round is the optimal t from evaluation
+    '''
+
+    f_mat = np.reshape(f, (num_tracts, num_total_stores))
+    t_mat = np.reshape(t, (num_tracts, num_total_stores))
+
+    D_mat = f_mat * t_mat
+    D_per_store = np.sum(D_mat, axis=0) # sum over columns
+    
+    # f should come from previous round
+    p_leftover = np.sum(f_mat * (1-t_mat), axis=1) # p'
+    
+    # sum of p_leftover + sum of D_per_store = sum of f_mat
+    # print(f'Number of sites with capacity before previous round: {np.sum(z)} with total capacity {np.round(np.sum(Kz) / 1000000, 5)}\n')
+
+    # if z is available from previous round & there's demand from previous round less than capacity
+    # compute remaining capacity and corresponding sites
+    Kz_leftover = np.where((z == 1) & (Kz > D_per_store), Kz - D_per_store, 0).astype(int)
+    z_leftover = np.where((z == 1) & (Kz_leftover > 0), 1, 0) # z'
+    
+    ### Compute x ###
+    x_leftover = np.zeros(num_tracts)
+    for i in range(num_tracts):
+        index_range = i * num_total_stores + np.array(C[i])
+        denom = np.sum(v[index_range] * z_leftover[C[i]])
+        x_leftover[i] = 0 if denom == 0 else 1 / denom # different
+    
+    x_leftover_reshaped = x_leftover.repeat(num_total_stores)
+    z_leftover_reshaped = np.tile(z_leftover, num_tracts)
+    p_total_leftover = p_leftover.repeat(num_total_stores)
+
+    pf_leftover = p_total_leftover * v
+    f_leftover = pf_leftover * x_leftover_reshaped * z_leftover_reshaped
+
+    # maximum possible demand in coming round < leftover unfulfilled demand
+    # individual that wants to get vaccinate but none of the M closest are available
+    print(f'Total demand fulfilled in previous round {np.round(np.sum(D_mat) / 1000000, 5)}, with leftover unfulfilled demand: {np.round(np.sum(p_leftover) / 1000000, 5)};\
+    Resulting in a total of {np.round(np.sum(f_mat) / 1000000, 5)}, but b/c consideration set, the maximum possible demand in coming round is {np.round(np.sum(f_leftover) / 1000000, 5)};\
+    Try to fill them with {np.sum(z_leftover)} sites that has leftover capacity {np.round(np.sum(Kz_leftover) / 1000000, 5)}\n')
+
+    max_possible_demand = np.round(np.sum(f_leftover) / 1000000, 5)
+    terminate = (max_possible_demand == 0)
+
+    return Kz_leftover, z_leftover, f_leftover, terminate
+
+
+
+# ===========================================================================
+
+
+
+def evaluate_rate_MNL_partial(f,
                               z,
-                              pf,
-                              v,
-                              C,
                               K,
                               closest,
                               num_current_stores,
                               num_total_stores,
                               num_tracts,
-                              scale_factor,
                               setting_tag,
                               path,
                               Pharmacy=False,
                               MIPGap=5e-3):
 
-
-    ### Compute x ###
-    num_stores = num_total_stores
-    x = np.zeros(num_tracts)
-    for i in range(num_tracts):
-        index_range = i * num_stores + np.array(C[i])
-        denom = np.sum(v[index_range] * z[C[i]])
-        x[i] = 1 / (1 + denom)
-
-    # pf_ij = p_i * v_ij, f_ij = pf_ij * z_j * x_i
-    x_reshaped = x.repeat(num_stores)
-    z_reshaped = np.tile(z, num_tracts)
-    f = pf * x_reshaped * z_reshaped
     
     # ======================================================================
 
@@ -316,6 +377,8 @@ def evaluate_rate_MNL_partial(C_total,
     m.Params.MIPFocus = 3 # to focus on the bound
     m.Params.MIPGap = MIPGap
     m.Params.TimeLimit = 21600 # 6 hours
+
+    num_stores = num_total_stores
 
     t = m.addVars(num_tracts * num_stores, lb = 0, ub = 1, name = 't')    
     m.setObjective(quicksum(f[k] * t[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
@@ -338,11 +401,84 @@ def evaluate_rate_MNL_partial(C_total,
         t_soln[j] = t[j].X
 
     ### Summary ###
-    if Pharmacy: np.savetxt(f'{path}t_Pharmacy{setting_tag}.csv', t_soln, delimiter=",")
-    else: np.savetxt(f'{path}t{setting_tag}.csv', t_soln, delimiter=",")
+    if Pharmacy: 
+        np.savetxt(f'{path}t_Pharmacy{setting_tag}.csv', t_soln, delimiter=",")
+        # np.savetxt(f'{path}f_Pharmacy{setting_tag}.csv', f, delimiter=",")
+    else: 
+        np.savetxt(f'{path}t{setting_tag}.csv', t_soln, delimiter=",")
+        # np.savetxt(f'{path}f{setting_tag}.csv', f, delimiter=",")
 
     ### Finished all ###
     m.dispose()
+
+
+
+# ===========================================================================
+
+
+
+def evaluate_rate_MNL_partial_leftover(f,
+                                       Kz,
+                                       z,
+                                       closest,
+                                       num_current_stores,
+                                       num_total_stores,
+                                       num_tracts,
+                                       scale_factor,
+                                       setting_tag,
+                                       path,
+                                       rank,
+                                       Pharmacy=False,
+                                       MIPGap=5e-3):
+
+
+    env = gp.Env(empty=True)
+    env.setParam("OutputFlag",0)
+    env.start()
+
+    m = gp.Model("Vaccination")
+    m.Params.MIPFocus = 3 # to focus on the bound
+    m.Params.MIPGap = MIPGap
+    m.Params.TimeLimit = 21600 # 6 hours
+
+    num_stores = num_total_stores
+
+    t = m.addVars(num_tracts * num_stores, lb = 0, ub = 1, name = 't')    
+    m.setObjective(quicksum(f[k] * t[k] for k in range(num_tracts * num_stores)), gp.GRB.MAXIMIZE)
+    
+    for j in range(num_stores):
+        m.addConstr(quicksum(f[i * num_stores + j] * t[i * num_stores + j] for i in range(num_tracts)) <= Kz[j])
+        m.addConstrs(t[i * num_stores + j] <= z[j] for i in range(num_tracts))
+
+    m.addConstrs(t[k] <= closest[k] for k in range(num_tracts * num_stores))
+
+    ## Solve ###
+    m.update()
+    start = time.time()
+    m.optimize()
+    end = time.time()
+
+    ### Export ###    
+    t_soln = np.zeros(num_tracts * num_stores)
+    for j in range(num_tracts * num_stores):
+        t_soln[j] = t[j].X
+
+    ### Summary ###
+    if Pharmacy: 
+        np.savetxt(f'{path}t_Pharmacy_round{rank}{setting_tag}.csv', t_soln, delimiter=",")
+        np.savetxt(f'{path}z_Pharmacy_round{rank}{setting_tag}.csv', z, delimiter=",")
+        np.savetxt(f'{path}f_Pharmacy_round{rank}{setting_tag}.csv', f, delimiter=",")
+        np.savetxt(f'{path}Kz_Pharmacy_round{rank}{setting_tag}.csv', Kz, delimiter=",")
+    else: 
+        np.savetxt(f'{path}t_round{rank}{setting_tag}.csv', t_soln, delimiter=",")
+        np.savetxt(f'{path}z_total_round{rank}{setting_tag}.csv', z, delimiter=",")
+        np.savetxt(f'{path}f_round{rank}{setting_tag}.csv', f, delimiter=",")
+        np.savetxt(f'{path}Kz_round{rank}{setting_tag}.csv', Kz, delimiter=",")
+
+    ### Finished all ###
+    m.dispose()
+
+
 
 
 

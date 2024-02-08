@@ -221,7 +221,8 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
 
     for i in range(num_tracts):
 
-        tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
+        tract_id, tract_pop, tract_abd = tract['GEOID'][i], tract['POPULATION'][i], tract_abd_values[i]
+        # tract_id, tract_pop = tract['GEOID'][i], tract['POPULATION'][i]
         blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
         block_id = block[block.blkid.isin(blk_tract_id)].blkid.to_list()
         block_utils_id = block_utils[block_utils.blkid.isin(blk_tract_id)].blkid.to_list()

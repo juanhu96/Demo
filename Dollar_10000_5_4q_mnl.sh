@@ -1,4 +1,6 @@
 
+### LOG DISTANCE ABOVE 1KM ###
+
 # nohup python3 initialization.py Dollar 10000 5 4 mnl "logdistabove1.0" > output_log/jan22/init_10000_5_4q_mnl_logdistabove1.0.txt &
 
 # nohup python3 main.py MNL_partial Dollar 10000 5 4 optimize mnl "logdistabove1.0" > output_log/jan22/MNL_partial_opt_10000_5_4q_mnl_logdistabove1.0.txt &
@@ -68,8 +70,11 @@
 
 # ==============================================================================================================
 
+# LEFTOVER EVALUATION
+nohup python3 main.py MNL_partial Dollar 10000 5 4 evaluate mnl > output_log/Feb2/MNL_partial_leftover_10000_5_4q_mnl.txt &
+nohup python3 main.py MaxVaxDistLogLin Dollar 10000 5 4 evaluate mnl > output_log/Feb2/LogLin_partial_leftover_10000_5_4q_mnl.txt &
 
-
+nohup python3 summary.py 10000 5 4 mnl > output_log/Feb2/summary_10000_5_4q_mnl.txt & 
 
 
 

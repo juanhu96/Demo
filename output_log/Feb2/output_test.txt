@@ -1,0 +1,32 @@
+Start evaluate stage for setting _10000_5_3q_mnl...
+
+========================================================================================================================
+Start filling the leftover demands to their 2 choice
+
+Number of sites with capacity before previous round: 4035.0 with total capacity 40.35
+
+Total leftover demand after previous round: 2.67568; Try to fill them in the     number of sites with leftover capacity: 2902 with total capacity: 6.98996;    Total leftover demand is unknown yet because we need to evaluate!
+
+========================================================================================================================
+Start filling the leftover demands to their 3 choice
+
+Number of sites with capacity before previous round: 2902.0 with total capacity 6.98996
+
+Total leftover demand after previous round: 0.64889; Try to fill them in the     number of sites with leftover capacity: 2573 with total capacity: 6.23244;    Total leftover demand is unknown yet because we need to evaluate!
+
+========================================================================================================================
+Start filling the leftover demands to their 4 choice
+
+Number of sites with capacity before previous round: 2573.0 with total capacity 6.23244
+
+Total leftover demand after previous round: 0.01642; Try to fill them in the     number of sites with leftover capacity: 2543 with total capacity: 6.16337;    Total leftover demand is unknown yet because we need to evaluate!
+
+========================================================================================================================
+Start filling the leftover demands to their 5 choice
+
+Number of sites with capacity before previous round: 2543.0 with total capacity 6.16337
+
+Total leftover demand after previous round: 0.0; Try to fill them in the     number of sites with leftover capacity: 2543 with total capacity: 6.16284;    Total leftover demand is unknown yet because we need to evaluate!
+
+Finished evaluate stage for setting _10000_5_3q_mnl!
+

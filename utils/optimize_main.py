@@ -84,29 +84,13 @@ def optimize_chain(Model: str,
     (Population, Quartile, abd, p_current, p_total, pc_current, pc_total, 
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
-
-
-    # model_mapping = {
-    # 'Facility_BLP_models': ('BLP_matrix',),
-    # 'Facility_LogLin_models': ('LogLin',),
-    # 'Assortment_MNL_models': ('V',)
-    # }
-
-    # model_key = next((k for k in model_mapping if Model in k), None)
-    # if model_key:
-    #     args = model_mapping[model_key]
-    #     if model_key == 'Assortment_MNL_models':
-    #         V_current, V_total = import_estimation(*args, Chain, R, A, setting_tag)
-    #     else:
-    #         F_current, F_total = import_estimation(*args, Chain, R, A, setting_tag)
-    # else:
-    #     raise ValueError("Model not recognized")
+    
 
     if Model in Facility_BLP_models: 
-        F_current, F_total = import_estimation('BLP_matrix', Chain, R, A, setting_tag)
+        V_current, V_total = import_estimation('BLP_matrix', Chain, R, A, setting_tag)
 
     if Model in Facility_LogLin_models: 
-        F_current, F_total = import_estimation('LogLin', Chain, R, A, setting_tag)
+        V_current, V_total = import_estimation('LogLin', Chain, R, A, setting_tag)
     
     if Model in Assortment_MNL_models:
         V_current, V_total = import_estimation('V', Chain, R, A, setting_tag)
@@ -118,22 +102,22 @@ def optimize_chain(Model: str,
     if Model in Facility_BLP_models or Model in Facility_LogLin_models:
 
         # willingness vector
-        f_current = F_current.flatten()
-        f_total = F_total.flatten()
-        f_total = np.nan_to_num(f_total)
+        v_current = V_current.flatten()
+        v_total = V_total.flatten()
+        v_total = np.nan_to_num(v_total)
 
         # population * willingness vector
-        pf_current = p_current * f_current
-        pf_total = p_total * f_total
-        pf_total = pf_total * Closest_total
+        pv_current = p_current * v_current
+        pv_total = p_total * v_total
+        pv_total = pv_total * Closest_total
     
 
     if Model in Assortment_MNL_models:
         v_total = V_total.flatten()
-        pf_total = p_total * v_total
+        pv_total = p_total * v_total
 
         v_total = v_total * Closest_total
-        pf_total = pf_total * Closest_total # make sure zero at other place
+        pv_total = pv_total * Closest_total # make sure zero at other place
 
 
     # ================================================================================
@@ -146,9 +130,7 @@ def optimize_chain(Model: str,
 
         optimize_rate(scenario='total',
                       constraint=constraint,
-                      pc=pc_total,
-                      pf=pf_total,
-                      ncp=p_total,
+                      pv=pv_total,
                       p=Population, 
                       closest=Closest_total,
                       K=K,
@@ -164,7 +146,7 @@ def optimize_chain(Model: str,
     elif Model == 'MNL_partial':
 
         optimize_rate_MNL_partial(scenario='total', 
-                                  pf=pf_total,
+                                  pv=pv_total,
                                   v=v_total,
                                   C=C,
                                   closest=Closest_total,

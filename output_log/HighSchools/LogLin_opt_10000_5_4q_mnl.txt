@@ -1,0 +1,61 @@
+Start optimize stage for setting _10000_5_4q_mnl...
+
+Optimization results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/HighSchools/...
+
+Importing estimation from LogLin_HighSchools_10000_5_4q_mnl.csv
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPGap to value 0.05
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 42916908 rows, 42908850 columns and 85857845 nonzeros
+Model fingerprint: 0x934bc0dc
+Variable types: 42903525 continuous, 5325 integer (5325 binary)
+Coefficient statistics:
+  Matrix range     [1e-03, 3e+04]
+  Objective range  [1e-03, 3e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Found heuristic solution: objective 2.663285e+07
+Presolve removed 0 rows and 0 columns (presolve time = 6s) ...
+Presolve removed 42903561 rows and 42863380 columns (presolve time = 10s) ...
+Presolve removed 42903561 rows and 42863387 columns (presolve time = 16s) ...
+Presolve removed 42903561 rows and 42863387 columns (presolve time = 20s) ...
+Presolve removed 42903561 rows and 42863387 columns (presolve time = 26s) ...
+Presolve removed 42903561 rows and 42863387 columns (presolve time = 31s) ...
+Presolve removed 42903561 rows and 42863387 columns (presolve time = 38s) ...
+Presolve removed 42903561 rows and 42863387 columns
+Presolve time: 39.50s
+Presolved: 13347 rows, 45463 columns, 90925 nonzeros
+Variable types: 40145 continuous, 5318 integer (5317 binary)
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.0306767e+07   2.454078e+05   0.000000e+00     47s
+    8161    3.0176446e+07   0.000000e+00   0.000000e+00     48s
+
+Root relaxation: objective 3.017645e+07, 8161 iterations, 1.39 seconds (1.89 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 3.0176e+07    0  765 2.6633e+07 3.0176e+07  13.3%     -   49s
+H    0     0                    3.011329e+07 3.0176e+07  0.21%     -   49s
+
+Explored 1 nodes (16828 simplex iterations) in 51.50 seconds (52.05 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 2: 3.01133e+07 2.66329e+07 
+
+Optimal solution found (tolerance 5.00e-02)
+Best objective 3.011329203451e+07, best bound 3.017644610660e+07, gap 0.2097%
+Finished optimize stage for setting _10000_5_4q_mnl!
+

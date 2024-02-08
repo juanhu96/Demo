@@ -1,0 +1,41 @@
+Start evaluate stage for setting _10000_5_4q_mnl...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Coffee
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 116140805 rows, 58066799 columns and 116159681 nonzeros
+Model fingerprint: 0x5b8ad911
+Coefficient statistics:
+  Matrix range     [3e-01, 1e+04]
+  Objective range  [3e-01, 1e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 3172 rows and 0 columns (presolve time = 7s) ...
+Presolve removed 116139660 rows and 58040716 columns (presolve time = 14s) ...
+Presolve removed 116139660 rows and 58056090 columns (presolve time = 16s) ...
+Presolve removed 116139660 rows and 58065654 columns (presolve time = 20s) ...
+Presolve removed 116140805 rows and 58066799 columns
+Presolve time: 25.58s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.1294201e+07   0.000000e+00   0.000000e+00     59s
+
+Solved in 0 iterations and 58.63 seconds (70.08 work units)
+Optimal objective  3.129420083e+07
+Evaluation finished!
+
+Finished evaluate stage for setting _10000_5_4q_mnl!
+
