@@ -1,0 +1,86 @@
+Start evaluate stage for setting _10000_10_4q_mnl...
+
+========================================================================================================================
+Start filling the leftover demands to their 2 choice
+
+Total demand fulfilled in previous round 34.46815, with leftover unfulfilled demand: 2.87805;    Resulting in a total of 37.3462, but b/c consideration set, the maximum possible demand in coming round is 1.94019;    Try to fill them with 2736 sites that has leftover capacity 5.88049
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81398994 nonzeros
+Model fingerprint: 0x22d0174f
+Coefficient statistics:
+  Matrix range     [7e-02, 1e+04]
+  Objective range  [7e-02, 1e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 9e+03]
+Presolve removed 2982 rows and 0 columns (presolve time = 11s) ...
+Presolve removed 81396436 rows and 40688727 columns (presolve time = 20s) ...
+Presolve removed 81396436 rows and 40693270 columns (presolve time = 23s) ...
+Presolve removed 81396436 rows and 40695478 columns (presolve time = 26s) ...
+Presolve removed 81396865 rows and 40695907 columns (presolve time = 32s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 36.74s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    9.6826646e+05   0.000000e+00   0.000000e+00     80s
+
+Solved in 0 iterations and 79.61 seconds (47.49 work units)
+Optimal objective  9.682664557e+05
+========================================================================================================================
+Start filling the leftover demands to their 3 choice
+
+Total demand fulfilled in previous round 0.96827, with leftover unfulfilled demand: 0.97193;    Resulting in a total of 1.94019, but b/c consideration set, the maximum possible demand in coming round is 0.18623;    Try to fill them with 2297 sites that has leftover capacity 4.91142
+
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81393680 nonzeros
+Model fingerprint: 0x097b033d
+Coefficient statistics:
+  Matrix range     [1e-02, 6e+03]
+  Objective range  [1e-02, 6e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 9e+03]
+Presolve removed 4221 rows and 0 columns (presolve time = 13s) ...
+Presolve removed 81396795 rows and 40694041 columns (presolve time = 21s) ...
+Presolve removed 81396795 rows and 40695837 columns (presolve time = 25s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 32.72s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    1.1809709e+05   0.000000e+00   0.000000e+00     60s
+
+Solved in 0 iterations and 60.00 seconds (47.49 work units)
+Optimal objective  1.180970855e+05
+Traceback (most recent call last):
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 102, in <module>
+    main(params)
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 95, in main
+    stage_functions[stage](**params)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_main.py", line 60, in evaluate_main
+    evalute_chain_MNL_leftover(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, setting_tag, constraint, path, rank)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_main.py", line 250, in evalute_chain_MNL_leftover
+    evaluate_rate_MNL_partial_leftover(f=f_new,
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_model.py", line 475, in evaluate_rate_MNL_partial_leftover
+    np.savetxt(f'{path}t_round{rank}{setting_tag}.csv', t_soln, delimiter=",")
+  File "<__array_function__ internals>", line 5, in savetxt
+  File "/users/phd/jihu/anaconda3/lib/python3.9/site-packages/numpy/lib/npyio.py", line 1440, in savetxt
+    fh.write(v)
+OSError: [Errno 28] No space left on device

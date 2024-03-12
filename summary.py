@@ -64,10 +64,15 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, setti
     print(f'Start creating summary table for {setting_tag}...\n')
 
     # Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
-    Model_list = ['MaxVaxDistLogLin', 'MNL_partial']
+    # Model_list = ['MaxVaxDistLogLin', 'MNL_partial']
+    Model_list = ['MNL_partial']
     # Model_list = ['MaxVaxDistLogLin'] # norandomterm # loglintemp
+
+    # Chain_list = ['Dollar', 'HighSchools', 'Coffee']
+    Chain_list = ['Dollar']
+
     partnerships_summary(Model_list=Model_list,
-                         Chain_list=['Dollar', 'HighSchools', 'Coffee'],
+                         Chain_list=Chain_list,
                          K=K,
                          M=M,
                          nsplits=nsplits,
@@ -76,7 +81,7 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, setti
                          R=R,
                          A=A,
                          setting_tag=setting_tag,
-                         suffix='chain_leftover')
+                         suffix='')
 
     print(f'Finished table for {setting_tag}!\n')
     return

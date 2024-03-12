@@ -71,12 +71,19 @@
 # ==============================================================================================================
 
 # LEFTOVER EVALUATION
-nohup python3 main.py MNL_partial Dollar 10000 5 4 evaluate mnl > output_log/Feb2/MNL_partial_leftover_10000_5_4q_mnl.txt &
-nohup python3 main.py MaxVaxDistLogLin Dollar 10000 5 4 evaluate mnl > output_log/Feb2/LogLin_partial_leftover_10000_5_4q_mnl.txt &
+# nohup python3 main.py MNL_partial Dollar 10000 5 4 evaluate mnl > output_log/Feb2/MNL_partial_leftover_10000_5_4q_mnl.txt &
+# nohup python3 main.py MaxVaxDistLogLin Dollar 10000 5 4 evaluate mnl > output_log/Feb2/LogLin_partial_leftover_10000_5_4q_mnl.txt &
 
-nohup python3 summary.py 10000 5 4 mnl > output_log/Feb2/summary_10000_5_4q_mnl.txt & 
+# nohup python3 summary.py 10000 5 4 mnl > output_log/Feb2/summary_10000_5_4q_mnl.txt & 
 
 
+# ==============================================================================================================
+
+# TRY THE RANDOM FCFS AGAIN
+# nohup python3 main.py MNL_partial Dollar 10000 5 4 evaluate mnl > output_log/MNL_partial_eval_fcfs_10000_5_4q_mnl.txt &
+# nohup python3 main.py MaxVaxDistLogLin Dollar 10000 5 4 evaluate mnl > output_log/LogLin_eval_fcfs_10000_5_4q_mnl.txt &
+
+# nohup python3 summary.py 10000 5 4 mnl > output_log/summary_10000_5_4q_mnl.txt & 
 
 
 

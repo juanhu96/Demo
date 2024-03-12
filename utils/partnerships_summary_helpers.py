@@ -172,6 +172,9 @@ def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_tota
             t_filename = f'{path}t_Pharmacy{setting_tag}.csv'
             # z = np.ones(num_current_stores)
             z = np.concatenate((np.ones(num_current_stores), np.zeros(num_total_stores - num_current_stores)))
+            # z_filename = f'{path}z_Pharmacy_round1{setting_tag}.csv' # NOTE: temp for randomization
+            # z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+
         else:
             t_filename = f'{path}t{setting_tag}.csv'
             z_filename = f'{path}z_total{setting_tag}.csv'
@@ -479,6 +482,9 @@ def create_row_MNL_MIP(Scenario, Model, Chain_type, M, K, nsplits, opt_constr, s
     assigned_dist_actual = np.array([[sum(CA_TRACT['Dist_weighted'].values) / sum(CA_TRACT['Vaccinated_Population'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Dist_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccinated_Population']) for i in range(nsplits)]])
     total_avg_dist = np.round(assigned_dist_actual/1000, 2)[0]
 
+    export_tract = True
+    if export_tract:
+        CA_TRACT.to_csv(f'/export/storage_covidvaccine/Result/Sensitivity_results/CA_TRACT_{Scenario}.csv', encoding='utf-8', index=False, header=True)
 
     ## Summary
     chain_summary = create_chain_summary(Model, Scenario, opt_constr, stage, M, K, nsplits, R, output, pharmacy, chains, total_vaccination, total_rate, total_vaccination_walkable, total_rate_walkable,
@@ -767,19 +773,18 @@ def compute_utilization_MIP(Scenario, Model, Chain_type, M, K, opt_constr, stage
 
 
 
-
-
-
 def export_dist(path, Model, Chain, M, K, R, z, block, locs, dists, assignment, chain_locations, num_current_stores, num_total_stores, num_copies = 5):
 
     '''
+    THIS WAS FOR FCFS
+
     Export distance for visualization
     The output is in the format of (hpi, locs: pharmacy/chain, assignment, dist)
     
     block_id: with column 'market_ids', 'hpi_quantile'
     market id is the corresponding zip
     '''
-
+    
     # make five copy of market id & hpi quantile
     hpi_quantile = block.hpi_quantile
     hpi_quantile_array = np.column_stack([hpi_quantile] * num_copies)
@@ -799,12 +804,4 @@ def export_dist(path, Model, Chain, M, K, R, z, block, locs, dists, assignment, 
     else: df.to_csv(f'{path}/Distance_HPI.csv', encoding='utf-8', index=False, header=True)
 
     return 
-
-
-
-
-
-
-
-
 

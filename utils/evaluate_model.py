@@ -85,9 +85,10 @@ def compute_distdf(Chain_type: str,
     within = 3000 # km
     limit = 50 # number of chain stores to consider
     output = subprocess.run(["stata-mp", "-b", "do", f"/mnt/phd/jihu/VaxDemandDistance/Demand/datawork/geonear_pharmacies.do", baselocpath, chainlocpath, outpath, str(within), str(limit)], capture_output=True, text=True)
-    
+    print(output.stdout)
+    print(output.stderr)
+
     # ============================= STATA ==================================
-    
 
     return 
 
@@ -119,7 +120,7 @@ def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, 
 
     # Block estimation
     temp_setting_tag = setting_tag.replace('_norandomterm', '') # estimation independent of random term
-    temp_setting_tag = temp_setting_tag.replace('_loglintemp', '') # estimation independent of random term
+    temp_setting_tag = temp_setting_tag.replace('_loglintemp', '') # estimation independent of loglin form
     if R is not None: temp_setting_tag = temp_setting_tag.replace(f'_R{R}', '')
     if A is not None: temp_setting_tag = temp_setting_tag.replace(f'_A{A}', '')
 
@@ -137,6 +138,8 @@ def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, 
 
     # Flexible 
     if flexible_consideration:
+        
+        print("Constructing dist_df under flexible consideration set...\n")
 
         cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/cw_pop.csv")        
         distdf = distdf.merge(cw_pop[['market_ids', 'blkid']], on='blkid', how='left')
@@ -173,7 +176,6 @@ def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, 
     return block, block_utils, distdf
 
 
-
 # ===========================================================================
 
 
@@ -188,23 +190,23 @@ def run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, 
     dist_grp = distdf.groupby('blkid')
     locs = dist_grp.locid.apply(np.array).values # list of lists of location IDs, corresponding to dists
     dists = dist_grp.logdist.apply(np.array).values # list of lists of distances, sorted ascending
-    geog_pops = block.population.values
+    geog_pops = block.population.values # identical to cw_pop.population.values done by Li
     geog_pops = np.array(geog_pops).astype(int).tolist() # updated: float to int
 
-    test = False
-    if test:
-        num_rows = 3
-        locs = locs[:num_rows]
-        dists = dists[:num_rows]
-        geog_pops = geog_pops[:num_rows]
-        distcoefs = distcoefs[:num_rows]
-        abd = abd[:num_rows]
-        block = block[:num_rows]
+    # test = False
+    # if test:
+    #     num_rows = 3
+    #     locs = locs[:num_rows]
+    #     dists = dists[:num_rows]
+    #     geog_pops = geog_pops[:num_rows]
+    #     distcoefs = distcoefs[:num_rows]
+    #     abd = abd[:num_rows]
+    #     block = block[:num_rows]
 
     # ===========================================================================
 
-    economy = vaxclass.Economy(locs=locs, dists=dists, geog_pops=geog_pops, max_rank=M, seed=42, mnl=mnl)
-    af.random_fcfs(economy, distcoefs, abd, K, mnl, True)
+    economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=M, mnl=mnl)
+    af.random_fcfs(economy, distcoefs, abd, K, mnl=mnl, evaluation=True)
     assignment = economy.assignments
 
     # ===========================================================================

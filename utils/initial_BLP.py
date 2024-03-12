@@ -62,6 +62,7 @@ def import_loglin_results(tract, logdist_above, logdist_above_thresh):
 
     if logdist_above:
         if logdist_above_thresh == 0.5: loglin_coef = [0.768, -0.076]
+        if logdist_above_thresh == 0.8: loglin_coef = [0.780, -0.081]
         if logdist_above_thresh == 1: loglin_coef = [0.788, -0.084]
         if logdist_above_thresh == 1.6: loglin_coef = [0.818, -0.095]
     else:

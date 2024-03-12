@@ -6,6 +6,7 @@ Created on Jul, 2022
 
 Export selected locations
 python3 export_locations.py Dollar 8000 5 4 True 100
+python3 export_locations.py Dollar 10000 5 4 mnl
 """
 
 import os
@@ -17,9 +18,10 @@ import pandas as pd
 #=================================================================
 # SETTINGS
 
-K = int(sys.argv[1])
-M = int(sys.argv[2])
-nsplits = int(sys.argv[3])
+Chain = sys.argv[1]
+K = int(sys.argv[2])
+M = int(sys.argv[3])
+nsplits = int(sys.argv[4])
 
 capcoef = any(['capcoef' in arg for arg in sys.argv])
 mnl = any([arg == 'mnl' for arg in sys.argv])
@@ -56,14 +58,16 @@ setting_tag += f"_A{A}" if add else ""
 
 # ================================================================================
 
-def main(M, K, nsplits, setting_tag):
+def main(Chain, M, K, nsplits, setting_tag):
 
     print(f"Start export locations under setting {setting_tag}...\n")
-    Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
+    # Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
+    # Model_list = ['MaxVaxDistLogLin', 'MNL_partial']
+    Model_list = ['MNL_partial']
 
     for Model in Model_list:
         export_locations(Model=Model,
-                         Chain='Dollar',
+                         Chain=Chain,
                          M=M,
                          K=K,
                          nsplits=nsplits,
@@ -78,30 +82,58 @@ def export_locations(Model, Chain, M, K, nsplits, setting_tag, suffix='', opt_co
     Model_name_dict = {'MaxVaxHPIDistBLP': 'Assignment_BLP', 'MaxVaxDistLogLin': 'Assignment_LogLin', 'MNL_partial': 'Choice_BLP'}
 
     path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{opt_constr}/'
-    z = np.genfromtxt(f'{path}/z_total{setting_tag}.csv', delimiter = ",", dtype = float)
+    z = np.genfromtxt(f'{path}z_total{setting_tag}.csv', delimiter = ",", dtype = float)
 
     # ====================================================================================
 
-    pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID'])
+    hpi_df = pd.read_csv(f"{datadir}/Intermediate/hpi_zip.csv")
+    hpi_df['hpi_quantile'] = pd.cut(hpi_df['hpi'], nsplits, labels=False, include_lowest=True) + 1
+    hpi_df['zip'] = hpi_df['zip'].astype(str)
+
+    pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID', 'zip_code', 'city'])
+    pharmacy_locations.rename(columns={'zip_code': 'zip'}, inplace=True)
+    pharmacy_locations['zip'] = pharmacy_locations['zip'].astype(str)
     pharmacy_locations = pharmacy_locations.loc[pharmacy_locations['StateID'] == 6, :]
+    pharmacy_locations = pharmacy_locations.merge(hpi_df, on="zip", how="left", indicator=True)
     pharmacy_locations.drop(columns=['StateID'], inplace=True)
 
-    chain_locations = pd.read_csv(f"{datadir}/Raw/Location/01_DollarStores.csv", usecols=['Latitude', 'Longitude', 'State'])
-    chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude'}, inplace=True)
+
+    Chain_name_list={'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}
+    Chain_name = Chain_name_list[Chain]
+    chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv")
+
+    if Chain == 'Dollar':
+        chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv", usecols=['Latitude', 'Longitude', 'Zip_Code', 'State'])
+        chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude', 'Zip_Code': 'zip'}, inplace=True)
+        
+    elif Chain == 'Coffee':
+        chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv", usecols=['latitude', 'longitude', 'postal_code', 'region'])
+        chain_locations.rename(columns={'postal_code': 'zip', 'region': 'State'}, inplace=True)
+
+    elif Chain == 'HighSchools':
+        chain_locations = pd.read_csv(f"{datadir}/Raw/Location/{Chain_name}.csv", usecols=['latitude', 'longitude', 'Zip', 'State'])
+        chain_locations.rename(columns={'Zip': 'zip'}, inplace=True)
+    else:
+        print('Warning: chain name undefined\n')
+    # chain_locations.rename(columns={'Latitude': 'latitude', 'Longitude': 'longitude', 'Zip_Code': 'zip', 'City': 'city'}, inplace=True)
+    chain_locations['zip'] = chain_locations['zip'].astype(str)
     chain_locations = chain_locations.loc[chain_locations['State'] == 'CA', :]
+    chain_locations = chain_locations.merge(hpi_df, on="zip", how="left", indicator=True)
     chain_locations.drop(columns=['State'], inplace=True)  
 
     # ====================================================================================
 
-    model_pharmacy = pharmacy_locations[z[:len(pharmacy_locations)] == 0] # closed
-    model_chain = chain_locations[z[len(pharmacy_locations):] == 1]
+    # model_pharmacy = pharmacy_locations[z[:len(pharmacy_locations)] == 1]
+    # model_chain = chain_locations[z[len(pharmacy_locations):] == 1]
+    pharmacy_locations['selected'] = np.where(z[:len(pharmacy_locations)] == 1, 1, 0)   
+    chain_locations['selected'] = np.where(z[len(pharmacy_locations):] == 1, 1, 0)
 
-    model_pharmacy.to_csv(f'{resultdir}/Locations/{Model_name_dict[Model]}_pharmacy{setting_tag}.csv', encoding='utf-8', index=False, header=True)
-    model_chain.to_csv(f'{resultdir}/Locations/{Model_name_dict[Model]}_chain{setting_tag}.csv', encoding='utf-8', index=False, header=True)
+    pharmacy_locations.to_csv(f'{resultdir}/Locations/{Model_name_dict[Model]}_pharmacy_{Chain}{setting_tag}.csv', encoding='utf-8', index=False, header=True)
+    chain_locations.to_csv(f'{resultdir}/Locations/{Model_name_dict[Model]}_{Chain}{setting_tag}.csv', encoding='utf-8', index=False, header=True)
 
     return
 
 
 
 if __name__ == "__main__":
-    main(M, K, nsplits, setting_tag)
+    main(Chain, M, K, nsplits, setting_tag)
