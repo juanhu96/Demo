@@ -481,16 +481,34 @@ def create_row_MNL_MIP(Scenario, Model, Chain_type, M, K, nsplits, opt_constr, s
     CA_TRACT['Dist_weighted'] = np.sum(np.multiply(C, np.multiply(mat_f, mat_t)), axis = 1)
     assigned_dist_actual = np.array([[sum(CA_TRACT['Dist_weighted'].values) / sum(CA_TRACT['Vaccinated_Population'].values)] + [sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Dist_weighted'].values) / sum(CA_TRACT[CA_TRACT['HPIQuartile'] == (i+1)]['Vaccinated_Population']) for i in range(nsplits)]])
     total_avg_dist = np.round(assigned_dist_actual/1000, 2)[0]
+    
 
-    export_tract = True
-    if export_tract:
-        CA_TRACT.to_csv(f'/export/storage_covidvaccine/Result/Sensitivity_results/CA_TRACT_{Scenario}.csv', encoding='utf-8', index=False, header=True)
+    ## Distance offered
+    # dist_offered_vec = C[mat_f != 0].flatten()
+    # population_vec = mat_f[mat_f != 0].flatten()
+    # np.savetxt(f"/export/storage_covidvaccine/Result/dist_offered_{Scenario}.csv", dist_offered_vec, delimiter=",")
+    # np.savetxt(f"/export/storage_covidvaccine/Result/population_{Scenario}.csv", population_vec, delimiter=",")
+
+
+    def compute_capacity_df(C, mat_f, d):
+        dist_mat = C * (mat_f != 0)
+        counts = ((dist_mat > 0) & (dist_mat < d)).sum(axis=1)
+        return counts
+    
+    d_list = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000, 30000, 40000, 50000]
+    for d in d_list:
+        sites_within_d = compute_capacity_df(C, mat_f, d)
+        CA_TRACT[f'Sites within {d}'] = sites_within_d
 
     ## Summary
     chain_summary = create_chain_summary(Model, Scenario, opt_constr, stage, M, K, nsplits, R, output, pharmacy, chains, total_vaccination, total_rate, total_vaccination_walkable, total_rate_walkable,
     pharmacy_vaccination, pharmacy_rate, chain_vaccination, chain_rate, pharmacy_vaccination_walkable, chain_vaccination_walkable, total_avg_dist) 
 
-    return chain_summary
+    export_tract = True
+    if export_tract:
+        return chain_summary, CA_TRACT
+    else:
+        return chain_summary
 
 
 

@@ -33,6 +33,7 @@ def evaluate_main(Model: str,
                   A,
                   norandomterm: bool,
                   loglintemp: bool,
+                  random_seed,
                   setting_tag: str,
                   RandomFCFS: bool = False,
                   MIP: bool = False,
@@ -52,12 +53,12 @@ def evaluate_main(Model: str,
     
     path = create_path(Model, Chain, K, M, nsplits, resultdir)
 
-    evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, setting_tag, constraint, path)
+    evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
     
     if leftover: 
         # for rank in range(2, M+1):
         for rank in range(2, 4): # computation/storage issue
-            evalute_chain_MNL_leftover(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, setting_tag, constraint, path, rank)
+            evalute_chain_MNL_leftover(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path, rank)
     
     # other evaluation form
     if RandomFCFS:
@@ -128,6 +129,7 @@ def evaluate_chain_MNL(Model,
                        R,
                        A,
                        norandomterm,
+                       random_seed,
                        setting_tag,
                        constraint,
                        path,
@@ -139,7 +141,7 @@ def evaluate_chain_MNL(Model,
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
     
-    _, V_total = import_MNL_estimation(Chain, R, A, setting_tag)
+    _, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)
     v_total = V_total.flatten()
     v_total = v_total * Closest_total
     pv_total = p_total * v_total
@@ -171,8 +173,8 @@ def evaluate_chain_MNL(Model,
         
         print("Start evaluating for pharmacies only...\n")
         if A is not None:
-            np.random.seed(42)
-            print(f"WE ARE HERE WITH A {A}\n")
+            np.random.seed(random_seed)
+            print(f"WE ARE HERE WITH A = {A} and RANDOM SEED OF {random_seed}\n")
             selected_dollar = np.zeros(num_total_stores - num_current_stores)
             indices = np.random.choice(range(len(selected_dollar)), A, replace=False)
             print(indices)
@@ -217,6 +219,7 @@ def evalute_chain_MNL_leftover(Model,
                                R,
                                A,
                                norandomterm,
+                               random_seed,
                                setting_tag,
                                constraint,
                                path,
@@ -229,7 +232,7 @@ def evalute_chain_MNL_leftover(Model,
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
     
-    _, V_total = import_MNL_estimation(Chain, R, A, setting_tag)
+    _, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)
     v_total = V_total.flatten()
     v_total = v_total * Closest_total
     

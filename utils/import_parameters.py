@@ -204,10 +204,11 @@ def import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logd
 
 
 
-def import_estimation(Model_name, Chain, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
+def import_estimation(Model_name, Chain, R, A, random_seed, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
     
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
     if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
+    if random_seed is not None: setting_tag = setting_tag.replace(f'_randomseed{random_seed}', '')
 
     print(f"Importing estimation from {Model_name}_{Chain}{setting_tag}.csv\n")
 
@@ -224,10 +225,11 @@ def import_estimation(Model_name, Chain, R, A, setting_tag, resultdir='/export/s
 
 
 
-def import_BLP_estimation(Chain_type, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
+def import_BLP_estimation(Chain_type, R, A, random_seed, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
 
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
     if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
+    if random_seed is not None: setting_tag = setting_tag.replace(f'_randomseed{random_seed}', '')
     # print(f"Import BLP estimation matrices from file BLP_current{setting_tag}...\n")
 
     F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', delimiter = ",", dtype = float) 
@@ -239,7 +241,7 @@ def import_BLP_estimation(Chain_type, R, A, setting_tag, resultdir='/export/stor
 
 
 
-def import_LogLin_estimation(Chain, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
+def import_LogLin_estimation(Chain, R, A, random_seed, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
     
     # if logdist_above:
     #     C_total[C_total < (logdist_above_thresh*1000)] = (logdist_above_thresh*1000)
@@ -259,6 +261,8 @@ def import_LogLin_estimation(Chain, R, A, setting_tag, resultdir='/export/storag
     # import directly at block-level
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
     if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
+    if random_seed is not None: setting_tag = setting_tag.replace(f'_randomseed{random_seed}', '')
+
     # print(f"import LogLin estimation from file LogLin_current{setting_tag}\n")
     F_D_current = np.genfromtxt(f'{resultdir}BLP_matrix/LogLin_current{setting_tag}.csv', delimiter = ",", dtype = float) 
     F_D_chain = np.genfromtxt(f'{resultdir}BLP_matrix/LogLin_{Chain}{setting_tag}.csv', delimiter = ",", dtype = float)
@@ -269,10 +273,12 @@ def import_LogLin_estimation(Chain, R, A, setting_tag, resultdir='/export/storag
 
 
 
-def import_MNL_estimation(Chain, R, A, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
+def import_MNL_estimation(Chain, R, A, random_seed, setting_tag, resultdir='/export/storage_covidvaccine/Result/'):
 
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
     if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
+    if random_seed is not None: setting_tag = setting_tag.replace(f'_randomseed{random_seed}', '')
+
     # print(f"import MNL estimation from file V_current{setting_tag}\n")
 
     V_current = np.genfromtxt(f'{resultdir}BLP_matrix/V_current{setting_tag}.csv', delimiter = ",", dtype = float) 

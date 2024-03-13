@@ -32,6 +32,7 @@ def optimize_main(Model: str,
                   A,
                   norandomterm: bool,
                   loglintemp: bool,
+                  random_seed,
                   setting_tag: str,
                   resultdir='/export/storage_covidvaccine/Result'):
     
@@ -47,7 +48,7 @@ def optimize_main(Model: str,
         return chain_path
     
     expdirpath = create_path(Model, Chain, K, M, nsplits, resultdir)
-    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, loglintemp, setting_tag, expdirpath)
+    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, loglintemp, random_seed, setting_tag, expdirpath)
 
     return
 
@@ -68,6 +69,7 @@ def optimize_chain(Model: str,
                    A,
                    norandomterm: bool,
                    loglintemp: bool,
+                   random_seed,
                    setting_tag: str,
                    expdirpath: str,
                    constraint: str = 'vaccinated',
@@ -87,13 +89,13 @@ def optimize_chain(Model: str,
     
 
     if Model in Facility_BLP_models: 
-        V_current, V_total = import_estimation('BLP_matrix', Chain, R, A, setting_tag)
+        V_current, V_total = import_estimation('BLP_matrix', Chain, R, A, random_seed, setting_tag)
 
     if Model in Facility_LogLin_models: 
-        V_current, V_total = import_estimation('LogLin', Chain, R, A, setting_tag)
+        V_current, V_total = import_estimation('LogLin', Chain, R, A, random_seed, setting_tag)
     
     if Model in Assortment_MNL_models:
-        V_current, V_total = import_estimation('V', Chain, R, A, setting_tag)
+        V_current, V_total = import_estimation('V', Chain, R, A, random_seed, setting_tag)
 
 
     # ================================================================================
