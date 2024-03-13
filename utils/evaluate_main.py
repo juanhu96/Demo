@@ -36,7 +36,6 @@ def evaluate_main(Model: str,
                   random_seed,
                   setting_tag: str,
                   RandomFCFS: bool = False,
-                  MIP: bool = False,
                   leftover: bool = True,
                   constraint='vaccinated',
                   resultdir='/export/storage_covidvaccine/Result'):
@@ -50,22 +49,21 @@ def evaluate_main(Model: str,
         chain_path = f'{parameter_path}/{Chain}/'
         if not os.path.exists(chain_path): os.mkdir(chain_path)
         return chain_path
-    
+       
     path = create_path(Model, Chain, K, M, nsplits, resultdir)
 
     evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
     
     if leftover: 
-        # for rank in range(2, M+1):
-        for rank in range(2, 4): # computation/storage issue
+        print("Evaluation with leftover fulfillments...\n")
+        for rank in range(2, 4): # computation/storage issue, for rank in range(2, M+1)
             evalute_chain_MNL_leftover(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path, rank)
+    
     
     # other evaluation form
     if RandomFCFS:
+        print("Evaluation with random FCFS...\n")
         evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, setting_tag, constraint, path)
-    if MIP: 
-        raise Exception("Warnings: MIP not updated yet \n")
-        evaluate_chain_MIP(Model, Chain, M, K, nsplits, capcoef, R, constraint, path)
 
     return
 
@@ -100,8 +98,6 @@ def evaluate_chain_RandomFCFS(Model,
     if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
         print("Distdf not computed for current setting, start computing...\n")
         compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
-
-    # compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path) # NOTE: TEMP FOR TESTING
 
     if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': # Pharmacy-only
         block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path, Pharmacy=True)
@@ -157,7 +153,7 @@ def evaluate_chain_MNL(Model,
         z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)        
         f = compute_f(z_total, pv_total, v_total, C, num_total_stores, num_tracts)
 
-        # NOTE: TEMP for sensitivity analysis we don't need to evalaute for MaxVaxDistLogLin
+        # NOTE: for sensitivity analysis we don't need to evalaute for MaxVaxDistLogLin
         evaluate_rate_MNL_partial(f=f,
                                 z=z_total,
                                 K=K,
@@ -200,7 +196,6 @@ def evaluate_chain_MNL(Model,
     print("Evaluation finished!\n")
 
     return
-
 
 
 
@@ -307,35 +302,3 @@ def evalute_chain_MNL_leftover(Model,
 
 
     return
-
-
-
-
-
-# def evaluate_chain_MIP(Model, Chain, M, K, nsplits, capcoef, R, heuristic, constraint, path, scale_factor=10000):
-    
-#     print(f'Evaluating MIP with Chain type: {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}.\n Results stored at {path}\n')
-#     Population, Quartile, p_current, p_total, pc_current, pc_total, C_total, Closest_current, Closest_total, _, _, num_tracts, num_current_stores, num_total_stores = import_basics(Chain, M, nsplits)
-#     F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, K, nsplits, capcoef)
-    
-#     f_dh_current = F_DH_current.flatten()
-#     f_dh_total = F_DH_total.flatten()
-#     pfdh_current = p_current * f_dh_current
-#     pfdh_total = p_total * f_dh_total
-
-#     if Model in ['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV']:
-
-#         if R is not None: z_total = np.genfromtxt(f'{path}/{constraint}/z_total_fixR{str(R)}.csv', delimiter = ",", dtype = float)
-#         else: z_total = np.genfromtxt(f'{path}/{constraint}/z_total.csv', delimiter = ",", dtype = float)
-
-#         evaluate_rate(scenario = 'total', constraint = constraint, z = z_total,
-#                     pc = pc_total, pf = pfdh_total, ncp = p_total, p = Population, 
-#                     closest = Closest_total, K=K,
-#                     num_current_stores=num_current_stores,
-#                     num_total_stores=num_total_stores,
-#                     num_tracts=num_tracts,
-#                     scale_factor=scale_factor,
-#                     path = f'{path}/{constraint}/',
-#                     R = R)
-
-#     return

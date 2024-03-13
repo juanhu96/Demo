@@ -48,7 +48,7 @@ def optimize_main(Model: str,
         return chain_path
     
     expdirpath = create_path(Model, Chain, K, M, nsplits, resultdir)
-    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, loglintemp, random_seed, setting_tag, expdirpath)
+    optimize_chain(Model, Chain, K, M, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, loglintemp, setting_tag, expdirpath)
 
     return
 
@@ -69,7 +69,6 @@ def optimize_chain(Model: str,
                    A,
                    norandomterm: bool,
                    loglintemp: bool,
-                   random_seed,
                    setting_tag: str,
                    expdirpath: str,
                    constraint: str = 'vaccinated',
@@ -89,13 +88,13 @@ def optimize_chain(Model: str,
     
 
     if Model in Facility_BLP_models: 
-        V_current, V_total = import_estimation('BLP_matrix', Chain, R, A, random_seed, setting_tag)
+        V_current, V_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag)
 
     if Model in Facility_LogLin_models: 
-        V_current, V_total = import_estimation('LogLin', Chain, R, A, random_seed, setting_tag)
+        V_current, V_total = import_estimation('LogLin', Chain, R, A, None, setting_tag)
     
     if Model in Assortment_MNL_models:
-        V_current, V_total = import_estimation('V', Chain, R, A, random_seed, setting_tag)
+        V_current, V_total = import_estimation('V', Chain, R, A, None, setting_tag)
 
 
     # ================================================================================
@@ -162,28 +161,6 @@ def optimize_chain(Model: str,
                                   setting_tag=setting_tag,
                                   scale_factor=scale_factor,
                                   MIPGap=1e-2)
-
-    elif Model == 'MNL_partial_test':
-
-        raise Exception("Broken code")
-
-        z_file_name = '/export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/z_total_10000_5_4q_mnl'
-        z_total = np.genfromtxt(f'{z_file_name}.csv', delimiter = ",", dtype = float) 
-        optimize_rate_MNL_partial_test(z=z_total,
-                        scenario='total', 
-                        pf=pf_total,
-                        v=v_total,
-                        C=C,
-                        K=K,
-                        R=R,
-                        closest=Closest_total,
-                        num_current_stores=num_current_stores,
-                        num_total_stores=num_total_stores,
-                        num_tracts=num_tracts,
-                        scale_factor=scale_factor,
-                        setting_tag=setting_tag,
-                        path=path,
-                        MIPGap=1e-2)
 
     else:
         raise Exception("Model undefined")
