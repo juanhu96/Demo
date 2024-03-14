@@ -1,0 +1,129 @@
+Start evaluate stage for setting _10000_5_4q_mnl_A200_randomseed129...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl_A200_randomseed129.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/
+
+Start evaluating for pharmacies only...
+
+WE ARE HERE WITH A = 200 and RANDOM SEED OF 129
+
+[ 964  624  132  185  977   51  575  139  905  622  853  715  573  148
+  897  566   29  739  399  582  711  498  786   97  982  115  250  428
+  886  144  923  388  969   88  451  506  418  851  483  270  873 1002
+  691 1013  559  667  723  629  562  368  304   84  166  975  963  539
+  229  798  436  297  724  130   22  578  394  327  747  488  351   59
+  128  730  323  753   89  817  857  707  463  587  112  721  547  188
+  666  701  584  755  133  355    4  334  307  885  262  913  282  545
+  804  243  496  710  256  199  212   37  909  658  895    2  801  596
+  998  234   32  924  485  437  434  759   99  838  825  829  260  187
+  131  313  146  718  671  741   54  781  123  569  837  794  478  734
+  259  673  466  444  433  142  555   10  269   43  275  344  412  850
+  890  343  619  237  778  114  757  152  908  901  889  421  263  264
+  864   16  760  556  512  789  692  314  808  958  159  425   86  121
+   39  341  122   98   73  725  541  178  513  350  677  170  522  299
+   87  571  693  987]
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81425985 nonzeros
+Model fingerprint: 0xaae56a4d
+Coefficient statistics:
+  Matrix range     [4e-01, 9e+03]
+  Objective range  [4e-01, 9e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 818 rows and 0 columns (presolve time = 12s) ...
+Presolve removed 81395647 rows and 40661736 columns (presolve time = 20s) ...
+Presolve removed 81395647 rows and 40681156 columns (presolve time = 24s) ...
+Presolve removed 81395647 rows and 40694689 columns (presolve time = 28s) ...
+Presolve removed 81395647 rows and 40694689 columns (presolve time = 31s) ...
+Presolve removed 81396865 rows and 40695907 columns (presolve time = 36s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 41.05s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.1406941e+07   0.000000e+00   0.000000e+00     89s
+
+Solved in 0 iterations and 89.32 seconds (48.52 work units)
+Optimal objective  3.140694060e+07
+Evaluation finished!
+
+Evaluation with leftover fulfillments...
+
+========================================================================================================================
+Start filling the leftover demands to their 2 choice
+
+Total demand fulfilled in previous round 31.40694, with leftover unfulfilled demand: 4.34446;    Resulting in a total of 35.7514, but b/c consideration set, the maximum possible demand in coming round is 1.54354;    Try to fill them with 3017 sites that has leftover capacity 10.94156
+
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81394259 nonzeros
+Model fingerprint: 0x48f573f0
+Coefficient statistics:
+  Matrix range     [1e-01, 9e+03]
+  Objective range  [1e-01, 9e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 3836 rows and 0 columns (presolve time = 20s) ...
+Presolve removed 81396597 rows and 40693462 columns (presolve time = 33s) ...
+Presolve removed 81396597 rows and 40695006 columns (presolve time = 38s) ...
+Presolve removed 81396597 rows and 40695639 columns (presolve time = 40s) ...
+Presolve removed 81396865 rows and 40695907 columns (presolve time = 46s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 53.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    8.0191749e+05   0.000000e+00   0.000000e+00    118s
+
+Solved in 0 iterations and 117.53 seconds (47.49 work units)
+Optimal objective  8.019174872e+05
+========================================================================================================================
+Start filling the leftover demands to their 3 choice
+
+Total demand fulfilled in previous round 0.80192, with leftover unfulfilled demand: 0.74163;    Resulting in a total of 1.54354, but b/c consideration set, the maximum possible demand in coming round is 0.06437;    Try to fill them with 2704 sites that has leftover capacity 10.1392
+
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81392117 nonzeros
+Model fingerprint: 0x9c49697c
+Coefficient statistics:
+  Matrix range     [3e-01, 3e+03]
+  Objective range  [3e-01, 3e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 4820 rows and 0 columns (presolve time = 13s) ...
+Presolve removed 81396852 rows and 40695604 columns (presolve time = 22s) ...
+Presolve removed 81396852 rows and 40695876 columns (presolve time = 26s) ...
+Presolve removed 81396852 rows and 40695894 columns (presolve time = 31s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 39.41s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    4.8139031e+04   0.000000e+00   0.000000e+00     85s
+
+Solved in 0 iterations and 85.03 seconds (47.49 work units)
+Optimal objective  4.813903147e+04
+Finished evaluate stage for setting _10000_5_4q_mnl_A200_randomseed129!
+

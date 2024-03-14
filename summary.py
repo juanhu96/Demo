@@ -42,6 +42,12 @@ if add:
     A = int(add_arg.replace('add', ''))
 else: A = None
 
+random = any(['random' in arg for arg in sys.argv])
+if random:
+    random_arg = [arg for arg in sys.argv if 'random' in arg][0]
+    random_seed = int(random_arg.replace('random', ''))
+else: random_seed = None
+
 norandomterm = any(['norandomterm' in arg for arg in sys.argv]) # for log linear intercept
 loglintemp = any(['loglintemp' in arg for arg in sys.argv]) # for log linear dist replace
 
@@ -55,11 +61,12 @@ setting_tag += f"_R{R}" if replace else ""
 setting_tag += f"_A{A}" if add else ""
 setting_tag += f"_norandomterm" if norandomterm else ""
 setting_tag += f"_loglintemp" if loglintemp else ""
+setting_tag += f"_randomseed{random_seed}" if random else ""
 
 #=================================================================
 
 
-def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, setting_tag):
+def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, random_seed, setting_tag):
 
     print(f'Start creating summary table for {setting_tag}...\n')
 
@@ -80,6 +87,7 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, setti
                          flexible_consideration=flexible_consideration,
                          R=R,
                          A=A,
+                         random_seed=random_seed,
                          setting_tag=setting_tag,
                          suffix='')
 
@@ -88,4 +96,4 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, setti
 
 
 if __name__ == "__main__":
-    summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, setting_tag)
+    summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, random_seed, setting_tag)

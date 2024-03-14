@@ -134,7 +134,7 @@ def import_locations(df, Chain_type, datadir='/export/storage_covidvaccine/Data/
 
 
 
-def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf=None, v=None, C=None, Pharmacy=False):
+def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pf=None, v=None, C=None, Pharmacy=False):
     
     '''
     z: results from first stage
@@ -170,10 +170,13 @@ def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_tota
 
         if Pharmacy:
             t_filename = f'{path}t_Pharmacy{setting_tag}.csv'
-            # z = np.ones(num_current_stores)
-            z = np.concatenate((np.ones(num_current_stores), np.zeros(num_total_stores - num_current_stores)))
-            # z_filename = f'{path}z_Pharmacy_round1{setting_tag}.csv' # NOTE: temp for randomization
-            # z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+
+            if random_seed is not None:
+                z_filename = f'{path}z_Pharmacy_round1{setting_tag}.csv' # for randomization
+                z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+            else:
+                # z = np.ones(num_current_stores)
+                z = np.concatenate((np.ones(num_current_stores), np.zeros(num_total_stores - num_current_stores)))
 
         else:
             t_filename = f'{path}t{setting_tag}.csv'
