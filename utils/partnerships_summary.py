@@ -20,7 +20,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                          K: int = 10000, 
                          M: int = 5, 
                          nsplits: int = 4,
-                         capcoef: bool = True,
+                         capcoef: bool = False,
                          flexible_consideration: bool = False,
                          R = None,
                          A = None,
@@ -28,6 +28,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                          evaluation: str = 'mnl_mip',
                          constraint='vaccinated', 
                          leftover: bool = False,
+                         export_tract=False,
                          export_dist: bool = False,
                          export_utilization: bool = False,
                          suffix: str = '',
@@ -74,7 +75,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
             elif evaluation == "mnl_mip":
                 
                 p_total, C, Closest_total = import_MNL_basics(tract_hpi, C_current, C_total, M, flexible_consideration)
-                _, V_total = import_MNL_estimation(Chain, R, A, setting_tag)
+                _, V_total = import_MNL_estimation(Chain, R, A, None, setting_tag)
 
                 v_total = V_total.flatten()
                 pf_total = p_total * v_total
@@ -87,22 +88,20 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
 
                     z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf_total, v_total, C)
                     
-                    # chain_summary = create_row_MNL_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
-                    #                             tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                    # chain_summary_table.append(chain_summary)
-                    
-                    _, CA_TRACT = create_row_MNL_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
+                    chain_summary, CA_TRACT = create_row_MNL_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
                                                 tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                    CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/CA_TRACT_PharmDollar{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
+                    chain_summary_table.append(chain_summary)
+                    
+                    if export_tract:
+                        CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/CA_TRACT_PharmDollar{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
 
-                    # if leftover:
-                    #     # for rank in range(2, M+1):
-                    #     for rank in range(2, 4):
-                    #         z, mat_t, mat_f = import_solution_leftover(evaluation, path, rank, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf_total, v_total, C)
+                    if leftover:
+                        for rank in range(2, 4): # for rank in range(2, M+1):
+                            z, mat_t, mat_f = import_solution_leftover(evaluation, path, rank, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf_total, v_total, C)
                             
-                    #         chain_summary = create_row_MNL_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, f'Evaluation {rank}', 
-                    #                             tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                    #         chain_summary_table.append(chain_summary)
+                            chain_summary = create_row_MNL_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, f'Evaluation {rank}', 
+                                                tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                            chain_summary_table.append(chain_summary)
 
                 # =================================================================================
                         
@@ -110,29 +109,26 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
 
                     z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf_total, v_total, C, Pharmacy=True)
                     
-                    # chain_summary = create_row_MNL_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
-                    #                         tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                    # chain_summary_table.append(chain_summary)
-
-                    _, CA_TRACT = create_row_MNL_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
+                    chain_summary, CA_TRACT = create_row_MNL_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
                                             tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                    CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/CA_TRACT_Pharm{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
+                    chain_summary_table.append(chain_summary)
+
+                    if export_tract:
+                        CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/CA_TRACT_Pharm{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)     
                 
-                    # if leftover:
-                    #     # for rank in range(2, M+1):
-                    #     for rank in range(2, 4):
-                    #         z, mat_t, mat_f = import_solution_leftover(evaluation, path, rank, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf_total, v_total, C, Pharmacy=True)
+                    if leftover:
+                        for rank in range(2, 4): # for rank in range(2, M+1):
+                            z, mat_t, mat_f = import_solution_leftover(evaluation, path, rank, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf_total, v_total, C, Pharmacy=True)
                             
-                    #         chain_summary = create_row_MNL_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, constraint, f'Evaluation {rank}', 
-                    #                             tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                    #         chain_summary_table.append(chain_summary)
+                            chain_summary = create_row_MNL_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, constraint, f'Evaluation {rank}', 
+                                                tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                            chain_summary_table.append(chain_summary)
 
 
             else:
                 # chain_summary_second_stage_MIP = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'second stage MIP',
                 # tract_hpi, mat_y_eval, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
                 raise Exception("Evaluation type undefined")
-    return 
   
     chain_summary = pd.DataFrame(chain_summary_table)
     chain_summary.to_csv(f'{resultdir}/Sensitivity_results/Results{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)

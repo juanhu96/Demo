@@ -504,11 +504,7 @@ def create_row_MNL_MIP(Scenario, Model, Chain_type, M, K, nsplits, opt_constr, s
     chain_summary = create_chain_summary(Model, Scenario, opt_constr, stage, M, K, nsplits, R, output, pharmacy, chains, total_vaccination, total_rate, total_vaccination_walkable, total_rate_walkable,
     pharmacy_vaccination, pharmacy_rate, chain_vaccination, chain_rate, pharmacy_vaccination_walkable, chain_vaccination_walkable, total_avg_dist) 
 
-    export_tract = True
-    if export_tract:
-        return chain_summary, CA_TRACT
-    else:
-        return chain_summary
+    return chain_summary, CA_TRACT
 
 
 
