@@ -1,0 +1,123 @@
+Start optimize stage for setting _10000_5_4q_mnl_A200...
+
+Optimization results stored at /export/storage_covidvaccine/Result/MNL_partial/M5_K10000_4q/HighSchools/...
+
+Importing estimation from V_HighSchools_10000_5_4q_mnl.csv
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter TimeLimit to value 21600
+Set parameter MIPGap to value 0.001
+Keep all current locations and add 200 locations
+****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 86062144 rows, 128723957 columns and 129377685 nonzeros
+Model fingerprint: 0xea833372
+Variable types: 128718632 continuous, 5325 integer (5325 binary)
+Coefficient statistics:
+  Matrix range     [5e-02, 6e+05]
+  Objective range  [1e+00, 6e+05]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Presolve removed 0 rows and 0 columns (presolve time = 24s) ...
+Presolve removed 0 rows and 0 columns (presolve time = 31s) ...
+Presolve removed 0 rows and 128589665 columns (presolve time = 51s) ...
+Presolve removed 85766773 rows and 128589665 columns (presolve time = 56s) ...
+Presolve removed 85828529 rows and 128593830 columns (presolve time = 66s) ...
+Presolve removed 85859157 rows and 128593835 columns (presolve time = 82s) ...
+Presolve removed 85859157 rows and 128593965 columns (presolve time = 97s) ...
+Presolve removed 85865192 rows and 128600000 columns (presolve time = 101s) ...
+Presolve removed 85929969 rows and 128664813 columns (presolve time = 107s) ...
+Presolve removed 85996697 rows and 128676617 columns (presolve time = 113s) ...
+Presolve removed 86006998 rows and 128684482 columns (presolve time = 119s) ...
+Presolve removed 86006998 rows and 128684482 columns (presolve time = 120s) ...
+Presolve removed 86016972 rows and 128692767 columns (presolve time = 125s) ...
+Presolve removed 86016977 rows and 128692771 columns (presolve time = 131s) ...
+Presolve removed 86018302 rows and 128694098 columns (presolve time = 136s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 140s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 146s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 154s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 156s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 163s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 167s) ...
+Presolve removed 86018391 rows and 128694127 columns (presolve time = 172s) ...
+Presolve removed 86018391 rows and 128694127 columns (presolve time = 179s) ...
+Presolve removed 86018391 rows and 128694127 columns (presolve time = 180s) ...
+Presolve removed 86018395 rows and 128694130 columns (presolve time = 185s) ...
+Presolve removed 86018402 rows and 128694130 columns (presolve time = 190s) ...
+Presolve removed 86018402 rows and 128694130 columns (presolve time = 196s) ...
+Presolve removed 86018404 rows and 128694132 columns (presolve time = 200s) ...
+Presolve removed 86019199 rows and 128694905 columns (presolve time = 214s) ...
+Presolve removed 86019199 rows and 128694905 columns (presolve time = 219s) ...
+Presolve removed 86019197 rows and 128694901 columns
+Presolve time: 218.60s
+Presolved: 42947 rows, 29056 columns, 117260 nonzeros
+Variable types: 27769 continuous, 1287 integer (1286 binary)
+Found heuristic solution: objective 3.191194e+07
+Root relaxation presolved: 42947 rows, 29056 columns, 117260 nonzeros
+
+Deterministic concurrent LP optimizer: primal and dual simplex
+Showing first log only...
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    1.5718108e+07   1.223632e+02   1.859444e+09    256s
+     859    2.1145600e+07   0.000000e+00   7.395919e+06    256s
+Concurrent spin time: 0.56s
+
+Solved with dual simplex
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   54643    3.2443182e+07   0.000000e+00   0.000000e+00    258s
+
+Root relaxation: objective 3.244318e+07, 54643 iterations, 3.92 seconds (1.99 work units)
+Total elapsed time = 260.92s
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 3.2443e+07    0  203 3.1912e+07 3.2443e+07  1.66%     -  263s
+H    0     0                    3.235701e+07 3.2443e+07  0.27%     -  265s
+H    0     0                    3.236217e+07 3.2443e+07  0.25%     -  268s
+H    0     0                    3.237731e+07 3.2442e+07  0.20%     -  272s
+     0     0 3.2419e+07    0  158 3.2377e+07 3.2419e+07  0.13%     -  277s
+H    0     0                    3.238083e+07 3.2419e+07  0.12%     -  279s
+H    0     0                    3.238258e+07 3.2419e+07  0.11%     -  280s
+H    0     0                    3.238391e+07 3.2419e+07  0.11%     -  283s
+     0     0 3.2415e+07    0  166 3.2384e+07 3.2415e+07  0.10%     -  283s
+
+Cutting planes:
+  Learned: 1
+  Gomory: 93
+  Lift-and-project: 170
+  Implied bound: 228
+  Projected implied bound: 12
+  MIR: 205
+  Flow cover: 677
+  RLT: 197
+  Relax-and-lift: 82
+  BQP: 10
+  PSD: 43
+
+Explored 1 nodes (57841 simplex iterations) in 294.66 seconds (192.32 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 7: 3.23839e+07 3.23826e+07 3.23808e+07 ... 3.19119e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 3.238390787434e+07, best bound 3.241530655553e+07, gap 0.0970%
+Finished optimize stage for setting _10000_5_4q_mnl_A200!
+

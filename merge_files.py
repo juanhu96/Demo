@@ -100,6 +100,30 @@ def merge_files_randomization(setting_tag, A_list = range(100, 1100, 100), rando
 
 
 ### MERGE RESUTLS FROM EVERY PARTNERSHIPS
-def merge_files_partnerships():
+def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Partnerships/'):
 
-    pass
+    total_df = pd.DataFrame()
+
+    for A in A_list:
+        file_name = f'Results{setting_tag}_A{A}'
+        current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
+        total_df = pd.concat([total_df, current_df])
+
+    total_df.to_csv(f'{resultdir}Results{setting_tag}_partnerships_merged.csv', encoding='utf-8', index=False, header=True)
+
+    ### TABLE OF VACCINATIONS UNDER EACH A & PARTNERSHIPS
+    summary_df = total_df.groupby(['A', 'Chain']).agg(Vaccination=('Vaccination', 'sum'),
+                                                      Vaccination_HPI1=('Vaccination HPI1', 'sum'),
+                                                      Vaccination_HPI2=('Vaccination HPI2', 'sum'),
+                                                      Vaccination_HPI3=('Vaccination HPI3', 'sum'),
+                                                      Vaccination_HPI4=('Vaccination HPI4', 'sum'),
+                                                      Vaccination_Walkable =('Vaccination Walkable', 'sum'),
+                                                      Vaccination_Walkable_HPI1=('Vaccination Walkable HPI1', 'sum'),
+                                                      Vaccination_Walkable_HPI2=('Vaccination Walkable HPI2', 'sum'),
+                                                      Vaccination_Walkable_HPI3=('Vaccination Walkable HPI3', 'sum'),
+                                                      Vaccination_Walkable_HPI4=('Vaccination Walkable HPI4', 'sum')).reset_index()
+    
+    summary_df.to_csv(f'{resultdir}Final{setting_tag}_randomization_merged.csv', encoding='utf-8', index=False, header=True)
+
+
+    return

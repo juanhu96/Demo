@@ -1,0 +1,141 @@
+Start optimize stage for setting _10000_5_4q_mnl_A400...
+
+Optimization results stored at /export/storage_covidvaccine/Result/MNL_partial/M5_K10000_4q/HighSchools/...
+
+Importing estimation from V_HighSchools_10000_5_4q_mnl.csv
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter TimeLimit to value 21600
+Set parameter MIPGap to value 0.001
+Keep all current locations and add 400 locations
+****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 86062144 rows, 128723957 columns and 129377685 nonzeros
+Model fingerprint: 0x20a14201
+Variable types: 128718632 continuous, 5325 integer (5325 binary)
+Coefficient statistics:
+  Matrix range     [5e-02, 6e+05]
+  Objective range  [1e+00, 6e+05]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+03]
+Presolve removed 0 rows and 0 columns (presolve time = 11s) ...
+Presolve removed 0 rows and 7 columns (presolve time = 15s) ...
+Presolve removed 0 rows and 128589665 columns (presolve time = 23s) ...
+Presolve removed 85766773 rows and 128589665 columns (presolve time = 26s) ...
+Presolve removed 85859157 rows and 128593835 columns (presolve time = 33s) ...
+Presolve removed 85859157 rows and 128593965 columns (presolve time = 37s) ...
+Presolve removed 85929969 rows and 128664813 columns (presolve time = 41s) ...
+Presolve removed 86006998 rows and 128684482 columns (presolve time = 46s) ...
+Presolve removed 86016977 rows and 128692771 columns (presolve time = 51s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 56s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 61s) ...
+Presolve removed 86018304 rows and 128694098 columns (presolve time = 65s) ...
+Presolve removed 86018391 rows and 128694127 columns (presolve time = 71s) ...
+Presolve removed 86018402 rows and 128694130 columns (presolve time = 76s) ...
+Presolve removed 86018404 rows and 128694132 columns (presolve time = 81s) ...
+Presolve removed 86019199 rows and 128694905 columns (presolve time = 91s) ...
+Presolve removed 86019197 rows and 128694901 columns
+Presolve time: 94.52s
+Presolved: 42947 rows, 29056 columns, 117260 nonzeros
+Variable types: 27769 continuous, 1287 integer (1286 binary)
+Found heuristic solution: objective 3.203982e+07
+Root relaxation presolved: 42947 rows, 29056 columns, 117260 nonzeros
+
+Deterministic concurrent LP optimizer: primal and dual simplex
+Showing first log only...
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    1.5715670e+07   1.578530e+02   2.936405e+09    127s
+    3805    2.0854841e+07   0.000000e+00   1.390311e+08    127s
+Concurrent spin time: 0.77s
+
+Solved with dual simplex
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   49317    3.3799507e+07   0.000000e+00   0.000000e+00    129s
+
+Root relaxation: objective 3.379951e+07, 49317 iterations, 2.68 seconds (2.00 work units)
+Total elapsed time = 132.94s
+Total elapsed time = 136.98s
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 3.3800e+07    0  343 3.2040e+07 3.3800e+07  5.49%     -  137s
+H    0     0                    3.364489e+07 3.3800e+07  0.46%     -  138s
+H    0     0                    3.364821e+07 3.3800e+07  0.45%     -  143s
+H    0     0                    3.365844e+07 3.3799e+07  0.42%     -  144s
+H    0     0                    3.366155e+07 3.3759e+07  0.29%     -  150s
+H    0     0                    3.367275e+07 3.3759e+07  0.26%     -  151s
+H    0     0                    3.367524e+07 3.3759e+07  0.25%     -  152s
+     0     0 3.3736e+07    0  278 3.3675e+07 3.3736e+07  0.18%     -  157s
+     0     0 3.3736e+07    0  264 3.3675e+07 3.3736e+07  0.18%     -  158s
+     0     0 3.3736e+07    0  272 3.3675e+07 3.3736e+07  0.18%     -  158s
+     0     0 3.3736e+07    0  269 3.3675e+07 3.3736e+07  0.18%     -  158s
+     0     0 3.3736e+07    0  268 3.3675e+07 3.3736e+07  0.18%     -  158s
+H    0     0                    3.367858e+07 3.3732e+07  0.16%     -  162s
+     0     0 3.3732e+07    0  254 3.3679e+07 3.3732e+07  0.16%     -  165s
+     0     0 3.3729e+07    0  250 3.3679e+07 3.3729e+07  0.15%     -  166s
+     0     0 3.3729e+07    0  250 3.3679e+07 3.3729e+07  0.15%     -  166s
+     0     0 3.3728e+07    0  253 3.3679e+07 3.3728e+07  0.15%     -  166s
+     0     0 3.3728e+07    0  250 3.3679e+07 3.3728e+07  0.15%     -  166s
+     0     0 3.3728e+07    0  250 3.3679e+07 3.3728e+07  0.15%     -  166s
+     0     0 3.3724e+07    0  253 3.3679e+07 3.3724e+07  0.13%     -  176s
+H    0     0                    3.367991e+07 3.3724e+07  0.13%     -  177s
+H    0     0                    3.368032e+07 3.3724e+07  0.13%     -  178s
+     0     0 3.3723e+07    0  243 3.3680e+07 3.3723e+07  0.13%     -  178s
+     0     0 3.3723e+07    0  246 3.3680e+07 3.3723e+07  0.13%     -  178s
+     0     0 3.3723e+07    0  243 3.3680e+07 3.3723e+07  0.13%     -  178s
+     0     0 3.3723e+07    0  243 3.3680e+07 3.3723e+07  0.13%     -  178s
+     0     0 3.3721e+07    0  248 3.3680e+07 3.3721e+07  0.12%     -  192s
+H    0     0                    3.368409e+07 3.3721e+07  0.11%     -  193s
+     0     0 3.3720e+07    0  244 3.3684e+07 3.3720e+07  0.11%     -  195s
+     0     0 3.3720e+07    0  244 3.3684e+07 3.3720e+07  0.11%     -  195s
+     0     0 3.3720e+07    0  247 3.3684e+07 3.3720e+07  0.11%     -  195s
+     0     0 3.3719e+07    0  241 3.3684e+07 3.3719e+07  0.10%     -  210s
+     0     0 3.3719e+07    0  240 3.3684e+07 3.3719e+07  0.10%     -  213s
+     0     0 3.3719e+07    0  239 3.3684e+07 3.3719e+07  0.10%     -  213s
+     0     0 3.3719e+07    0  238 3.3684e+07 3.3719e+07  0.10%     -  213s
+     0     0 3.3718e+07    0  244 3.3684e+07 3.3718e+07  0.10%     -  229s
+     0     0 3.3718e+07    0  240 3.3684e+07 3.3718e+07  0.10%     -  232s
+     0     0 3.3718e+07    0  241 3.3684e+07 3.3718e+07  0.10%     -  232s
+H    0     0                    3.368940e+07 3.3718e+07  0.08%     -  243s
+     0     0 3.3718e+07    0  240 3.3689e+07 3.3718e+07  0.08%     -  245s
+
+Cutting planes:
+  Learned: 1
+  Gomory: 235
+  Lift-and-project: 174
+  Implied bound: 337
+  Projected implied bound: 13
+  MIR: 766
+  Flow cover: 1335
+  RLT: 371
+  Relax-and-lift: 170
+  BQP: 4
+  PSD: 73
+
+Explored 1 nodes (60425 simplex iterations) in 252.53 seconds (247.78 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 10: 3.36894e+07 3.36841e+07 3.36803e+07 ... 3.36482e+07
+
+Optimal solution found (tolerance 1.00e-03)
+Best objective 3.368940125594e+07, best bound 3.371795990880e+07, gap 0.0848%
+Finished optimize stage for setting _10000_5_4q_mnl_A400!
+

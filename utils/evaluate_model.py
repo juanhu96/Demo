@@ -393,9 +393,7 @@ def evaluate_rate_MNL_partial(f,
 
     ## Solve ###
     m.update()
-    start = time.time()
     m.optimize()
-    end = time.time()
 
     ### Export ###    
     t_soln = np.zeros(num_tracts * num_stores)

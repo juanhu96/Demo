@@ -1,0 +1,47 @@
+Start evaluate stage for setting _10000_5_4q_mnl_A200...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl_A200.
+ Results stored at /export/storage_covidvaccine/Result/MNL_partial/M5_K10000_4q/Coffee/
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 116140805 rows, 58066799 columns and 116159241 nonzeros
+Model fingerprint: 0xa0a96119
+Coefficient statistics:
+  Matrix range     [4e-06, 1e+04]
+  Objective range  [4e-06, 1e+04]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [7e-09, 1e+04]
+Presolve removed 3008 rows and 0 columns (presolve time = 48s) ...
+Presolve removed 116139474 rows and 58041156 columns (presolve time = 70s) ...
+Presolve removed 116139474 rows and 58054635 columns
+Presolve time: 81.25s
+
+Solved in 0 iterations and 81.25 seconds (10.73 work units)
+Infeasible model
+Traceback (most recent call last):
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 110, in <module>
+    main(params)
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 103, in main
+    stage_functions[stage](**params)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_main.py", line 55, in evaluate_main
+    evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_main.py", line 157, in evaluate_chain_MNL
+    evaluate_rate_MNL_partial(f=f,
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_model.py", line 403, in evaluate_rate_MNL_partial
+    t_soln[j] = t[j].X
+  File "src/gurobipy/var.pxi", line 125, in gurobipy.Var.__getattr__
+  File "src/gurobipy/var.pxi", line 153, in gurobipy.Var.getAttr
+  File "src/gurobipy/attrutil.pxi", line 100, in gurobipy.__getattr
+AttributeError: Unable to retrieve attribute 'X'

@@ -150,7 +150,8 @@ def evaluate_chain_MNL(Model,
     if Model == 'MNL_partial':
 
         z_file_name = f'{path}z_total'
-        z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)        
+        z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float) 
+        print(f'The number of {Chain} opened: {np.sum(z_total == 1)}')
         f = compute_f(z_total, pv_total, v_total, C, num_total_stores, num_tracts)
 
         # NOTE: for sensitivity analysis we don't need to evalaute for MaxVaxDistLogLin
@@ -236,7 +237,7 @@ def evalute_chain_MNL_leftover(Model,
     path = f'{path}/{constraint}/'
     if not os.path.exists(path): os.mkdir(path)
     
-    if Chain == 'Dollar' and Model == 'MNL_partial' and constraint == 'vaccinated': # Pharmacy-only    
+    if Model == 'MNL_partial' and constraint == 'vaccinated': # Pharmacy + Chain  
 
         z_file_name = f'{path}z_total' if rank == 2 else f'{path}z_total_round{rank-1}'
         Kz_file_name = f'{path}Kz_round{rank-1}'
