@@ -290,6 +290,9 @@ def compute_f(z, pf, v, C, num_total_stores, num_tracts):
         denom = np.sum(v[index_range] * z[C[i]])
         x[i] = 1 / (1 + denom)
 
+    # min_val, min_index, max_val, max_index = np.min(x), np.argmin(x), np.max(x), np.argmax(x)
+    # print(f"X minimum {min_index}: {min_val}, maximum {max_index}: {max_val}")
+
     # f = pf * z * x
     x_reshaped = x.repeat(num_total_stores)
     z_reshaped = np.tile(z, num_tracts)

@@ -7,7 +7,7 @@
 # declare -a adds=("add100" "add200" "add300" "add400" "add500" "add600" "add700" "add800" "add900" "add1000")
 
 declare -a types=("Coffee")
-declare -a adds=("add200" "add700" "add800")
+declare -a adds=("add100")
 
 # optimize
 # for type in "${types[@]}"; do
@@ -32,9 +32,9 @@ for type in "${types[@]}"; do
 done
 
 # summary
-# for add in "${add_values[@]}"; do
+# for add in "${adds[@]}"; do
 #     add_num=$(echo $add | grep -o -E '[0-9]+')
-#     output_filename="output_log/sensitivity/partnerships_summary_10000_5_4q_mnl_A${add_num}.txt"
+#     output_filename="output_log/sensitivity/partnerships/summary_10000_5_4q_mnl_A${add_num}.txt"
 #     nohup python3 summary.py 10000 5 4 mnl "$add" > $output_filename &
 # done
 

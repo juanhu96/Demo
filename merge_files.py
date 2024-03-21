@@ -86,44 +86,61 @@ def merge_files_randomization(setting_tag, A_list = range(100, 1100, 100), rando
 
 
     ### TABLE OF AVERAGE VACCINATIONS UNDER EACH A
-    random_runs = 4 # 42 excluded as it only got evaluated 2 times (rather than 3)
-    summary_df = summary_df[summary_df['random_seed'] != 42].groupby(['A']).agg(Vaccination=('Vaccination', lambda x: x.sum() / random_runs),
-                                                            Vaccination_HPI1=('Vaccination_HPI1', lambda x: x.sum() / random_runs),
-                                                            Vaccination_HPI2=('Vaccination_HPI2', lambda x: x.sum() / random_runs),
-                                                            Vaccination_HPI3=('Vaccination_HPI3', lambda x: x.sum() / random_runs),
-                                                            Vaccination_HPI4=('Vaccination_HPI4', lambda x: x.sum() / random_runs)).reset_index()
+    # random_runs = 4 # 42 excluded as it only got evaluated 2 times (rather than 3)
+    # summary_df = summary_df[summary_df['random_seed'] != 42].groupby(['A']).agg(Vaccination=('Vaccination', lambda x: x.sum() / random_runs),
+    #                                                         Vaccination_HPI1=('Vaccination_HPI1', lambda x: x.sum() / random_runs),
+    #                                                         Vaccination_HPI2=('Vaccination_HPI2', lambda x: x.sum() / random_runs),
+    #                                                         Vaccination_HPI3=('Vaccination_HPI3', lambda x: x.sum() / random_runs),
+    #                                                         Vaccination_HPI4=('Vaccination_HPI4', lambda x: x.sum() / random_runs)).reset_index()
+    
+    random_runs = 5
+    summary_df = summary_df.groupby(['A']).agg(Vaccination=('Vaccination', lambda x: x.sum() / random_runs),
+                                               Vaccination_HPI1=('Vaccination_HPI1', lambda x: x.sum() / random_runs),
+                                               Vaccination_HPI2=('Vaccination_HPI2', lambda x: x.sum() / random_runs),
+                                               Vaccination_HPI3=('Vaccination_HPI3', lambda x: x.sum() / random_runs),
+                                               Vaccination_HPI4=('Vaccination_HPI4', lambda x: x.sum() / random_runs)).reset_index()
     summary_df.to_csv(f'{resultdir}Final{setting_tag}_randomization_merged.csv', encoding='utf-8', index=False, header=True)
     
     return
+
 # merge_files_randomization(setting_tag)
 
 
 
 ### MERGE RESUTLS FROM EVERY PARTNERSHIPS
-def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Partnerships/'):
+def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), Dollar = True, resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Partnerships/'):
 
     total_df = pd.DataFrame()
 
     for A in A_list:
-        file_name = f'Results{setting_tag}_A{A}'
+        file_name = f'Results{setting_tag}_A{A}_partnerships'
         current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
         total_df = pd.concat([total_df, current_df])
 
+        # add dollar results
+        if Dollar:
+            file_name = f'Results{setting_tag}_A{A}_Dollar'
+            current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
+            current_df['A'] = A
+            total_df = pd.concat([total_df, current_df])
+
     total_df.to_csv(f'{resultdir}Results{setting_tag}_partnerships_merged.csv', encoding='utf-8', index=False, header=True)
 
-    ### TABLE OF VACCINATIONS UNDER EACH A & PARTNERSHIPS
-    summary_df = total_df.groupby(['A', 'Chain']).agg(Vaccination=('Vaccination', 'sum'),
-                                                      Vaccination_HPI1=('Vaccination HPI1', 'sum'),
-                                                      Vaccination_HPI2=('Vaccination HPI2', 'sum'),
-                                                      Vaccination_HPI3=('Vaccination HPI3', 'sum'),
-                                                      Vaccination_HPI4=('Vaccination HPI4', 'sum'),
-                                                      Vaccination_Walkable =('Vaccination Walkable', 'sum'),
-                                                      Vaccination_Walkable_HPI1=('Vaccination Walkable HPI1', 'sum'),
-                                                      Vaccination_Walkable_HPI2=('Vaccination Walkable HPI2', 'sum'),
-                                                      Vaccination_Walkable_HPI3=('Vaccination Walkable HPI3', 'sum'),
-                                                      Vaccination_Walkable_HPI4=('Vaccination Walkable HPI4', 'sum')).reset_index()
     
-    summary_df.to_csv(f'{resultdir}Final{setting_tag}_randomization_merged.csv', encoding='utf-8', index=False, header=True)
-
+    ### TABLE OF VACCINATIONS UNDER EACH A & PARTNERSHIPS
+    summary_df = total_df.groupby(['A', 'Chain']).agg(Vaccination=('Vaccination', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_HPI1=('Vaccination HPI1', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_HPI2=('Vaccination HPI2', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_HPI3=('Vaccination HPI3', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_HPI4=('Vaccination HPI4', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_Walkable =('Vaccination Walkable', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_Walkable_HPI1=('Vaccination Walkable HPI1', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_Walkable_HPI2=('Vaccination Walkable HPI2', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_Walkable_HPI3=('Vaccination Walkable HPI3', lambda x: round(x.sum(), 2)),
+                                                      Vaccination_Walkable_HPI4=('Vaccination Walkable HPI4', lambda x: round(x.sum(), 2))).reset_index()
+    
+    summary_df.to_csv(f'{resultdir}Final{setting_tag}_partnerships_merged.csv', encoding='utf-8', index=False, header=True)
 
     return
+
+merge_files_partnerships(setting_tag)

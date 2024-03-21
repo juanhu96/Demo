@@ -53,7 +53,7 @@ def evaluate_main(Model: str,
     path = create_path(Model, Chain, K, M, nsplits, resultdir)
 
     evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
-    
+
     if leftover: 
         print("Evaluation with leftover fulfillments...\n")
         for rank in range(2, 4): # computation/storage issue, for rank in range(2, M+1)
@@ -151,7 +151,19 @@ def evaluate_chain_MNL(Model,
 
         z_file_name = f'{path}z_total'
         z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float) 
-        print(f'The number of {Chain} opened: {np.sum(z_total == 1)}')
+        print(f'The number of pharmacies opened: {np.sum(z_total[:num_current_stores] == 1)}, number of {Chain} opened: {np.sum(z_total[num_current_stores:] == 1)}')
+        
+        non_binary_check = np.any((z_total != 0) & (z_total != 1))
+        print(f'Is there any fractional number in the final solution z: {non_binary_check}')
+        if non_binary_check:
+            print('The fractional numbers are')
+            non_binary_indices = np.where((z_total != 0) & (z_total != 1))
+            non_binary_values = z_total[non_binary_indices]
+            for index, value in zip(non_binary_indices[0], non_binary_values):
+                print(f"index: {index}, value: {value}")
+
+            z_total = z_total.astype(int)
+
         f = compute_f(z_total, pv_total, v_total, C, num_total_stores, num_tracts)
 
         # NOTE: for sensitivity analysis we don't need to evalaute for MaxVaxDistLogLin
@@ -180,6 +192,8 @@ def evaluate_chain_MNL(Model,
             np.savetxt(f'{path}z_Pharmacy_round{1}{setting_tag}.csv', z_total, delimiter=",")
         else:
             z_total = np.concatenate((np.ones(num_current_stores), np.zeros(num_total_stores - num_current_stores)))
+
+        print(f'The number of pharmacies opened: {np.sum(z_total[:num_current_stores] == 1)}, number of {Chain} opened: {np.sum(z_total[num_current_stores:] == 1)}')
 
         f = compute_f(z_total, pv_total, v_total, C, num_total_stores, num_tracts)
 

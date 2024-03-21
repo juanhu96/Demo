@@ -15,8 +15,8 @@ from utils.import_parameters import import_MNL_estimation
 
 
 
-def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
-                         Chain_list=['Dollar'],
+def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial'],
+                         Chain_list = ['Dollar', 'HighSchools', 'Coffee'],
                          K: int = 10000, 
                          M: int = 5, 
                          nsplits: int = 4,
@@ -85,7 +85,7 @@ def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVa
                 
                 # mat_t and mat_f is essentially mat_y and F_DH
 
-                if Chain == 'Dollar' and Model == 'MNL_partial' and constraint == 'vaccinated': # so that we don't evaluate loglin for sensitivity analysis
+                if Model == 'MNL_partial' and constraint == 'vaccinated': # so that we don't evaluate loglin for sensitivity analysis
 
                     z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pf_total, v_total, C)
                     
