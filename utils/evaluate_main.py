@@ -13,7 +13,7 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.evaluate_model import compute_distdf, construct_blocks, run_assignment, evaluate_rate, evaluate_rate_MNL_partial, evaluate_rate_MNL_partial_leftover, compute_f, update_f
+from utils.evaluate_model import compute_distdf, construct_blocks, run_assignment, evaluate_rate, evaluate_rate_MNL_partial, evaluate_rate_MNL_partial_leftover, compute_f, update_f, compute_g, update_g
 from utils.import_parameters import import_basics, import_BLP_estimation, import_MNL_estimation
 
 
@@ -53,7 +53,7 @@ def evaluate_main(Model: str,
     path = create_path(Model, Chain, K, M, nsplits, resultdir)
 
     evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
-
+    
     if leftover: 
         print("Evaluation with leftover fulfillments...\n")
         for rank in range(2, 4): # computation/storage issue, for rank in range(2, M+1)
@@ -147,7 +147,7 @@ def evaluate_chain_MNL(Model,
     path = f'{path}/{constraint}/'
     if not os.path.exists(path): os.mkdir(path)
     
-    if Model == 'MNL_partial':
+    if Model == 'MNL_partial' or Model == 'MNL_partial_new':
 
         z_file_name = f'{path}z_total'
         z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float) 
@@ -164,7 +164,16 @@ def evaluate_chain_MNL(Model,
 
             z_total = z_total.astype(int)
 
-        f = compute_f(z_total, pv_total, v_total, C, num_total_stores, num_tracts)
+        if Model == 'MNL_partial_new':
+            print("================== MNL_partial_new ==================\n")
+            gamma = (v_total * v_total) / (1 + v_total)
+            pg_total = p_total * gamma
+            pg_total = pg_total * Closest_total
+            f = compute_g(z_total, pg_total, v_total, C, num_total_stores, num_tracts)
+        else: 
+            f = compute_f(z_total, pv_total, v_total, C, num_total_stores, num_tracts)
+
+        print(f'B/C consideration set, the maximum possible demand in coming round is {np.round(np.sum(f) / 1000000, 5)};\n')
 
         # NOTE: for sensitivity analysis we don't need to evalaute for MaxVaxDistLogLin
         evaluate_rate_MNL_partial(f=f,
@@ -176,6 +185,7 @@ def evaluate_chain_MNL(Model,
                                 num_tracts=num_tracts,
                                 setting_tag=setting_tag,
                                 path=path)
+        
 
 
     if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': # Pharmacy-only
@@ -195,7 +205,14 @@ def evaluate_chain_MNL(Model,
 
         print(f'The number of pharmacies opened: {np.sum(z_total[:num_current_stores] == 1)}, number of {Chain} opened: {np.sum(z_total[num_current_stores:] == 1)}')
 
-        f = compute_f(z_total, pv_total, v_total, C, num_total_stores, num_tracts)
+        # f = compute_f(z_total, pv_total, v_total, C, num_total_stores, num_tracts)
+        
+        gamma = (v_total * v_total) / (1 + v_total)
+        pg_total = p_total * gamma
+        pg_total = pg_total * Closest_total
+        f = compute_g(z_total, pg_total, v_total, C, num_total_stores, num_tracts)
+
+        print(f'B/C consideration set, the maximum possible demand in coming round is {np.round(np.sum(f) / 1000000, 5)};\n')
 
         evaluate_rate_MNL_partial(f=f,
                                   z=z_total,
@@ -251,7 +268,7 @@ def evalute_chain_MNL_leftover(Model,
     path = f'{path}/{constraint}/'
     if not os.path.exists(path): os.mkdir(path)
     
-    if Model == 'MNL_partial' and constraint == 'vaccinated': # Pharmacy + Chain  
+    if Model == 'MNL_partial' or Model == 'MNL_partial_new': # Pharmacy + Chain  
 
         z_file_name = f'{path}z_total' if rank == 2 else f'{path}z_total_round{rank-1}'
         Kz_file_name = f'{path}Kz_round{rank-1}'
@@ -265,9 +282,18 @@ def evalute_chain_MNL_leftover(Model,
         z_prev = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)    
         Kz_prev = K * z_prev if rank == 2 else np.genfromtxt(f'{Kz_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
         t_prev = np.genfromtxt(f'{t_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
-        f_prev = compute_f(z_prev, p_total * v_total, v_total, C, num_total_stores, num_tracts) if rank == 2 else np.genfromtxt(f'{f_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
+        
+        if Model == 'MNL_partial_new':
+            print("================== MNL_partial_new ==================\n")
+            gamma = (v_total * v_total) / (1 + v_total)
+            pg_total = p_total * gamma
+            pg_total = pg_total * Closest_total
+            f_prev = compute_g(z_prev, pg_total, v_total, C, num_total_stores, num_tracts) if rank == 2 else np.genfromtxt(f'{f_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
+            Kz_new, z_new, f_new, terminate = update_g(f_prev, z_prev, t_prev, v_total, gamma, C, Kz_prev, num_total_stores, num_tracts)
+        else:
+            f_prev = compute_f(z_prev, p_total * v_total, v_total, C, num_total_stores, num_tracts) if rank == 2 else np.genfromtxt(f'{f_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
+            Kz_new, z_new, f_new, terminate = update_f(f_prev, z_prev, t_prev, v_total, C, Kz_prev, num_total_stores, num_tracts)
 
-        Kz_new, z_new, f_new, terminate = update_f(f_prev, z_prev, t_prev, v_total, C, Kz_prev, num_total_stores, num_tracts)
         if terminate: return
 
         # takes in updated f/Kz/z, saves z_new, f_new and compute t_new
@@ -297,9 +323,15 @@ def evalute_chain_MNL_leftover(Model,
             z_prev = np.concatenate((np.ones(num_current_stores), np.zeros(num_total_stores - num_current_stores))) if rank == 2 else np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)    
         Kz_prev = K * z_prev if rank == 2 else np.genfromtxt(f'{Kz_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
         t_prev = np.genfromtxt(f'{t_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
-        f_prev = compute_f(z_prev, p_total * v_total, v_total, C, num_total_stores, num_tracts) if rank == 2 else np.genfromtxt(f'{f_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
-        
-        Kz_new, z_new, f_new, terminate  = update_f(f_prev, z_prev, t_prev, v_total, C, Kz_prev, num_total_stores, num_tracts)
+        # f_prev = compute_f(z_prev, p_total * v_total, v_total, C, num_total_stores, num_tracts) if rank == 2 else np.genfromtxt(f'{f_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
+        # Kz_new, z_new, f_new, terminate  = update_f(f_prev, z_prev, t_prev, v_total, C, Kz_prev, num_total_stores, num_tracts)
+
+        gamma = (v_total * v_total) / (1 + v_total)
+        pg_total = p_total * gamma
+        pg_total = pg_total * Closest_total
+        f_prev = compute_g(z_prev, pg_total, v_total, C, num_total_stores, num_tracts) if rank == 2 else np.genfromtxt(f'{f_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)
+        Kz_new, z_new, f_new, terminate = update_g(f_prev, z_prev, t_prev, v_total, gamma, C, Kz_prev, num_total_stores, num_tracts)
+
         if terminate: return
 
         evaluate_rate_MNL_partial_leftover(f=f_new,

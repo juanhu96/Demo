@@ -72,11 +72,11 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, rando
 
     # Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
     # Model_list = ['MaxVaxDistLogLin', 'MNL_partial']
-    Model_list = ['MNL_partial']
+    Model_list = ['MaxVaxDistLogLin', 'MNL_partial_new']
     # Model_list = ['MaxVaxDistLogLin']
 
-    Chain_list = ['HighSchools', 'Coffee']
-    # Chain_list = ['Dollar']
+    # Chain_list = ['HighSchools', 'Coffee']
+    Chain_list = ['Dollar']
 
     partnerships_summary(Model_list=Model_list,
                          Chain_list=Chain_list,
@@ -89,7 +89,7 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, rando
                          A=A,
                          random_seed=random_seed,
                          setting_tag=setting_tag,
-                         suffix='_partnerships')
+                         suffix='_new')
 
     print(f'Finished table for {setting_tag}!\n')
     return

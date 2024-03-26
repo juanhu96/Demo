@@ -289,6 +289,8 @@ def compute_f(z, pf, v, C, num_total_stores, num_tracts):
         index_range = i * num_total_stores + np.array(C[i])
         denom = np.sum(v[index_range] * z[C[i]])
         x[i] = 1 / (1 + denom)
+        # if i == 6400:
+        #     print(x[i], np.array(C[i]), denom)
 
     # min_val, min_index, max_val, max_index = np.min(x), np.argmin(x), np.max(x), np.argmax(x)
     # print(f"X minimum {min_index}: {min_val}, maximum {max_index}: {max_val}")
@@ -297,6 +299,7 @@ def compute_f(z, pf, v, C, num_total_stores, num_tracts):
     x_reshaped = x.repeat(num_total_stores)
     z_reshaped = np.tile(z, num_tracts)
     f = pf * x_reshaped * z_reshaped
+    print(f'sum of pf is {np.round(np.sum(pf) / 1000000, 5)}, sum of z is {np.sum(z)}\n')
 
     return f
 
@@ -354,9 +357,87 @@ def update_f(f, z, t, v, C, Kz, num_total_stores, num_tracts):
     return Kz_leftover, z_leftover, f_leftover, terminate
 
 
+# ===========================================================================
+
+
+def compute_g(z, pg, v, C, num_total_stores, num_tracts):
+
+    '''
+    First-round evaluation only
+    '''
+
+    ### Compute x ###
+    x = np.zeros(num_tracts)
+    for i in range(num_tracts):
+        index_range = i * num_total_stores + np.array(C[i])
+        denom = np.sum(v[index_range] * z[C[i]])
+        x[i] = 1 / denom if denom != 0 else 0 # DIFF
+
+    # f = pg * z * x
+    x_reshaped = x.repeat(num_total_stores)
+    z_reshaped = np.tile(z, num_tracts)
+    f = pg * x_reshaped * z_reshaped
+    print(f'sum of pg is {np.round(np.sum(pg) / 1000000, 5)}, sum of z is {np.sum(z)}\n')
+
+    return f
 
 # ===========================================================================
 
+
+def update_g(f, z, t, v, gamma, C, Kz, num_total_stores, num_tracts):
+
+    '''
+    f, z, t are all from previous round and requires update
+
+    f from first round is from compute_f()
+    z from first round is z_total from evalution
+    t from first round is the optimal t from evaluation
+    '''
+
+    f_mat = np.reshape(f, (num_tracts, num_total_stores))
+    t_mat = np.reshape(t, (num_tracts, num_total_stores))
+
+    D_mat = f_mat * t_mat
+    D_per_store = np.sum(D_mat, axis=0) # sum over columns
+    
+    # f should come from previous round
+    p_leftover = np.sum(f_mat * (1-t_mat), axis=1) # p'
+    
+    # sum of p_leftover + sum of D_per_store = sum of f_mat
+    # print(f'Number of sites with capacity before previous round: {np.sum(z)} with total capacity {np.round(np.sum(Kz) / 1000000, 5)}\n')
+
+    # if z is available from previous round & there's demand from previous round less than capacity
+    # compute remaining capacity and corresponding sites
+    Kz_leftover = np.where((z == 1) & (Kz > D_per_store), Kz - D_per_store, 0).astype(int)
+    z_leftover = np.where((z == 1) & (Kz_leftover > 0), 1, 0) # z'
+    
+    ### Compute x ###
+    x_leftover = np.zeros(num_tracts)
+    for i in range(num_tracts):
+        index_range = i * num_total_stores + np.array(C[i])
+        denom = np.sum(v[index_range] * z_leftover[C[i]])
+        x_leftover[i] = 0 if denom == 0 else 1 / denom # different
+    
+    x_leftover_reshaped = x_leftover.repeat(num_total_stores)
+    z_leftover_reshaped = np.tile(z_leftover, num_tracts)
+    p_total_leftover = p_leftover.repeat(num_total_stores)
+
+    pf_leftover = p_total_leftover * gamma # DIFF
+    f_leftover = pf_leftover * x_leftover_reshaped * z_leftover_reshaped
+
+    # maximum possible demand in coming round < leftover unfulfilled demand
+    # individual that wants to get vaccinate but none of the M closest are available
+    print(f'Total demand fulfilled in previous round {np.round(np.sum(D_mat) / 1000000, 5)}, with leftover unfulfilled demand: {np.round(np.sum(p_leftover) / 1000000, 5)};\
+    Resulting in a total of {np.round(np.sum(f_mat) / 1000000, 5)}, but b/c consideration set, the maximum possible demand in coming round is {np.round(np.sum(f_leftover) / 1000000, 5)};\
+    Try to fill them with {np.sum(z_leftover)} sites that has leftover capacity {np.round(np.sum(Kz_leftover) / 1000000, 5)}\n')
+
+    max_possible_demand = np.round(np.sum(f_leftover) / 1000000, 5)
+    terminate = (max_possible_demand == 0)
+
+    return Kz_leftover, z_leftover, f_leftover, terminate
+
+
+# ======================================================================
 
 
 def evaluate_rate_MNL_partial(f,
@@ -480,8 +561,6 @@ def evaluate_rate_MNL_partial_leftover(f,
 
     ### Finished all ###
     m.dispose()
-
-
 
 
 

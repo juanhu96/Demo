@@ -187,15 +187,27 @@ def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_tota
         mat_t = np.reshape(t, (num_tracts, num_total_stores))
 
         # import C and v
+        # x = np.zeros(num_tracts)
+        # for i in range(num_tracts):
+        #     index_range = i * num_total_stores + np.array(C[i])
+        #     denom = np.sum(v[index_range] * z[C[i]])
+        #     x[i] = 1 / (1 + denom)
+    
+        # x_reshaped = x.repeat(num_total_stores)
+        # z_reshaped = np.tile(z, num_tracts)
+        # f = pf * x_reshaped * z_reshaped
+        # mat_f = np.reshape(f, (num_tracts, num_total_stores))
+
+        # NEW: For pg
         x = np.zeros(num_tracts)
         for i in range(num_tracts):
             index_range = i * num_total_stores + np.array(C[i])
             denom = np.sum(v[index_range] * z[C[i]])
-            x[i] = 1 / (1 + denom)
-    
+            x[i] = 1 / denom if denom != 0 else 0 # DIFF
+
         x_reshaped = x.repeat(num_total_stores)
         z_reshaped = np.tile(z, num_tracts)
-        f = pf * x_reshaped * z_reshaped
+        f = pf * x_reshaped * z_reshaped # here pf is actually pg
         mat_f = np.reshape(f, (num_tracts, num_total_stores))
 
         return z, mat_t, mat_f
@@ -204,7 +216,7 @@ def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_tota
         raise Exception("Evaluation type undefined")
 
 
-def import_solution_leftover(evaluation, path, rank, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, setting_tag, pf=None, v=None, C=None, Pharmacy=False):
+def import_solution_leftover(evaluation, path, rank, Model, Chain_type, K, num_tracts, num_total_stores, num_current_stores, setting_tag, Pharmacy=False):
     
     if evaluation == 'mnl_mip':
 

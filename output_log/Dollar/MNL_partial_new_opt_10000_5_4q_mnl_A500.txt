@@ -1,0 +1,16 @@
+Start optimize stage for setting _10000_5_4q_mnl_A500...
+
+Optimization results stored at /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/Dollar/...
+
+Importing estimation from V_Dollar_10000_5_4q_mnl.csv
+
+The min for correponding big M is 0.04993652131690865 and max is 20.171025282672204
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter TimeLimit to value 21600
+Set parameter MIPGap to value 0.001

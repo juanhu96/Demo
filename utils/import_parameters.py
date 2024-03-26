@@ -95,6 +95,8 @@ def import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logd
         np.put_along_axis(Closest_current, np.argpartition(C_current_mat,M,axis=1)[:,M:],0,axis=1)
         np.put_along_axis(Closest_total, np.argpartition(C_total_mat,M,axis=1)[:,M:],0,axis=1)
         C = np.argsort(C_total_mat, axis=1)[:, :M]
+        # print("========= USING THE TEN CLOSEST INSTEAD ============\n")
+        # C = np.argsort(C_total_mat, axis=1)[:, :10] # test for evaluation issue
 
     elif consideration_case == 'fix_dist':
 

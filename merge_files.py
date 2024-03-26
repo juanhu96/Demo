@@ -143,4 +143,54 @@ def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), Dollar
 
     return
 
-merge_files_partnerships(setting_tag)
+# merge_files_partnerships(setting_tag)
+
+
+
+
+
+
+
+
+
+# 
+def merge_files_main(setting_tag, suffix='new', resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/'):
+
+    file_name = f'Results{setting_tag}_{suffix}'
+    df = pd.read_csv(f'{resultdir}{file_name}.csv')
+    
+    summary_df = df.groupby(['Model']).agg(M=('M', 'first'),
+                                           K=('K', 'first'),
+                                           Pharmacies_replaced = ('Pharmacies replaced', 'first'),
+                                           Pharmacies_replaced_HPI1 = ('Pharmacies replaced HPI 1', 'first'),
+                                           Pharmacies_replaced_HPI2 = ('Pharmacies replaced HPI 2', 'first'),
+                                           Pharmacies_replaced_HPI3 = ('Pharmacies replaced HPI 3', 'first'),
+                                           Pharmacies_replaced_HPI4 = ('Pharmacies replaced HPI 4', 'first'),
+                                           Stores_opened_HPI1 = ('Stores opened HPI 1', 'first'),
+                                           Stores_opened_HPI2 = ('Stores opened HPI 2', 'first'),
+                                           Stores_opened_HPI3 = ('Stores opened HPI 3', 'first'),
+                                           Stores_opened_HPI4 = ('Stores opened HPI 4', 'first'),
+                                           Vaccination=('Vaccination', lambda x: round(x.sum(), 2)),
+                                           Vaccination_HPI1=('Vaccination HPI1', lambda x: round(x.sum(), 2)),
+                                           Vaccination_HPI2=('Vaccination HPI2', lambda x: round(x.sum(), 2)),
+                                           Vaccination_HPI3=('Vaccination HPI3', lambda x: round(x.sum(), 2)),
+                                           Vaccination_HPI4=('Vaccination HPI4', lambda x: round(x.sum(), 2)),
+                                           Vaccination_Walkable =('Vaccination Walkable', lambda x: round(x.sum(), 2)),
+                                           Vaccination_Walkable_HPI1=('Vaccination Walkable HPI1', lambda x: round(x.sum(), 2)),
+                                           Vaccination_Walkable_HPI2=('Vaccination Walkable HPI2', lambda x: round(x.sum(), 2)),
+                                           Vaccination_Walkable_HPI3=('Vaccination Walkable HPI3', lambda x: round(x.sum(), 2)),
+                                           Vaccination_Walkable_HPI4=('Vaccination Walkable HPI4', lambda x: round(x.sum(), 2))).reset_index()
+    
+    summary_df['Stores net gain HPI 1'] = summary_df['Stores_opened_HPI1'] - summary_df['Pharmacies_replaced_HPI1']
+    summary_df['Stores net gain HPI 2'] = summary_df['Stores_opened_HPI2'] - summary_df['Pharmacies_replaced_HPI2']
+    summary_df['Stores net gain HPI 3'] = summary_df['Stores_opened_HPI3'] - summary_df['Pharmacies_replaced_HPI3']
+    summary_df['Stores net gain HPI 4'] = summary_df['Stores_opened_HPI4'] - summary_df['Pharmacies_replaced_HPI4']
+
+    # columns_to_drop = ['Stores net gain HPI 1', 'Stores net gain HPI 2', 'Stores net gain HPI 3', 'Stores net gain HPI 4']
+    # summary_df = summary_df.drop(columns=columns_to_drop)
+
+    summary_df.to_csv(f'{resultdir}Final{setting_tag}_{suffix}.csv', encoding='utf-8', index=False, header=True)
+
+    return
+
+merge_files_main(setting_tag)

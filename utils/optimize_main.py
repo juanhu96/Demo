@@ -13,7 +13,7 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix, optimize_rate_MNL, optimize_rate_MNL_partial, optimize_rate_MNL_partial_test
+from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix, optimize_rate_MNL, optimize_rate_MNL_partial, optimize_rate_MNL_partial_test, optimize_rate_MNL_partial_new
 from utils.import_parameters import import_basics, import_estimation
 
 
@@ -75,10 +75,10 @@ def optimize_chain(Model: str,
                    scale_factor: int = 10000):
 
     print(f'Optimization results stored at {expdirpath}...\n')
-    
+
     Facility_BLP_models = ['MaxVaxHPIDistBLP']
     Facility_LogLin_models = ['MaxVaxDistLogLin']
-    Assortment_MNL_models = ['MNL', 'MNL_partial', 'MNL_partial_test']
+    Assortment_MNL_models = ['MNL', 'MNL_partial', 'MNL_partial_test', 'MNL_partial_new']
 
     # ================================================================================
 
@@ -114,11 +114,23 @@ def optimize_chain(Model: str,
     
 
     if Model in Assortment_MNL_models:
+
         v_total = V_total.flatten()
         pv_total = p_total * v_total
 
         v_total = v_total * Closest_total
         pv_total = pv_total * Closest_total # make sure zero at other place
+
+        ### M for MNL_partial_new
+        if Model == 'MNL_partial_new':
+            V_temp = v_total.reshape((num_tracts, num_total_stores))
+            V_nonzero = np.where(V_temp == 0, np.inf, V_temp)
+            v_min = np.min(V_nonzero, axis=1)
+            big_M = np.where(v_min != 0, 1/v_min, 0)
+            print(f'The min for correponding big M is {np.min(big_M)} and max is {np.max(big_M)}\n')
+            gamma = (v_total * v_total) / (1 + v_total)
+            pg_total = p_total * gamma
+            pg_total = pg_total * Closest_total
 
 
     # ================================================================================
@@ -152,6 +164,25 @@ def optimize_chain(Model: str,
                                   C=C,
                                   closest=Closest_total,
                                   K=K,
+                                  R=R,
+                                  A=A,
+                                  num_current_stores=num_current_stores,
+                                  num_total_stores=num_total_stores,
+                                  num_tracts=num_tracts,
+                                  path=path,
+                                  setting_tag=setting_tag,
+                                  scale_factor=scale_factor,
+                                  MIPGap=1e-2)
+
+    elif Model == 'MNL_partial_new':
+
+        optimize_rate_MNL_partial_new(scenario='total', 
+                                  pg=pg_total, # p * gamma
+                                  v=v_total,
+                                  C=C,
+                                  closest=Closest_total,
+                                  K=K,
+                                  big_M=big_M,
                                   R=R,
                                   A=A,
                                   num_current_stores=num_current_stores,

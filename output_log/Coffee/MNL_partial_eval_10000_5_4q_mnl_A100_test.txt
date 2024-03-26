@@ -1,0 +1,16 @@
+Start evaluate stage for setting _10000_5_4q_mnl_A100...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl_A100.
+ Results stored at /export/storage_covidvaccine/Result/MNL_partial/M5_K10000_4q/Coffee/
+
+749744 2218
+Traceback (most recent call last):
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 110, in <module>
+    main(params)
+  File "/mnt/phd/jihu/VaxDemandDistance/main.py", line 103, in main
+    stage_functions[stage](**params)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_main.py", line 55, in evaluate_main
+    evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
+  File "/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_main.py", line 136, in evaluate_chain_MNL
+    (Population, Quartile, abd, p_current, p_total, pc_current, pc_total, 
+TypeError: cannot unpack non-iterable NoneType object
