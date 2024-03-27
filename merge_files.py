@@ -60,6 +60,11 @@ setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').repla
 setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
 
 
+main = True
+randomization = False
+partnerships = False
+
+
 ### MERGE RESULTS FROM EVERY RANDOMIZED INSTANCE
 def merge_files_randomization(setting_tag, A_list = range(100, 1100, 100), random_seed_list = [42, 13, 940, 457, 129], resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Randomization/'):
 
@@ -93,7 +98,7 @@ def merge_files_randomization(setting_tag, A_list = range(100, 1100, 100), rando
     #                                                         Vaccination_HPI3=('Vaccination_HPI3', lambda x: x.sum() / random_runs),
     #                                                         Vaccination_HPI4=('Vaccination_HPI4', lambda x: x.sum() / random_runs)).reset_index()
     
-    random_runs = 5
+    random_runs = len(random_seed_list)
     summary_df = summary_df.groupby(['A']).agg(Vaccination=('Vaccination', lambda x: x.sum() / random_runs),
                                                Vaccination_HPI1=('Vaccination_HPI1', lambda x: x.sum() / random_runs),
                                                Vaccination_HPI2=('Vaccination_HPI2', lambda x: x.sum() / random_runs),
@@ -103,7 +108,8 @@ def merge_files_randomization(setting_tag, A_list = range(100, 1100, 100), rando
     
     return
 
-# merge_files_randomization(setting_tag)
+
+# ======================================================================
 
 
 
@@ -113,16 +119,16 @@ def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), Dollar
     total_df = pd.DataFrame()
 
     for A in A_list:
-        file_name = f'Results{setting_tag}_A{A}_partnerships'
+        file_name = f'Results{setting_tag}_A{A}'
         current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
         total_df = pd.concat([total_df, current_df])
 
         # add dollar results
-        if Dollar:
-            file_name = f'Results{setting_tag}_A{A}_Dollar'
-            current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
-            current_df['A'] = A
-            total_df = pd.concat([total_df, current_df])
+        # if Dollar:
+        #     file_name = f'Results{setting_tag}_A{A}_Dollar'
+        #     current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
+        #     current_df['A'] = A
+        #     total_df = pd.concat([total_df, current_df])
 
     total_df.to_csv(f'{resultdir}Results{setting_tag}_partnerships_merged.csv', encoding='utf-8', index=False, header=True)
 
@@ -143,20 +149,15 @@ def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), Dollar
 
     return
 
-# merge_files_partnerships(setting_tag)
+
+
+# ======================================================================
 
 
 
+def merge_files_main(setting_tag, suffix='', resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/'):
 
-
-
-
-
-
-# 
-def merge_files_main(setting_tag, suffix='new', resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/'):
-
-    file_name = f'Results{setting_tag}_{suffix}'
+    file_name = f'Results{setting_tag}{suffix}'
     df = pd.read_csv(f'{resultdir}{file_name}.csv')
     
     summary_df = df.groupby(['Model']).agg(M=('M', 'first'),
@@ -189,8 +190,12 @@ def merge_files_main(setting_tag, suffix='new', resultdir = '/export/storage_cov
     # columns_to_drop = ['Stores net gain HPI 1', 'Stores net gain HPI 2', 'Stores net gain HPI 3', 'Stores net gain HPI 4']
     # summary_df = summary_df.drop(columns=columns_to_drop)
 
-    summary_df.to_csv(f'{resultdir}Final{setting_tag}_{suffix}.csv', encoding='utf-8', index=False, header=True)
+    summary_df.to_csv(f'{resultdir}Final{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
 
     return
 
-merge_files_main(setting_tag)
+
+
+if main: merge_files_main(setting_tag)
+if randomization: merge_files_randomization(setting_tag, random_seed_list=[42])
+if partnerships: merge_files_partnerships(setting_tag)

@@ -1,0 +1,21 @@
+Start evaluate stage for setting _10000_5_4q_mnl...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl.
+ Results stored at /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/Coffee/
+
+The number of pharmacies opened: 2315, number of Coffee opened: 1720
+Is there any fractional number in the final solution z: False
+================== MNL_partial_new ==================
+
+sum of pg is 685.54169, sum of z is 4035.0
+
+B/C consideration set, the maximum possible demand in coming round is 28.96471;
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600

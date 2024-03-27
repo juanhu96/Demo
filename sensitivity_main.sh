@@ -17,11 +17,11 @@
 
 
 ## OPTIMIZATION
-# nohup python3 main.py MNL_partial Dollar 8000 5 4 optimize mnl > output_log/sensitivity/MNL_partial_opt_8000_5_4q_mnl.txt &
-# nohup python3 main.py MNL_partial Dollar 12000 5 4 optimize mnl > output_log/sensitivity/MNL_partial_opt_12000_5_4q_mnl.txt &
-# nohup python3 main.py MNL_partial Dollar 10000 10 4 optimize mnl > output_log/sensitivity/MNL_partial_opt_10000_10_4q_mnl.txt &
-# nohup python3 main.py MNL_partial Dollar 10000 5 4 optimize mnl "logdistabove1.6" > output_log/sensitivity/MNL_partial_opt_10000_5_4q_mnl_logdistabove1.6.txt &
-# nohup python3 main.py MNL_partial Dollar 10000 5 4 optimize mnl "logdistabove0.8" > output_log/sensitivity/MNL_partial_opt_10000_5_4q_mnl_logdistabove0.8.txt &
+nohup python3 main.py MNL_partial_new Dollar 8000 5 4 optimize mnl > output_log/Dollar/Others/MNL_partial_new_opt_8000_5_4q_mnl.txt &
+nohup python3 main.py MNL_partial_new Dollar 12000 5 4 optimize mnl > output_log/Dollar/Others/MNL_partial_new_opt_12000_5_4q_mnl.txt &
+nohup python3 main.py MNL_partial_new Dollar 10000 10 4 optimize mnl > output_log/Dollar/Others/MNL_partial_new_opt_10000_10_4q_mnl.txt &
+nohup python3 main.py MNL_partial_new Dollar 10000 5 4 optimize mnl "logdistabove1.6" > output_log/Dollar/Others/MNL_partial_new_opt_10000_5_4q_mnl_logdistabove1.6.txt &
+nohup python3 main.py MNL_partial_new Dollar 10000 5 4 optimize mnl "logdistabove0.8" > output_log/Dollar/Others/MNL_partial_new_opt_10000_5_4q_mnl_logdistabove0.8.txt &
 
 
 ## EVALUATION

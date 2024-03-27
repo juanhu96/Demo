@@ -1,0 +1,16 @@
+Start creating summary table for _10000_5_4q_mnl_A100_randomseed42...
+
+Importing dataset...
+
+Start computing summary table for Chain = Dollar...
+
+Model = MaxVaxDistLogLin, K = 10000, M = 5, with setting tag _10000_5_4q_mnl_A100_randomseed42...
+
+Closest_total and C follows fix rank of 5
+
+Importing optimization and evaluation solution...
+
+Table exported as Results_10000_5_4q_mnl_A100_randomseed42.csv
+
+Finished table for _10000_5_4q_mnl_A100_randomseed42!
+

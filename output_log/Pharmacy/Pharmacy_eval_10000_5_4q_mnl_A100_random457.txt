@@ -1,0 +1,30 @@
+Start evaluate stage for setting _10000_5_4q_mnl_A100_randomseed457...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl_A100_randomseed457.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/
+
+Start evaluating for pharmacies only...
+
+WE ARE HERE WITH A = 100 and RANDOM SEED OF 457
+
+[ 463  992  704  971  834  634  711  668  406  495  774  280  943  217
+  528  741  961   27  539  679  931  278   94  666  830  765  203   16
+  780   86   20  331  647  616  290  535  920  400 1009   65   21  515
+  676  833  950  253  831  438  369    8  855  571  958  835  849  821
+  701  377  846  730  503  744  732  754  225  276  661  984  854   69
+  292  624  160  293  118  111  773  783  756  859  899  186  448  693
+  247  357  603  966  421  384  233  116  601  877  815  883  390  889
+   64  252]
+The number of pharmacies opened: 4035, number of Dollar opened: 100
+sum of pg is 673.8604, sum of z is 4135.0
+
+B/C consideration set, the maximum possible demand in coming round is 28.79376;
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600

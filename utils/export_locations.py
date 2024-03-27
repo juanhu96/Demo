@@ -5,8 +5,8 @@ Created on Jul, 2022
 @author: Jingyuan Hu
 
 Export selected locations
-python3 export_locations.py Dollar 8000 5 4 True 100
-python3 export_locations.py Dollar 10000 5 4 mnl
+python3 utils/export_locations.py Dollar 8000 5 4 True 100
+python3 utils/export_locations.py Dollar 10000 5 4 mnl
 """
 
 import os
@@ -63,7 +63,7 @@ def main(Chain, M, K, nsplits, setting_tag):
     print(f"Start export locations under setting {setting_tag}...\n")
     # Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
     # Model_list = ['MaxVaxDistLogLin', 'MNL_partial']
-    Model_list = ['MNL_partial']
+    Model_list = ['MNL_partial_new']
 
     for Model in Model_list:
         export_locations(Model=Model,
@@ -79,7 +79,7 @@ def main(Chain, M, K, nsplits, setting_tag):
 
 def export_locations(Model, Chain, M, K, nsplits, setting_tag, suffix='', opt_constr='vaccinated', datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result'):
 
-    Model_name_dict = {'MaxVaxHPIDistBLP': 'Assignment_BLP', 'MaxVaxDistLogLin': 'Assignment_LogLin', 'MNL_partial': 'Choice_BLP'}
+    Model_name_dict = {'MaxVaxHPIDistBLP': 'Assignment_BLP', 'MaxVaxDistLogLin': 'Assignment_LogLin', 'MNL_partial_new': 'Choice_BLP'}
 
     path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{opt_constr}/'
     z = np.genfromtxt(f'{path}z_total{setting_tag}.csv', delimiter = ",", dtype = float)

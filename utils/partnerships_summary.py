@@ -29,7 +29,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
                          evaluation: str = 'mnl_mip',
                          constraint='vaccinated', 
                          leftover: bool = True,
-                         export_tract=False,
+                         export_tract: bool = False,
                          export_dist: bool = False,
                          export_utilization: bool = False,
                          suffix: str = '',
@@ -100,7 +100,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
                     chain_summary_table.append(chain_summary)
                     
                     if export_tract:
-                        CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/CA_TRACT_PharmDollar{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
+                        CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/Tract/CA_TRACT_PharmDollar{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
 
                     if leftover:
                         for rank in range(2, 4): # for rank in range(2, M+1):
@@ -122,7 +122,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
                     chain_summary_table.append(chain_summary)
 
                     if export_tract:
-                        CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/CA_TRACT_Pharm{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)     
+                        CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/Tract/CA_TRACT_Pharm{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)     
                 
                     if leftover:
                         for rank in range(2, 4): # for rank in range(2, M+1):

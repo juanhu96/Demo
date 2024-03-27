@@ -1,0 +1,189 @@
+Start evaluate stage for setting _10000_5_4q_mnl_A1000_randomseed940...
+
+Evaluating using MNL with setting tag _10000_5_4q_mnl_A1000_randomseed940.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/
+
+Start evaluating for pharmacies only...
+
+WE ARE HERE WITH A = 1000 and RANDOM SEED OF 940
+
+[ 268  585  692  908    4  229  338  795  414  955  820  972  676  392
+  902  332  337  181   99  305  206  402  109  195  631  568  615  901
+  383  858   78  111   77  674  718  767  178  524  710  883   91  247
+  954  357  428  517  248   60  626  923  837  913  145  887  412  277
+  749   55   24  336  587    5  500   10   37  773  356  292  211  281
+  377  265  360  216  755  430  740  891   45  728  952  108  841  666
+  899   72  451  362  417  694  226  970  379  701  553  129  918  303
+  130  317  104  322  486  938  866  988  185  741  768   80  800  857
+  230  493  838  333  808  240  919  404  717  943  147  861  128  618
+  518  654  619  300  408  546 1005  183  953  672  663  366  342  661
+  655  586  751  647  933  760  302  283  994  394  391  704  325  990
+   85  840   88  227  849  581   35  996  607  573  863  384 1015  522
+  318  867  220  494  896  742 1012  756  662  236  331  132  785  424
+  307  685  499  179  207  502  169  784  613 1004  734  787   70  634
+  578  531  371  948  209   25  679  382  510 1010  600  523  345   41
+  660   68   75   48  738  316  136  471  931  163   83  324  910  482
+  320  998  577  361  758  819  766    2  456  757  697  243  372  754
+  170  781  624  262  904  419  364  118  369  554  205  197  351  888
+  200  864  464  470  872  399  545  219  834  388  852  946  705  942
+  745  716  131  528  790  935  112  702  150  409  930  252  783  653
+  668  805  547  941  506  978  992  488  592  287   89  443  476  426
+  824  275   30  836  182  897  652    9  171  405  123  874  125  682
+  892  139  363  566  637  538   31  794  667  614  848  806  560  610
+  354  465  669  960  633  664  569  410  367  909  515  539  521  188
+  194  981  447  422  176  222  597  612  347   96  126  235  153   39
+  483  567   79  997  611  289  739  278  100  103  504  985  895   65
+  440  339  306  203  503  724  855  778  723  242  598  670  963  398
+  885  334  788  321    6  301   26   93  983  606 1001  436  770  381
+  944  818 1008  870  975  642  880  570  142  599  274   52  429  559
+  748  671  271   27   92  556  284  329  937  677  110  868  584  583
+  376  924  780  804  208  965  920  915  165  563  854  199  771  572
+  558   76  699  579  127  507  395  184  829  907  174  543  651  529
+   21  752  982  124  313  939 1000  390  727  413  233  294  608  223
+  535  646  898  403  722  550  368  683  400  285  691  959  270  703
+   95  478   13  853  346  632  817  192  544  735   84  480  411  214
+  628  228  164  640  498  879  949  828  458  979  343  187   50  917
+   63  191   57  561   47  406  167  746  630  463  453  193  645  689
+  744  604  442  267   28  266  114  525  700  254  893  772  686  389
+  532  355  549   82  629   90  133  168  489  708  516  811    0  706
+  763  330  344  987  121    8  143  541  295  916  712  548  257  238
+  643  991  189  162  862   23  871  815  843  427  349  202  967  374
+  264  116  958  656  253  993  251  459  452  431   61  140  791  552
+  648  479  341  290  224  571  906  945  684  878  387 1011  155  475
+  474  509  487   87  826  217  986  639  622  842  198  564   32   11
+  151  276  433  731  280  497  779   34   98  378  299  730  721 1014
+  246  491  352  467  146  847  298  830  501  359  319  793  201  936
+  950   81  665   46   51  309  974   14  434  616   29  802  496  588
+  688  310  439  273  999  977  589  725   18  925  348  732  462  533
+  449    3   59  580  715  536  765  876  101  875   67  323  237  534
+  750   15  454   43   73  212  636  215  928  173  801  839  792  922
+  161  914  989  311  782  231  747  881  593  971  562  934  373  260
+  437  511  407  225  609   54  177  386  513  644  733  485  416  759
+  423  152  984  845  172  649  594  884  940  964  774  450  261  432
+  625  798  966  962  481  213  675  869   20  175  455  729  495  134
+  753 1013  851  102  148  764  444  530   42  623  446  421  956  807
+ 1007  438  508  673  601  603  743  457  255  204  492   49  657  115
+  542   86  380  796  638  472  762  650  308  441  263   74  393  105
+  258  825   97  117  239  777  565  120   33  350  786  951  154  681
+  835  250  138  335   38  490    7  256  873  328  590  358  905  877
+  288  158  889  591  809  719  775  385  695  137  473  921  969  221
+ 1009  929   44 1002   36   19   17  726  947  693  461  119  860  976
+  833  844   56  890  911  961  932  602  707  210  448   53   64  312
+  620   62  831  315  244  353  166  505  190  420  846  282  903  526
+  249  927  658  540  856  296  713  813  859  995  659   66  196  370
+  886  690  418  714  180  520  415  822  445  900  797 1006  365  484
+  113  159  340  696  107  314  527  596   71  769  537  291   12  812
+  512  469  135  375  973   40  709  850  912  627  460  234    1  519
+  576  122  293 1003  698  680  551  149  968  687  286  894  814  272
+  297  557  555  160  789   69  821  326  832  678  827  816  259  477
+  232  468  810  574  466  435  269   94  186  396  711  865  514  304
+   22  245  157  218  737  279  582  823  803  575  397  799  980   58
+  595  617  401  635  605  156]
+The number of pharmacies opened: 4035, number of Dollar opened: 1000
+sum of pg is 673.8604, sum of z is 5035.0
+
+B/C consideration set, the maximum possible demand in coming round is 28.81387;
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81431831 nonzeros
+Model fingerprint: 0x34059bad
+Coefficient statistics:
+  Matrix range     [2e-01, 8e+03]
+  Objective range  [2e-01, 8e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 19 rows and 0 columns (presolve time = 59s) ...
+Presolve removed 81396408 rows and 40655890 columns (presolve time = 83s) ...
+Presolve removed 81396408 rows and 40689078 columns (presolve time = 85s) ...
+Presolve removed 81396408 rows and 40695450 columns (presolve time = 91s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 98.30s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.7700808e+07   0.000000e+00   0.000000e+00    150s
+
+Solved in 0 iterations and 150.20 seconds (47.50 work units)
+Optimal objective  2.770080814e+07
+Evaluation finished!
+
+Evaluation with leftover fulfillments...
+
+========================================================================================================================
+Start filling the leftover demands to their 2 choice
+
+sum of pg is 673.8604, sum of z is 5035.0
+
+Total demand fulfilled in previous round 27.70081, with leftover unfulfilled demand: 1.11306;    Resulting in a total of 28.81387, but b/c consideration set, the maximum possible demand in coming round is 0.54298;    Try to fill them with 4578 sites that has leftover capacity 22.64692
+
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81393262 nonzeros
+Model fingerprint: 0xbc5242a2
+Coefficient statistics:
+  Matrix range     [1e-02, 5e+03]
+  Objective range  [1e-02, 5e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 4368 rows and 0 columns (presolve time = 7s) ...
+Presolve removed 81396743 rows and 40694459 columns (presolve time = 13s) ...
+Presolve removed 81396743 rows and 40695431 columns (presolve time = 16s) ...
+Presolve removed 81396743 rows and 40695785 columns (presolve time = 21s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 26.62s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.2851999e+05   0.000000e+00   0.000000e+00     59s
+
+Solved in 0 iterations and 58.81 seconds (47.49 work units)
+Optimal objective  3.285199943e+05
+========================================================================================================================
+Start filling the leftover demands to their 3 choice
+
+Total demand fulfilled in previous round 0.32852, with leftover unfulfilled demand: 0.21446;    Resulting in a total of 0.54298, but b/c consideration set, the maximum possible demand in coming round is 0.02386;    Try to fill them with 4450 sites that has leftover capacity 22.31812
+
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81392037 nonzeros
+Model fingerprint: 0x98cd7a5a
+Coefficient statistics:
+  Matrix range     [7e-02, 2e+03]
+  Objective range  [7e-02, 2e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 4898 rows and 0 columns (presolve time = 8s) ...
+Presolve removed 81396861 rows and 40695684 columns (presolve time = 15s) ...
+Presolve removed 81396861 rows and 40695903 columns (presolve time = 21s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 26.20s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    1.9309908e+04   0.000000e+00   0.000000e+00     59s
+
+Solved in 0 iterations and 59.36 seconds (47.49 work units)
+Optimal objective  1.930990778e+04
+Finished evaluate stage for setting _10000_5_4q_mnl_A1000_randomseed940!
+
