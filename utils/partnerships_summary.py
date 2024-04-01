@@ -44,6 +44,9 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
         print(f'Start computing summary table for Chain = {Chain}...\n')
         
         for Model in Model_list:
+            
+            if Model == 'MaxVaxDistLogLin' and Chain != 'Dollar':
+                continue
 
             (pharmacy_locations, chain_locations, num_tracts, num_current_stores, num_total_stores,
             C_current, C_total, C_current_walkable, C_total_walkable) = import_locations(df_temp, Chain)
@@ -92,8 +95,8 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
                 # if Model == 'MNL_partial' and constraint == 'vaccinated': # so that we don't evaluate loglin for sensitivity analysis
                 if Model == 'MNL_partial' or Model == 'MNL_partial_new': # so that we don't evaluate loglin for sensitivity analysis
                     
-                    # z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pf_total, v_total, C)
-                    z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pg_total, v_total, C)
+                    if Model == 'MNL_partial_new': z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pg_total, v_total, C)
+                    else: z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pf_total, v_total, C)
 
                     chain_summary, CA_TRACT = create_row_MNL_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
                                                 tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
@@ -113,9 +116,10 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
                 # =================================================================================
                         
                 if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': 
-
-                    # z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pf_total, v_total, C, Pharmacy=True)
-                    z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pg_total, v_total, C, Pharmacy=True)
+                    
+                    MNL_partial_new = True
+                    if MNL_partial_new: z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pg_total, v_total, C, Pharmacy=True)
+                    else: z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pf_total, v_total, C, Pharmacy=True)
 
                     chain_summary, CA_TRACT = create_row_MNL_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
                                             tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)

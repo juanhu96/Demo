@@ -75,8 +75,8 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, rando
     # Model_list = ['MNL_partial_new']
     # Model_list = ['MaxVaxDistLogLin']
 
-    # Chain_list = ['HighSchools', 'Coffee']
-    Chain_list = ['Dollar']
+    Chain_list = ['Dollar', 'HighSchools', 'Coffee']
+    # Chain_list = ['Dollar']
 
     partnerships_summary(Model_list=Model_list,
                          Chain_list=Chain_list,

@@ -160,7 +160,7 @@ def merge_files_main(setting_tag, suffix='', resultdir = '/export/storage_covidv
     file_name = f'Results{setting_tag}{suffix}'
     df = pd.read_csv(f'{resultdir}{file_name}.csv')
     
-    summary_df = df.groupby(['Model']).agg(M=('M', 'first'),
+    summary_df = df.groupby(['Model', 'Chain']).agg(M=('M', 'first'),
                                            K=('K', 'first'),
                                            Pharmacies_replaced = ('Pharmacies replaced', 'first'),
                                            Pharmacies_replaced_HPI1 = ('Pharmacies replaced HPI 1', 'first'),

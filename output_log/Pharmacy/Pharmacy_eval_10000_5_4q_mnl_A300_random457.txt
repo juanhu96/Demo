@@ -42,3 +42,105 @@ Set parameter TokenServer to value "164.67.163.231"
 Set parameter MIPFocus to value 3
 Set parameter MIPGap to value 0.005
 Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81426799 nonzeros
+Model fingerprint: 0x107e25e5
+Coefficient statistics:
+  Matrix range     [2e-01, 8e+03]
+  Objective range  [2e-01, 8e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 719 rows and 0 columns (presolve time = 21s) ...
+Presolve removed 81396233 rows and 40660922 columns (presolve time = 34s) ...
+Presolve removed 81396233 rows and 40687315 columns (presolve time = 42s) ...
+Presolve removed 81396233 rows and 40695275 columns (presolve time = 47s) ...
+Presolve removed 81396233 rows and 40695275 columns (presolve time = 53s) ...
+Presolve removed 81396865 rows and 40695907 columns (presolve time = 60s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 68.77s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.6882517e+07   0.000000e+00   0.000000e+00    192s
+
+Solved in 0 iterations and 192.33 seconds (48.51 work units)
+Optimal objective  2.688251734e+07
+Evaluation finished!
+
+Evaluation with leftover fulfillments...
+
+========================================================================================================================
+Start filling the leftover demands to their 2 choice
+
+sum of pg is 673.8604, sum of z is 4335.0
+
+Total demand fulfilled in previous round 26.88252, with leftover unfulfilled demand: 1.9212;    Resulting in a total of 28.80372, but b/c consideration set, the maximum possible demand in coming round is 0.64297;    Try to fill them with 3702 sites that has leftover capacity 16.46564
+
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81393465 nonzeros
+Model fingerprint: 0xbc40e3d3
+Coefficient statistics:
+  Matrix range     [2e-02, 7e+03]
+  Objective range  [2e-02, 7e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 4229 rows and 0 columns (presolve time = 19s) ...
+Presolve removed 81396733 rows and 40694256 columns (presolve time = 40s) ...
+Presolve removed 81396733 rows and 40695410 columns (presolve time = 40s) ...
+Presolve removed 81396733 rows and 40695410 columns (presolve time = 47s) ...
+Presolve removed 81396733 rows and 40695775 columns (presolve time = 52s) ...
+Presolve removed 81396733 rows and 40695775 columns (presolve time = 56s) ...
+Presolve removed 81396865 rows and 40695907 columns (presolve time = 62s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 69.34s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.8857550e+05   0.000000e+00   0.000000e+00    146s
+
+Solved in 0 iterations and 145.72 seconds (47.49 work units)
+Optimal objective  3.885755018e+05
+========================================================================================================================
+Start filling the leftover demands to their 3 choice
+
+Total demand fulfilled in previous round 0.38858, with leftover unfulfilled demand: 0.25439;    Resulting in a total of 0.64297, but b/c consideration set, the maximum possible demand in coming round is 0.02626;    Try to fill them with 3552 sites that has leftover capacity 16.07673
+
+Set parameter MIPFocus to value 3
+Set parameter MIPGap to value 0.005
+Set parameter TimeLimit to value 21600
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 81396865 rows, 40695907 columns and 81392032 nonzeros
+Model fingerprint: 0xb1e677e0
+Coefficient statistics:
+  Matrix range     [3e-01, 2e+03]
+  Objective range  [3e-01, 2e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve removed 4904 rows and 0 columns (presolve time = 15s) ...
+Presolve removed 81396859 rows and 40695689 columns (presolve time = 24s) ...
+Presolve removed 81396859 rows and 40695893 columns (presolve time = 29s) ...
+Presolve removed 81396859 rows and 40695901 columns (presolve time = 32s) ...
+Presolve removed 81396865 rows and 40695907 columns (presolve time = 38s) ...
+Presolve removed 81396865 rows and 40695907 columns
+Presolve time: 43.48s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.3351249e+04   0.000000e+00   0.000000e+00     94s
+
+Solved in 0 iterations and 94.33 seconds (47.49 work units)
+Optimal objective  2.335124916e+04
+Finished evaluate stage for setting _10000_5_4q_mnl_A300_randomseed457!
+
