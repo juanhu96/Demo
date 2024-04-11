@@ -71,12 +71,12 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, rando
     print(f'Start creating summary table for {setting_tag}...\n')
 
     # Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
-    Model_list = ['MaxVaxDistLogLin', 'MNL_partial_new']
-    # Model_list = ['MNL_partial_new']
+    # Model_list = ['MaxVaxDistLogLin', 'MNL_partial_new']
+    Model_list = ['MNL_partial_new']
     # Model_list = ['MaxVaxDistLogLin']
 
-    Chain_list = ['Dollar', 'HighSchools', 'Coffee']
-    # Chain_list = ['Dollar']
+    # Chain_list = ['Dollar', 'HighSchools', 'Coffee']
+    Chain_list = ['Dollar']
 
     partnerships_summary(Model_list=Model_list,
                          Chain_list=Chain_list,
@@ -89,7 +89,8 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, rando
                          A=A,
                          random_seed=random_seed,
                          setting_tag=setting_tag,
-                         suffix='')
+                         evaluation='random_fcfs',
+                         suffix='_Dollar_FCFStest')
 
     print(f'Finished table for {setting_tag}!\n')
     return

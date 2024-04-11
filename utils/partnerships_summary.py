@@ -45,7 +45,7 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
         
         for Model in Model_list:
             
-            if Model == 'MaxVaxDistLogLin' and Chain != 'Dollar':
+            if Model == 'MaxVaxDistLogLin' and Chain != 'Dollar': # when we refer to MaxVaxDistLogLin, we really meant Pharmacy-only
                 continue
 
             (pharmacy_locations, chain_locations, num_tracts, num_current_stores, num_total_stores,
@@ -57,23 +57,22 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
             # =================================================================================
             
             if evaluation == "random_fcfs":
-                
-                z, locs, dists, assignment = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag)
-                            
-                # second stage FCFS
-                chain_summary_second_stage_randomFCFS = create_row_randomFCFS('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'Evaluation', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                chain_summary_table.append(chain_summary_second_stage_randomFCFS)
+
+                # Pharmacy-only
+                if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': 
+                    z, locs, dists, assignment = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, Pharmacy=True)
+                    chain_summary = create_row_randomFCFS('Pharmacy-only', Model, Chain, M, K, nsplits, 'none', 'Evaluation', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                    chain_summary_table.append(chain_summary)
+                else:
+                    z, locs, dists, assignment = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag)   
+                    # second stage FCFS
+                    chain_summary_second_stage_randomFCFS = create_row_randomFCFS('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'Evaluation', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                    chain_summary_table.append(chain_summary_second_stage_randomFCFS)
 
                 # other results
                 if export_dist: export_dist(path, Model, Chain, M, K, R, z, block, locs, dists, assignment, chain_locations, num_current_stores, num_total_stores)
                 if export_utilization: compute_utilization_randomFCFS(K, R, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, path)
-
-                # Pharmacy-only
-                if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': 
-                    z, locs, dists, assignment = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, Pharmacy=True)
-                    chain_summary = create_row_randomFCFS('Pharmacy-only', Model, Chain, M, K, nsplits, 'none', 'Evaluation', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                    chain_summary_table.append(chain_summary)
-                        
+  
             # =================================================================================
                     
             elif evaluation == "mnl_mip":

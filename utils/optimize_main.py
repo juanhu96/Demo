@@ -80,12 +80,13 @@ def optimize_chain(Model: str,
     Facility_LogLin_models = ['MaxVaxDistLogLin']
     Assortment_MNL_models = ['MNL', 'MNL_partial', 'MNL_partial_test', 'MNL_partial_new']
 
+    # test(Chain, R, A, setting_tag)
+
     # ================================================================================
 
     (Population, Quartile, abd, p_current, p_total, pc_current, pc_total, 
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
-    
 
     if Model in Facility_BLP_models: 
         V_current, V_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag)
@@ -94,7 +95,27 @@ def optimize_chain(Model: str,
         V_current, V_total = import_estimation('LogLin', Chain, R, A, None, setting_tag)
     
     if Model in Assortment_MNL_models:
-        V_current, V_total = import_estimation('V', Chain, R, A, None, setting_tag)
+
+        if True:
+            F_current, F_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag)
+            # zero_rows = np.where(np.all(F_current == 0, axis=1))[0]
+            
+            # print("Indices of rows that are all zeros:", zero_rows) # tons of rows with all zero
+            
+            # smallest_five_360 = np.partition(C_total[360], 4)[:5]
+            # smallest_five_644 = np.partition(C_total[644], 4)[:5]
+            # print("Five smallest values in row 360 onward:", smallest_five_360)
+            # print("Five smallest values in row 644 onward:", smallest_five_644)
+            V_current = F_current / (1-F_current)
+            V_total = F_total / (1-F_total)
+            setting_tag += '_test'
+
+        else:
+            V_current, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)   
+
+        # V_current = np.where(F_current!=1, F_current / (1-F_current), np.inf)
+        # V_total = np.where(F_total!=1, F_total / (1-F_total), np.inf)
+        # V_current, V_total = import_estimation('V', Chain, R, A, None, setting_tag)
 
 
     # ================================================================================
@@ -116,6 +137,7 @@ def optimize_chain(Model: str,
     if Model in Assortment_MNL_models:
 
         v_total = V_total.flatten()
+        test_new(Chain, R, A, v_total, p_total, Closest_total, num_tracts, num_current_stores, num_total_stores, setting_tag)
         pv_total = p_total * v_total
 
         v_total = v_total * Closest_total
@@ -123,6 +145,10 @@ def optimize_chain(Model: str,
 
         ### M for MNL_partial_new
         if Model == 'MNL_partial_new':
+            
+            # test_new(Chain, R, A, v_total, p_total, Closest_total, num_tracts, num_current_stores, num_total_stores, setting_tag)
+            # return
+        
             V_temp = v_total.reshape((num_tracts, num_total_stores))
             V_nonzero = np.where(V_temp == 0, np.inf, V_temp)
             v_min = np.min(V_nonzero, axis=1)
@@ -251,4 +277,96 @@ def optimize_chain(Model: str,
     return 
 
 
+def test_new(Chain, R, A, v_total, p_total, Closest_total, num_tracts, num_current_stores, num_total_stores, setting_tag):
 
+    V_temp = v_total.reshape((num_tracts, num_total_stores))
+
+    sorted_indices_v_total = np.argsort(V_temp.flatten())[-3:][::-1]
+    largest_values_v_total = V_temp.flatten()[sorted_indices_v_total]
+    print("\nThe three largest values in V_total are:")
+    for index, value in zip(sorted_indices_v_total, largest_values_v_total):
+        print(f"Value: {value}, Index: {np.unravel_index(index, V_temp.shape)}")
+
+    zero_rows = np.where(np.all(V_temp == 0, axis=1))[0]
+    print("Indices of rows that are all zeros:", zero_rows) # tons of rows with all zero
+
+    # there are rows with all V_temp == 0
+    V_nonzero = np.where(V_temp == 0, np.inf, V_temp)
+    v_min = np.min(V_nonzero, axis=1)
+    big_M = np.where(v_min != 0, 1/v_min, 0)
+    print(f'The min for correponding big M is {np.min(big_M)} and max is {np.max(big_M)}\n')
+    gamma = (v_total * v_total) / (1 + v_total)
+    pg_total = p_total * gamma
+    pg_total = pg_total * Closest_total
+    
+    return
+
+
+def test(Chain, R, A, setting_tag):
+
+    F_current, F_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag) # willingness, p
+
+    U_current = F_current / (1-F_current)
+    U_total = F_total / (1-F_total)
+    V_current, V_total = import_estimation('V', Chain, R, A, None, setting_tag)
+
+    print(f'The max of F / 1-F current and total is {np.amax(U_current)} and {np.amax(U_total)}\n')
+    print(f'The max of wrong V is {np.amax(V_current)} and {np.amax(V_total)}\n')
+
+    # ========================================================================
+    # For U_current
+    sorted_indices_u_current = np.argsort(U_current.flatten())[-3:][::-1]
+    largest_values_u_current = U_current.flatten()[sorted_indices_u_current]
+    print("The three largest values in U_current are:")
+    for index, value in zip(sorted_indices_u_current, largest_values_u_current):
+        print(f"Value: {value}, Index: {np.unravel_index(index, U_current.shape)}")
+
+    # For U_total
+    sorted_indices_u_total = np.argsort(U_total.flatten())[-3:][::-1]
+    largest_values_u_total = U_total.flatten()[sorted_indices_u_total]
+    print("\nThe three largest values in U_total are:")
+    for index, value in zip(sorted_indices_u_total, largest_values_u_total):
+        print(f"Value: {value}, Index: {np.unravel_index(index, U_total.shape)}")
+
+    # For V_current
+    sorted_indices_v_current = np.argsort(V_current.flatten())[-3:][::-1]
+    largest_values_v_current = V_current.flatten()[sorted_indices_v_current]
+    print("\nThe three largest values in V_current are:")
+    for index, value in zip(sorted_indices_v_current, largest_values_v_current):
+        print(f"Value: {value}, Index: {np.unravel_index(index, V_current.shape)}")
+
+    # For V_total
+    sorted_indices_v_total = np.argsort(V_total.flatten())[-3:][::-1]
+    largest_values_v_total = V_total.flatten()[sorted_indices_v_total]
+    print("\nThe three largest values in V_total are:")
+    for index, value in zip(sorted_indices_v_total, largest_values_v_total):
+        print(f"Value: {value}, Index: {np.unravel_index(index, V_total.shape)}")
+
+    # NOTE: U_current matches V_current, U_total (6400, 6415, 5901) does not matches V_total (4892, 6400, 6415)
+
+    # ========================================================================
+
+    print(U_total[5901, 4745], V_total[5901, 4745]) # 22.87026397602321 22.945411822248474
+    print(U_total[4892, 4988], V_total[4892, 4988]) # 22.458366224000272 24.33190106928219
+
+
+    V_temp = v_total.reshape((num_tracts, num_total_stores))
+    V_nonzero = np.where(V_temp == 0, np.inf, V_temp)
+    v_min = np.min(V_nonzero, axis=1)
+    big_M = np.where(v_min != 0, 1/v_min, 0)
+    print(f'The min for correponding big M is {np.min(big_M)} and max is {np.max(big_M)}\n')
+    gamma = (v_total * v_total) / (1 + v_total)
+    pg_total = p_total * gamma
+    pg_total = pg_total * Closest_total
+    
+    return
+
+    from sklearn.metrics.pairwise import cosine_similarity
+    vec1 = U_current.flatten().reshape(1, -1)
+    vec2 = V_current.flatten().reshape(1, -1)
+    similarity = cosine_similarity(vec1, vec2)[0][0]
+    print(f"Cosine similarity: {similarity}")
+
+    print(np.amax(vec1 - vec2))
+
+    return 

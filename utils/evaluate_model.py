@@ -43,7 +43,7 @@ def compute_distdf(Chain_type: str,
                    within: int = 3000,
                    limit: int = 50):
     
-    print('Start computing distdf...\n')
+    print(f"Distdf not computed for current setting, start computing; File saved as ca_blk_{Chain}_dist_total{setting_tag}.csv\n")
     path = f'{path}/{constraint}'
      
     pharmacy_locations = pd.read_csv(f"{datadir}/Raw/Location/00_Pharmacies.csv", usecols=['latitude', 'longitude', 'StateID'])
@@ -84,6 +84,8 @@ def compute_distdf(Chain_type: str,
     outpath = f"{path}/ca_blk_{Chain}_dist_total{setting_tag}.csv"
     within = 3000 # km
     limit = 50 # number of chain stores to consider
+
+    os.chdir("../output_log/Stata/")
     output = subprocess.run(["stata-mp", "-b", "do", f"/mnt/phd/jihu/VaxDemandDistance/Demand/datawork/geonear_pharmacies.do", baselocpath, chainlocpath, outpath, str(within), str(limit)], capture_output=True, text=True)
     print(output.stdout)
     print(output.stderr)
@@ -97,7 +99,7 @@ def compute_distdf(Chain_type: str,
 # ===========================================================================
 
 
-def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path, Pharmacy=False, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
+def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path, random_seed=None, Pharmacy=False, datadir='/export/storage_covidvaccine/Data', resultdir='/export/storage_covidvaccine/Result'):
 
     print('Start constructing blocks...\n')
     if constraint != 'None': path = f'{path}/{constraint}'
@@ -123,6 +125,7 @@ def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, 
     temp_setting_tag = temp_setting_tag.replace('_loglintemp', '') # estimation independent of loglin form
     if R is not None: temp_setting_tag = temp_setting_tag.replace(f'_R{R}', '')
     if A is not None: temp_setting_tag = temp_setting_tag.replace(f'_A{A}', '')
+    if random_seed is not None: temp_setting_tag = temp_setting_tag.replace(f'_randomseed{random_seed}', '')
 
     block_utils = pd.read_csv(f'{resultdir}/Demand/agent_results{temp_setting_tag}.csv', delimiter = ",")
     block_utils = block_utils.loc[block_utils.blkid.isin(blocks_unique), :]

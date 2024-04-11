@@ -15,8 +15,7 @@ os.chdir(dname)
 
 from utils.evaluate_model import compute_distdf, construct_blocks, run_assignment, evaluate_rate, \
     evaluate_rate_MNL_partial, evaluate_rate_MNL_partial_leftover, compute_f, update_f, compute_g, update_g
-from utils.import_parameters import import_basics, import_BLP_estimation, import_MNL_estimation
-
+from utils.import_parameters import import_basics, import_estimation, import_MNL_estimation
 
 
 def evaluate_main(Model: str,
@@ -36,8 +35,8 @@ def evaluate_main(Model: str,
                   loglintemp: bool,
                   random_seed,
                   setting_tag: str,
-                  RandomFCFS: bool = False,
-                  leftover: bool = True,
+                  RandomFCFS: bool = True,
+                  leftover: bool = False,
                   constraint='vaccinated',
                   resultdir='/export/storage_covidvaccine/Result'):
 
@@ -52,18 +51,15 @@ def evaluate_main(Model: str,
         return chain_path
        
     path = create_path(Model, Chain, K, M, nsplits, resultdir)
-
-    evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
     
     if leftover: 
-        print("Evaluation with leftover fulfillments...\n")
+        evaluate_chain_MNL(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
         for rank in range(2, 4): # computation/storage issue, for rank in range(2, M+1)
             evalute_chain_MNL_leftover(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path, rank)
     
     # other evaluation form
     if RandomFCFS:
-        print("Evaluation with random FCFS...\n")
-        evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, setting_tag, constraint, path)
+        evaluate_chain_RandomFCFS(Model, Chain, M, K, nsplits, capcoef, mnl, flexible_consideration, flex_thresh, logdist_above, logdist_above_thresh, R, A, norandomterm, random_seed, setting_tag, constraint, path)
 
     return
 
@@ -96,7 +92,13 @@ def evaluate_chain_MNL(Model,
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
     
-    _, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)
+    if True:
+        _, F_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag)
+        V_total = F_total / (1-F_total)
+        setting_tag += '_test'
+    else:
+        _, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)
+
     v_total = V_total.flatten()
     v_total = v_total * Closest_total
     pv_total = p_total * v_total
@@ -220,7 +222,13 @@ def evalute_chain_MNL_leftover(Model,
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
     
-    _, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)
+    if True:
+        _, F_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag)
+        V_total = F_total / (1-F_total)
+        setting_tag += '_test'
+    else:
+        _, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)
+        
     v_total = V_total.flatten()
     v_total = v_total * Closest_total
     
@@ -318,7 +326,6 @@ def evalute_chain_MNL_leftover(Model,
 
 
 
-
 def evaluate_chain_RandomFCFS(Model,
                               Chain,
                               M,
@@ -333,26 +340,67 @@ def evaluate_chain_RandomFCFS(Model,
                               R,
                               A,
                               norandomterm,
+                              random_seed,
                               setting_tag,
                               constraint,
-                              path):
+                              path,
+                              scale_factor: int = 10000):
 
     print(f'Evaluating random order FCFS with Chain type: {Chain}; Model: {Model}; M = {str(M)}, K = {str(K)}, R = {R}, A = {A}.\n Results stored at {path}\n')
     Chain_dict = {'Dollar': '01_DollarStores', 'Coffee': '04_Coffee', 'HighSchools': '09_HighSchools'}
+    
+    (Population, Quartile, abd, p_current, p_total, pc_current, pc_total, 
+    C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
+    num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
 
-    z_file_name = f'{path}/{constraint}/z_total'
-    z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)        
-    print(f"Import optimization solution from file {z_file_name}{setting_tag}\n")
-
-    if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
-        print("Distdf not computed for current setting, start computing...\n")
-        compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
 
     if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': # Pharmacy-only
-        block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path, Pharmacy=True)
-        run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path, Pharmacy=True)
+        
+        print("Start evaluating for pharmacies only...\n")
+        if A is not None:
+            np.random.seed(random_seed)
+            print(f"Randomly adding A = {A} under random seed of {random_seed}\n")
+            selected_dollar = np.zeros(num_total_stores - num_current_stores)
+            indices = np.random.choice(range(len(selected_dollar)), A, replace=False)
+            print(indices)
+            selected_dollar[indices] = 1
+            z_total = np.concatenate((np.ones(num_current_stores), selected_dollar))
+            np.savetxt(f'{path}z_Pharmacy_round{1}{setting_tag}.csv', z_total, delimiter=",")
 
-    block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path)
-    run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path)
+            if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
+                compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
+
+            block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path, random_seed)
+            run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path)
+
+        else: # only current pharmacies, don't need to compute distdf
+            z_total = np.concatenate((np.ones(num_current_stores), np.zeros(num_total_stores - num_current_stores)))
+            block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path, Pharmacy=True)
+            run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path, Pharmacy=True)
+    
+
+    else:
+
+        z_file_name = f'{path}/{constraint}/z_total'
+        z_total = np.genfromtxt(f'{z_file_name}{setting_tag}.csv', delimiter = ",", dtype = float)        
+        print(f"Import optimization solution from file {z_file_name}{setting_tag}\n")
+        print(f'The number of pharmacies opened: {np.sum(z_total[:num_current_stores] == 1)}, number of {Chain} opened: {np.sum(z_total[num_current_stores:] == 1)}\n')
+        
+        non_binary_check = np.any((z_total != 0) & (z_total != 1))
+        print(f'Is there any fractional number in the final solution z: {non_binary_check}')
+        if non_binary_check:
+            print('The fractional numbers are')
+            non_binary_indices = np.where((z_total != 0) & (z_total != 1))
+            non_binary_values = z_total[non_binary_indices]
+            for index, value in zip(non_binary_indices[0], non_binary_values):
+                print(f"index: {index}, value: {value}")
+
+            z_total = z_total.astype(int)
+
+        if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
+            compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
+
+        block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path)
+        run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path)
         
     return

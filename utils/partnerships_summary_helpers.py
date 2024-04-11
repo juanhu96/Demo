@@ -147,10 +147,17 @@ def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_tota
     if evaluation == 'random_fcfs':
 
         if Pharmacy:
-            locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
-            dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
-            assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
-            z = np.ones(num_current_stores)
+            if random_seed is not None:
+                locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
+                dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
+                assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
+                z_filename = f'{path}z_Pharmacy_round1{setting_tag}.csv' # for randomization
+                z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
+            else:
+                locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
+                dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
+                assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
+                z = np.ones(num_current_stores)
         
         else:
             locs_filename = f'{path}locs_{Chain_type}{setting_tag}.csv'
@@ -160,6 +167,7 @@ def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_tota
             z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
 
         # Load data
+        print(f'The assignment file imported is {assignment_filename}\n')
         locs = np.genfromtxt(locs_filename, delimiter="")
         dists = np.genfromtxt(dists_filename, delimiter="")
         assignment = np.genfromtxt(assignment_filename, delimiter="")

@@ -173,6 +173,7 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
                     tract_site_willingness = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
 
                     # NOTE: v_ij = e^{mu_ij]}
+                    # TODO: compute the block-level probability, getting to vaccinate or not, then aggregate at the tract-level
                     # tract_site_preference = np.sum((temp_blocks_pop / temp_tract_pop) * np.exp(blocks_utility))
                     tract_site_preference = np.exp(np.sum((temp_blocks_pop / temp_tract_pop) * blocks_utility))
 
@@ -189,7 +190,7 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
 
                     # tract_site_preference = np.sum((blocks_pop / tract_pop) * np.exp(blocks_utility))
                     tract_site_preference = np.exp(np.sum((blocks_pop / tract_pop) * blocks_utility))
-                    
+
                     loglin_willingness = tract_abd + loglin_coef * np.sum((blocks_pop / tract_pop) * logdists)
 
 
