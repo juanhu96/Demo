@@ -4,7 +4,7 @@
 
 add_values=("add100" "add200" "add300" "add400" "add500" "add600" "add700" "add800" "add900" "add1000")
 # random_values=("random42" "random13" "random940" "random457" "random129")
-random_values=("random940")
+random_values=("random129")
 
 # randomize
 for add in "${add_values[@]}"; do

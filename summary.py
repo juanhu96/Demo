@@ -72,8 +72,8 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, rando
 
     # Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
     # Model_list = ['MaxVaxDistLogLin', 'MNL_partial_new']
-    Model_list = ['MNL_partial_new']
-    # Model_list = ['MaxVaxDistLogLin']
+    # Model_list = ['MNL_partial_new']
+    Model_list = ['MaxVaxDistLogLin']
 
     # Chain_list = ['Dollar', 'HighSchools', 'Coffee']
     Chain_list = ['Dollar']

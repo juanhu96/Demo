@@ -1,0 +1,66 @@
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_model.py:72: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+Start evaluate stage for setting _10000_5_4q_mnl_A500_randomseed129...
+
+Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000, R = None, A = 500.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/
+
+Start evaluating for pharmacies only...
+
+Randomly adding A = 500 under random seed of 129
+
+[ 964  624  132  185  977   51  575  139  905  622  853  715  573  148
+  897  566   29  739  399  582  711  498  786   97  982  115  250  428
+  886  144  923  388  969   88  451  506  418  851  483  270  873 1002
+  691 1013  559  667  723  629  562  368  304   84  166  975  963  539
+  229  798  436  297  724  130   22  578  394  327  747  488  351   59
+  128  730  323  753   89  817  857  707  463  587  112  721  547  188
+  666  701  584  755  133  355    4  334  307  885  262  913  282  545
+  804  243  496  710  256  199  212   37  909  658  895    2  801  596
+  998  234   32  924  485  437  434  759   99  838  825  829  260  187
+  131  313  146  718  671  741   54  781  123  569  837  794  478  734
+  259  673  466  444  433  142  555   10  269   43  275  344  412  850
+  890  343  619  237  778  114  757  152  908  901  889  421  263  264
+  864   16  760  556  512  789  692  314  808  958  159  425   86  121
+   39  341  122   98   73  725  541  178  513  350  677  170  522  299
+   87  571  693  987  654  866   25  653 1014  713  409  356  984  745
+  874  922  899  492  454  137  107  287  381  193  669  891  780  274
+  784  957  197   31  614  915  228  717  240  703  623  961  824  655
+  637  515  603  918  318  775  203  505  503  574  258  663  687   13
+  668  494  832  473  689  184  974  810  738  389  205 1001  791  109
+  476  286  510   52  821  733  514  939  702   34  265  848  100  694
+  233  911  419 1009  305  972  468  306  719  941  736  511  542  902
+  599  665  731  469  208  722  932  310  679  770   56  241  475  518
+  645  761   78  311  411   19  896  523   27  366  117  774  750  959
+  855  104   55  370  192  198  882  936  883  990  347  369  783  946
+  564  839  943  970  616   77  813  611  572   80  649 1003  236  392
+  472  490  846  151  186  164   46  533  613  509  720  683  805  992
+  894  551  576  448  696   74   65  868  169  377  378  579 1010  154
+  588  501  884  716  927  119  552  520  296  697  352  834  686  288
+  345  346  182  118  357  662  271  397  627  471  940   41  376  955
+  898  937  592  420  606  160  491  221  175  907  876  143   48  443
+  779  136  129  141  589  516  317  602  324  330  633  432  818  581
+  919  856  862  435  360   72  481  294  705  449  840  427   24  997
+  335  956  502  140  529  484  150  474  644  989  586  338  988  162
+  816  544  508  785  321  967  954  361  732  968  726  916  917   57
+  751  540  157  699  682  218  648  226   53  446  684  585  740  500
+  593  700  567   30  145  550  373  797  371   50]
+Distdf not computed for current setting, start computing; File saved as ca_blk_Dollar_dist_total_10000_5_4q_mnl_A500_randomseed129.csv
+
+
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.587 seconds.
+Assigning individuals...
+time3 - time2: 30.711
+time4 - time3: 418.441
+Number of full locations: 767  out of  4535
+Finished evaluate stage for setting _10000_5_4q_mnl_A500_randomseed129!
+
