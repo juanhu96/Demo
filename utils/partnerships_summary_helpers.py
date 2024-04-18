@@ -147,10 +147,10 @@ def import_solution(evaluation, path, Model, Chain_type, K, num_tracts, num_tota
     if evaluation == 'random_fcfs':
 
         if Pharmacy:
-            if random_seed is not None:
-                locs_filename = f'{path}locs_Pharmacy{setting_tag}.csv'
-                dists_filename = f'{path}dists_Pharmacy{setting_tag}.csv'
-                assignment_filename = f'{path}assignment_Pharmacy{setting_tag}.csv'
+            if random_seed is not None: # means we are adding dollar stores
+                locs_filename = f'{path}locs_Dollar{setting_tag}.csv'
+                dists_filename = f'{path}dists_Dollar{setting_tag}.csv'
+                assignment_filename = f'{path}assignment_Dollar{setting_tag}.csv'
                 z_filename = f'{path}z_Pharmacy_round1{setting_tag}.csv' # for randomization
                 z = np.genfromtxt(z_filename, delimiter=",", dtype=float)
             else:

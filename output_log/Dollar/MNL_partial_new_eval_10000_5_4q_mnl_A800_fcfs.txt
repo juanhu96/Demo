@@ -1,0 +1,31 @@
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_model.py:72: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
+Start evaluate stage for setting _10000_5_4q_mnl_A800...
+
+Evaluating random order FCFS with Chain type: Dollar; Model: MNL_partial_new; M = 5, K = 10000, R = None, A = 800.
+ Results stored at /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/Dollar/
+
+Import optimization solution from file /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/Dollar//vaccinated/z_total_10000_5_4q_mnl_A800
+
+The number of pharmacies opened: 4035, number of Dollar opened: 800
+
+Is there any fractional number in the final solution z: False
+Distdf not computed for current setting, start computing; File saved as ca_blk_Dollar_dist_total_10000_5_4q_mnl_A800.csv
+
+
+
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.529 seconds.
+Assigning individuals...
+time3 - time2: 34.205
+time4 - time3: 381.212
+Number of full locations: 644  out of  4835
+Finished evaluate stage for setting _10000_5_4q_mnl_A800!
+

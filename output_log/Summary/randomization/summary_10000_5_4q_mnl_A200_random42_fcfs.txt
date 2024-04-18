@@ -8,9 +8,9 @@ Model = MaxVaxDistLogLin, K = 10000, M = 5, with setting tag _10000_5_4q_mnl_A20
 
 Importing optimization and evaluation solution...
 
-The assignment file imported is /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/assignment_Pharmacy_10000_5_4q_mnl_A200_randomseed42.csv
+The assignment file imported is /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/assignment_Dollar_10000_5_4q_mnl_A200_randomseed42.csv
 
-Table exported as Results_10000_5_4q_mnl_A200_randomseed42_Pharmacy_FCFStest.csv
+Table exported as Results_10000_5_4q_mnl_A200_randomseed42_Randomization_FCFStest.csv
 
 Finished table for _10000_5_4q_mnl_A200_randomseed42!
 

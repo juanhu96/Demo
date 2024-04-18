@@ -85,7 +85,7 @@ def compute_distdf(Chain_type: str,
     within = 3000 # km
     limit = 50 # number of chain stores to consider
 
-    os.chdir("../output_log/Stata/")
+    # os.chdir("../output_log/Stata/")
     output = subprocess.run(["stata-mp", "-b", "do", f"/mnt/phd/jihu/VaxDemandDistance/Demand/datawork/geonear_pharmacies.do", baselocpath, chainlocpath, outpath, str(within), str(limit)], capture_output=True, text=True)
     print(output.stdout)
     print(output.stderr)

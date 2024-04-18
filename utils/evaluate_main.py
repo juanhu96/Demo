@@ -365,7 +365,7 @@ def evaluate_chain_RandomFCFS(Model,
             print(indices)
             selected_dollar[indices] = 1
             z_total = np.concatenate((np.ones(num_current_stores), selected_dollar))
-            np.savetxt(f'{path}z_Pharmacy_round{1}{setting_tag}.csv', z_total, delimiter=",")
+            np.savetxt(f'{path}/{constraint}/z_Pharmacy_round{1}{setting_tag}.csv', z_total, delimiter=",")
 
             if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
                 compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
