@@ -1,0 +1,35 @@
+Start evaluate stage for setting _10000_5_4q_mnl_A200_randomseed42...
+
+Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000, R = None, A = 200.
+ Results stored at /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/
+
+Start evaluating for pharmacies only...
+
+Randomly adding A = 200 under random seed of 42
+
+[ 753  519  210  943  915  534  810  199  215  589  595  429  547  598
+  741  405  883  355  580  824  736  139  256 1014  929  946  249  213
+  312  481  601  136   59  359  280  950  962  309  174  432  750  892
+  428  594  290   70  662   96   10  296  909  581  286  101  497  830
+  468  706   30  365  885   76  394   54   23  896  444  254  430  615
+  548  773  158  964  650  956  535  625  836  529  518  408   39  307
+  745  920  479   66  530   67  716  235  536  107  927  531  634  542
+  554  799  244  995  884  590   88   63  865  342  275  611  728  618
+  209  109  277  184  906  482  306  689  975  749  880  786  907 1001
+  837   86  876  321  281  557  350  849  398  305  793  462  765  490
+  966  914  533 1011  597   55  120  879   25   72   44  259  208  294
+  994  714  298  787  445  334  825  168  247  845  986  778  331  310
+   60  513  605  620  850  485  423  603  198  344  894  833  723  333
+  453  327  110  829  960  352  265  912  673  420  583  635  588  864
+  739  137  370  381]
+Start constructing blocks...
+
+Start assignments...
+
+Computed abepsilon in: 1.477 seconds.
+Assigning individuals...
+time3 - time2: 30.381
+time4 - time3: 332.092
+Number of full locations: 886  out of  4235
+Finished evaluate stage for setting _10000_5_4q_mnl_A200_randomseed42!
+

@@ -1,6 +1,7 @@
 // NOTE: rename the input data's latitude and longitude variables to "latitude" and "longitude" before running this script.
 cap log close
-log using "geonear.log", replace
+// JINGYUAN: commented out log file so that we won't be writing on the same log file
+// log using "geonear.log", replace
 
 *Pass in parameters.
 local baselocs "`1'"

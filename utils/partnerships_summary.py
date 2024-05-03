@@ -10,126 +10,142 @@ import pandas as pd
 import numpy as np
 from tabulate import tabulate
 
-from utils.partnerships_summary_helpers import import_dataset, import_solution, import_locations, create_row_MIP, create_row_randomFCFS, compute_utilization_randomFCFS, export_dist
-from utils.import_parameters import import_BLP_estimation
+from utils.partnerships_summary_helpers import import_dataset, import_solution, import_solution_leftover, import_locations, import_MNL_basics, create_row_MIP, create_row_MNL_MIP, create_row_randomFCFS, compute_utilization_randomFCFS, export_dist
+from utils.import_parameters import import_MNL_estimation
 
 
 
-def partnerships_summary(Model_list=['MaxVaxHPIDistBLP', 'MaxVaxDistBLP', 'MaxVaxHPIDistLogLin', 'MaxVaxDistLogLin', 'MaxVaxFixV', 'MinDist'],
-                        Chain_list=['Dollar', 'DiscountRetailers', 'Mcdonald', 'Coffee', 'ConvenienceStores', 'GasStations', 'CarDealers', 'PostOffices', 'HighSchools', 'Libraries'],
-                        M_list=[5, 10], 
-                        K_list=[8000, 10000, 12000], 
-                        nsplits=4,
-                        capcoef=True,
-                        R=None,
-                        heuristic=False,
-                        constraint='vaccinated', 
-                        second_stage_MIP=False,
-                        export_dist=False,
-                        export_utilization=False,
-                        resultdir='/export/storage_covidvaccine/Result', 
-                        datadir='/export/storage_covidvaccine/Data', 
-                        filename=''):
+def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial'],
+                         Chain_list = ['Dollar', 'HighSchools', 'Coffee'],
+                         K: int = 10000, 
+                         M: int = 5, 
+                         nsplits: int = 4,
+                         capcoef: bool = False,
+                         flexible_consideration: bool = False,
+                         R = None,
+                         A = None,
+                         random_seed=None,
+                         setting_tag: str = '',
+                         evaluation: str = 'mnl_mip',
+                         constraint='vaccinated', 
+                         leftover: bool = True,
+                         export_tract: bool = False,
+                         export_dist: bool = False,
+                         export_utilization: bool = False,
+                         suffix: str = '',
+                         resultdir: str = '/export/storage_covidvaccine/Result', 
+                         datadir: str = '/export/storage_covidvaccine/Data'):
 
-    '''
-    Summary for each (Model, Chain, M, K, constraint) pair
-
-    Parameters
-    ----------
-    Model_list: List of strings
-        List of models to construct summary table
-
-    Chain_list: List of strings
-        List of partnerships to construct summary table
-
-    K_list: List of int
-        List of capacity to construct summary table
-        For 'MinDist' this is only feasible for K = 10000, 12000
-
-    constraint_list: List of strings
-        List of constraint types that are used in first-stage optimization
-
-    nsplits: Int
-        Number of splits for HPI quantiles, default = 3
-
-    filename : string
-        Filename
-    '''
     
-    
-    df, df_temp, block, tract_hpi, _ = import_dataset(nsplits, datadir)
+    df, df_temp, block, tract_hpi, _ = import_dataset(nsplits, datadir) # non-estimation-related
     chain_summary_table = []
 
-    for Model in Model_list:
-        for Chain in Chain_list:
+    for Chain in Chain_list:
+        print(f'Start computing summary table for Chain = {Chain}...\n')
+        
+        for Model in Model_list:
+            
+            if Model == 'MaxVaxDistLogLin' and Chain != 'Dollar': # when we refer to MaxVaxDistLogLin, we really meant Pharmacy-only
+                continue
 
-            pharmacy_locations, chain_locations, num_tracts, num_current_stores, num_total_stores, C_current, C_total, C_current_walkable, C_total_walkable = import_locations(df_temp, Chain)
+            (pharmacy_locations, chain_locations, num_tracts, num_current_stores, num_total_stores,
+            C_current, C_total, C_current_walkable, C_total_walkable) = import_locations(df_temp, Chain)
 
-            for M in M_list:
-                for K in K_list:
-                    
-                    print(f'Model={Model}, M={M}, K={K}, Chain={Chain}, nsplits={nsplits}, capcoef={capcoef}, R={R}, heuristic={heuristic}\n')
-                    
-                    F_D_current, F_D_total, F_DH_current, F_DH_total = import_BLP_estimation(Chain, K, nsplits, capcoef)
+            print(f'Model = {Model}, K = {K}, M = {M}, with setting tag {setting_tag}...\n')
+            path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{constraint}/'
+            
+            # =================================================================================
+            
+            if evaluation == "random_fcfs":
 
-                    if capcoef: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q_capcoef/{Chain}/{constraint}/'
-                    else: path = f'{resultdir}/{Model}/M{str(M)}_K{str(K)}_{nsplits}q/{Chain}/{constraint}/'
-
-                    z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R)
-
-                    print(np.sum(assignment), assignment)
-
-                    # first stage MIP
-                    if Model != 'MNL':
-                        chain_summary_first_stage = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'first stage', tract_hpi, mat_y, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                        chain_summary_table.append(chain_summary_first_stage)
-
-
-                    # second stage MIP
-                    if second_stage_MIP:
-                        chain_summary_second_stage_MIP = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'second stage MIP', tract_hpi, mat_y_eval, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                        chain_summary_table.append(chain_summary_second_stage_MIP)
-
-
+                # Pharmacy-only
+                # if Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': 
+                if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': 
+                    z, locs, dists, assignment = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, Pharmacy=True)
+                    chain_summary = create_row_randomFCFS('Pharmacy-only', Model, Chain, M, K, nsplits, 'none', 'Evaluation', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                    chain_summary_table.append(chain_summary)
+                else:
+                    z, locs, dists, assignment = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag)   
                     # second stage FCFS
-                    chain_summary_second_stage_randomFCFS = create_row_randomFCFS('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'second stage randomFCFS', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                    chain_summary_second_stage_randomFCFS = create_row_randomFCFS('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'Evaluation', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
                     chain_summary_table.append(chain_summary_second_stage_randomFCFS)
 
-
-                    # other results
-                    if export_dist: export_dist(path, Model, Chain, M, K, R, z, block, locs, dists, assignment, chain_locations, num_current_stores, num_total_stores)
-                    if export_utilization: compute_utilization_randomFCFS(K, R, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, path)
-
-
-                    # heuristic results
-                    if Model == "MaxVaxHPIDistBLP" and heuristic:
-                                
-                        z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, heuristic)
-
-                        # second stage MIP
-                        if second_stage_MIP:
-                            chain_summary_second_stage_MIP = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'second stage MIP (heuristic)', tract_hpi, mat_y_eval, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                            chain_summary_table.append(chain_summary_second_stage_MIP)
-
-                        # second stage FCFS
-                        chain_summary_second_stage_randomFCFS = create_row_randomFCFS('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'second stage randomFCFS (heuristic)', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                        chain_summary_table.append(chain_summary_second_stage_randomFCFS)
-
-
-                    if Chain == 'Dollar' and Model == 'MaxVaxHPIDistBLP' and constraint == 'vaccinated': # Pharmacy-only
-                                
-                        # z, mat_y, mat_y_eval, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, heuristic=False, Pharmacy=True)
-                        z, locs, dists, assignment = import_solution(path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, R, heuristic=False, Pharmacy=True)
-
-                        # chain_summary_first_stage = create_row_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, 'none', 'first stage', tract_hpi, mat_y, z, F_DH_current, C_current, C_current_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                        # chain_summary_table.append(chain_summary_first_stage)
-
-                        chain_summary = create_row_randomFCFS('Pharmacy-only', Model, Chain, M, K, nsplits, 'none', 'second stage randomFCFS', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
-                        chain_summary_table.append(chain_summary)
+                # other results
+                if export_dist: export_dist(path, Model, Chain, M, K, R, z, block, locs, dists, assignment, chain_locations, num_current_stores, num_total_stores)
+                if export_utilization: compute_utilization_randomFCFS(K, R, z, block, locs, dists, assignment, pharmacy_locations, chain_locations, path)
+  
+            # =================================================================================
                     
+            elif evaluation == "mnl_mip":
+                
+                p_total, C, Closest_total = import_MNL_basics(tract_hpi, C_current, C_total, M, flexible_consideration)
+                _, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)
 
+                v_total = V_total.flatten()
+                pf_total = p_total * v_total
+                v_total = v_total * Closest_total
+                pf_total = pf_total * Closest_total
+                
+                gamma = (v_total * v_total) / (1 + v_total)
+                pg_total = p_total * gamma
+                pg_total = pg_total * Closest_total
+
+                # mat_t and mat_f is essentially mat_y and F_DH
+
+                # if Model == 'MNL_partial' and constraint == 'vaccinated': # so that we don't evaluate loglin for sensitivity analysis
+                if Model == 'MNL_partial' or Model == 'MNL_partial_new': # so that we don't evaluate loglin for sensitivity analysis
+                    
+                    if Model == 'MNL_partial_new': z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pg_total, v_total, C)
+                    else: z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pf_total, v_total, C)
+
+                    chain_summary, CA_TRACT = create_row_MNL_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
+                                                tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                    chain_summary_table.append(chain_summary)
+                    
+                    if export_tract:
+                        CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/Tract/CA_TRACT_PharmDollar{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
+
+                    if leftover:
+                        for rank in range(2, 4): # for rank in range(2, M+1):
+                            z, mat_t, mat_f = import_solution_leftover(evaluation, path, rank, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag)
+                            
+                            chain_summary, _ = create_row_MNL_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, f'Evaluation {rank}', 
+                                                tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                            chain_summary_table.append(chain_summary)
+
+                # =================================================================================
+                        
+                if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': 
+                    
+                    MNL_partial_new = True
+                    if MNL_partial_new: z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pg_total, v_total, C, Pharmacy=True)
+                    else: z, mat_t, mat_f = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, pf_total, v_total, C, Pharmacy=True)
+
+                    chain_summary, CA_TRACT = create_row_MNL_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, constraint, 'Evaluation', 
+                                            tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                    chain_summary_table.append(chain_summary)
+
+                    if export_tract:
+                        CA_TRACT.to_csv(f'{resultdir}/Sensitivity_results/Tract/CA_TRACT_Pharm{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)     
+                
+                    if leftover:
+                        for rank in range(2, 4): # for rank in range(2, M+1):
+                            z, mat_t, mat_f = import_solution_leftover(evaluation, path, rank, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, setting_tag, Pharmacy=True)
+                            
+                            chain_summary, _ = create_row_MNL_MIP('Pharmacy-only', Model, Chain, M, K, nsplits, constraint, f'Evaluation {rank}', 
+                                                tract_hpi, mat_t, z, mat_f, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                            chain_summary_table.append(chain_summary)
+
+
+            else:
+                # chain_summary_second_stage_MIP = create_row_MIP('Pharmacy + ' + Chain, Model, Chain, M, K, nsplits, constraint, 'second stage MIP',
+                # tract_hpi, mat_y_eval, z, F_DH_total, C_total, C_total_walkable, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
+                raise Exception("Evaluation type undefined")
 
     chain_summary = pd.DataFrame(chain_summary_table)
-    if R is not None: chain_summary.to_csv(f'{resultdir}/Sensitivity_results/sensitivity_results_{filename}R{R}.csv', encoding='utf-8', index=False, header=True)
-    else: chain_summary.to_csv(f'{resultdir}/Sensitivity_results/sensitivity_results_{filename}.csv', encoding='utf-8', index=False, header=True)
+    if A is not None: chain_summary['A'] = A
+    chain_summary.to_csv(f'{resultdir}/Sensitivity_results/Results{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
+    
+    print(f"Table exported as Results{setting_tag}{suffix}.csv\n")
+    return
 
