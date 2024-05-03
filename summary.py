@@ -66,17 +66,34 @@ setting_tag += f"_randomseed{random_seed}" if random else ""
 #=================================================================
 
 
-def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, random_seed, setting_tag):
+def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, random_seed, setting_tag, main=False, partnerships=False, randomization=False):
 
     print(f'Start creating summary table for {setting_tag}...\n')
 
-    # Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', 'MNL_partial']
-    # Model_list = ['MaxVaxDistLogLin', 'MNL_partial_new']
-    # Model_list = ['MNL_partial_new']
-    Model_list = ['MaxVaxDistLogLin']
+    if main:
+        # different partnerships: full replacement vs. pharmacy-only
+        Model_list = ['MNL_partial_new', 'MaxVaxDistLogLin']
+        Chain_list = ['Dollar', 'HighSchools', 'Coffee']
+        suffix = '_replacement'
 
-    # Chain_list = ['Dollar', 'HighSchools', 'Coffee']
-    Chain_list = ['Dollar']
+    elif partnerships: 
+        # different partnerships: different A (requires 'add$A')
+        Model_list = ['MNL_partial_new']
+        Chain_list = ['Dollar', 'HighSchools', 'Coffee']
+        suffix = '_partnerships'
+
+    elif randomization: 
+        # dollar: randomly add A vs. optimally add A
+        Model_list = ['MaxVaxDistLogLin', 'MNL_partial_new']
+        Chain_list = ['Dollar']
+
+    else: 
+        # main scenarios, for different parameters in sensitivity analysis
+        # need pharmacy-only results as baseline
+        Model_list = ['MNL_partial_new', 'MaxVaxDistLogLin']
+        # if M == 10: Model_list = ['MNL_partial', 'MaxVaxDistLogLin'] # test
+        Chain_list = ['Dollar']
+        suffix = '_parameter'
 
     partnerships_summary(Model_list=Model_list,
                          Chain_list=Chain_list,
@@ -90,7 +107,7 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, rando
                          random_seed=random_seed,
                          setting_tag=setting_tag,
                          evaluation='random_fcfs',
-                         suffix='_Dollar_FCFStest')
+                         suffix=suffix)
 
     print(f'Finished table for {setting_tag}!\n')
     return

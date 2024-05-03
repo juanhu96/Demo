@@ -14,7 +14,7 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 from utils.optimize_model import optimize_rate, optimize_dist, optimize_rate_fix, optimize_rate_MNL, optimize_rate_MNL_partial, optimize_rate_MNL_partial_test, optimize_rate_MNL_partial_new
-from utils.import_parameters import import_basics, import_estimation
+from utils.import_parameters import import_basics, import_estimation, import_MNL_estimation
 
 
 def optimize_main(Model: str,
@@ -95,28 +95,7 @@ def optimize_chain(Model: str,
         V_current, V_total = import_estimation('LogLin', Chain, R, A, None, setting_tag)
     
     if Model in Assortment_MNL_models:
-
-        if True:
-            F_current, F_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag)
-            # zero_rows = np.where(np.all(F_current == 0, axis=1))[0]
-            
-            # print("Indices of rows that are all zeros:", zero_rows) # tons of rows with all zero
-            
-            # smallest_five_360 = np.partition(C_total[360], 4)[:5]
-            # smallest_five_644 = np.partition(C_total[644], 4)[:5]
-            # print("Five smallest values in row 360 onward:", smallest_five_360)
-            # print("Five smallest values in row 644 onward:", smallest_five_644)
-            V_current = F_current / (1-F_current)
-            V_total = F_total / (1-F_total)
-            setting_tag += '_test'
-
-        else:
-            V_current, V_total = import_MNL_estimation(Chain, R, A, random_seed, setting_tag)   
-
-        # V_current = np.where(F_current!=1, F_current / (1-F_current), np.inf)
-        # V_total = np.where(F_total!=1, F_total / (1-F_total), np.inf)
-        # V_current, V_total = import_estimation('V', Chain, R, A, None, setting_tag)
-
+        V_current, V_total = import_estimation('V', Chain, R, A, None, setting_tag)
 
     # ================================================================================
 
@@ -137,7 +116,7 @@ def optimize_chain(Model: str,
     if Model in Assortment_MNL_models:
 
         v_total = V_total.flatten()
-        test_new(Chain, R, A, v_total, p_total, Closest_total, num_tracts, num_current_stores, num_total_stores, setting_tag)
+        # test_new(Chain, R, A, v_total, p_total, Closest_total, num_tracts, num_current_stores, num_total_stores, setting_tag)
         pv_total = p_total * v_total
 
         v_total = v_total * Closest_total

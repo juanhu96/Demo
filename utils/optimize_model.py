@@ -463,6 +463,7 @@ def optimize_rate_MNL_partial_new(scenario,
     m = gp.Model("Vaccination")
     m.Params.MIPFocus = 3 # to focus on the bound
     m.Params.TimeLimit = 21600 # 6 hours
+    # m.Params.TimeLimit = 36000 # 10 hours FOR M = 10
     # m.Params.FeasibilityTol = FeasibilityTol # tolerence
     # small problems require higher accuracy (also easier to solve)
     if (A is not None) or (R is not None): 

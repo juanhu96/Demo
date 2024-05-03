@@ -232,7 +232,6 @@ def import_BLP_estimation(Chain_type, R, A, random_seed, setting_tag, resultdir=
     if R is not None: setting_tag = setting_tag.replace(f'_R{R}', '')
     if A is not None: setting_tag = setting_tag.replace(f'_A{A}', '')
     if random_seed is not None: setting_tag = setting_tag.replace(f'_randomseed{random_seed}', '')
-    # print(f"Import BLP estimation matrices from file BLP_current{setting_tag}...\n")
 
     F_DH_current = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', delimiter = ",", dtype = float) 
     F_DH_chain = np.genfromtxt(f'{resultdir}BLP_matrix/BLP_matrix_{Chain_type}{setting_tag}.csv', delimiter = ",", dtype = float)

@@ -4,43 +4,35 @@ Importing dataset...
 
 Start computing summary table for Chain = Dollar...
 
-Model = MaxVaxDistLogLin, K = 10000, M = 5, with setting tag _10000_5_4q_mnl...
-
-Closest_total and C follows fix rank of 5
-
-Importing optimization and evaluation solution...
-
 Model = MNL_partial_new, K = 10000, M = 5, with setting tag _10000_5_4q_mnl...
 
-Closest_total and C follows fix rank of 5
+Importing optimization and evaluation solution...
+
+The assignment file imported is /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/Dollar/vaccinated/assignment_Dollar_10000_5_4q_mnl.csv
+
+Model = MaxVaxDistLogLin, K = 10000, M = 5, with setting tag _10000_5_4q_mnl...
 
 Importing optimization and evaluation solution...
+
+The assignment file imported is /export/storage_covidvaccine/Result/MaxVaxDistLogLin/M5_K10000_4q/Dollar/vaccinated/assignment_Pharmacy_10000_5_4q_mnl.csv
 
 Start computing summary table for Chain = HighSchools...
 
-Model = MaxVaxDistLogLin, K = 10000, M = 5, with setting tag _10000_5_4q_mnl...
-
-Closest_total and C follows fix rank of 5
-
 Model = MNL_partial_new, K = 10000, M = 5, with setting tag _10000_5_4q_mnl...
 
-Closest_total and C follows fix rank of 5
-
 Importing optimization and evaluation solution...
+
+The assignment file imported is /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/HighSchools/vaccinated/assignment_HighSchools_10000_5_4q_mnl.csv
 
 Start computing summary table for Chain = Coffee...
 
-Model = MaxVaxDistLogLin, K = 10000, M = 5, with setting tag _10000_5_4q_mnl...
-
-Closest_total and C follows fix rank of 5
-
 Model = MNL_partial_new, K = 10000, M = 5, with setting tag _10000_5_4q_mnl...
-
-Closest_total and C follows fix rank of 5
 
 Importing optimization and evaluation solution...
 
-Table exported as Results_10000_5_4q_mnl.csv
+The assignment file imported is /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/Coffee/vaccinated/assignment_Coffee_10000_5_4q_mnl.csv
+
+Table exported as Results_10000_5_4q_mnl_partnerships_replacement.csv
 
 Finished table for _10000_5_4q_mnl!
 

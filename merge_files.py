@@ -13,6 +13,11 @@ os.chdir(dname)
 
 import pandas as pd
 
+main = False
+randomization = False
+partnerships = False
+parameters = True
+
 #=================================================================
 # SETTINGS
 
@@ -58,29 +63,29 @@ setting_tag += "_mnl" if mnl else ""
 setting_tag += "_flex" if flexible_consideration else ""
 setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').replace('[', '').replace(']', '')}" if flexible_consideration else ""
 setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
+#=================================================================
 
-
-main = False
-randomization = True
-partnerships = True
 
 
 ### MERGE RESULTS FROM EVERY RANDOMIZED INSTANCE
-def merge_files_randomization(setting_tag, A_list = range(100, 1100, 100), random_seed_list = [42, 13, 940, 457, 129], resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Randomization/'):
+def merge_files_randomization(setting_tag,
+                              A_list = range(100, 1100, 100),
+                              random_seed_list = [42, 13, 940, 457, 129],
+                              export_details = False,
+                              resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Randomization/'):
 
     total_df = pd.DataFrame()
-
+    
+    ### IMPORT ALL INDIVIDUAL SUMMARY TABLE
     for A in A_list:
         for random_seed in random_seed_list:
-            # file_name = f'Results{setting_tag}_A{A}_randomseed{random_seed}'
-            file_name = f'Results{setting_tag}_A{A}_randomseed{random_seed}_Randomization_FCFStest' # FCFS
+            file_name = f'Results{setting_tag}_A{A}_randomseed{random_seed}'
             current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
             if random_seed == 42: current_df['A'] = A
             current_df['random_seed'] = random_seed
             total_df = pd.concat([total_df, current_df])
+    if export_details: total_df.to_csv(f'{resultdir}Results{setting_tag}_randomization.csv', encoding='utf-8', index=False, header=True) # FCFS
 
-    # total_df.to_csv(f'{resultdir}Results{setting_tag}_randomization_merged.csv', encoding='utf-8', index=False, header=True)
-    total_df.to_csv(f'{resultdir}Results{setting_tag}_randomization_FCFStest_merged.csv', encoding='utf-8', index=False, header=True) # FCFS
 
     ### TABLE OF VACCINATIONS UNDER EACH A & RANDOM SEED
     summary_df = total_df.groupby(['A', 'random_seed']).agg(Vaccination=('Vaccination', 'sum'),
@@ -88,26 +93,17 @@ def merge_files_randomization(setting_tag, A_list = range(100, 1100, 100), rando
                                                             Vaccination_HPI2=('Vaccination HPI2', 'sum'),
                                                             Vaccination_HPI3=('Vaccination HPI3', 'sum'),
                                                             Vaccination_HPI4=('Vaccination HPI4', 'sum')).reset_index()
-    # total_df.to_csv(f'{resultdir}Results{setting_tag}_randomization_merged.csv', encoding='utf-8', index=False, header=True)
-    summary_df.to_csv(f'{resultdir}Summary{setting_tag}_randomization_FCFStest_merged.csv', encoding='utf-8', index=False, header=True) # FCFS
+    if export_details: summary_df.to_csv(f'{resultdir}Summary{setting_tag}_randomization.csv', encoding='utf-8', index=False, header=True) # FCFS
 
 
     ### TABLE OF AVERAGE VACCINATIONS UNDER EACH A
-    # random_runs = 4 # 42 excluded as it only got evaluated 2 times (rather than 3)
-    # summary_df = summary_df[summary_df['random_seed'] != 42].groupby(['A']).agg(Vaccination=('Vaccination', lambda x: x.sum() / random_runs),
-    #                                                         Vaccination_HPI1=('Vaccination_HPI1', lambda x: x.sum() / random_runs),
-    #                                                         Vaccination_HPI2=('Vaccination_HPI2', lambda x: x.sum() / random_runs),
-    #                                                         Vaccination_HPI3=('Vaccination_HPI3', lambda x: x.sum() / random_runs),
-    #                                                         Vaccination_HPI4=('Vaccination_HPI4', lambda x: x.sum() / random_runs)).reset_index()
-    
     random_runs = len(random_seed_list)
-    summary_df = summary_df.groupby(['A']).agg(Vaccination=('Vaccination', lambda x: x.sum() / random_runs),
-                                               Vaccination_HPI1=('Vaccination_HPI1', lambda x: x.sum() / random_runs),
-                                               Vaccination_HPI2=('Vaccination_HPI2', lambda x: x.sum() / random_runs),
-                                               Vaccination_HPI3=('Vaccination_HPI3', lambda x: x.sum() / random_runs),
-                                               Vaccination_HPI4=('Vaccination_HPI4', lambda x: x.sum() / random_runs)).reset_index()
-    # summary_df.to_csv(f'{resultdir}Final{setting_tag}_randomization_merged.csv', encoding='utf-8', index=False, header=True) # FCFS
-    summary_df.to_csv(f'{resultdir}Final{setting_tag}_randomization_FCFStest_merged.csv', encoding='utf-8', index=False, header=True) # FCFS
+    summary_df = summary_df.groupby(['A']).agg(Vaccination=('Vaccination', lambda x: round(x.sum() / random_runs, 2)),
+                                               Vaccination_HPI1=('Vaccination_HPI1', lambda x: round(x.sum() / random_runs, 2)),
+                                               Vaccination_HPI2=('Vaccination_HPI2', lambda x: round(x.sum() / random_runs, 2)),
+                                               Vaccination_HPI3=('Vaccination_HPI3', lambda x: round(x.sum() / random_runs, 2)),
+                                               Vaccination_HPI4=('Vaccination_HPI4', lambda x: round(x.sum() / random_runs, 2))).reset_index()
+    summary_df.to_csv(f'{resultdir}Final{setting_tag}_randomization.csv', encoding='utf-8', index=False, header=True)
     
     return
 
@@ -117,26 +113,23 @@ def merge_files_randomization(setting_tag, A_list = range(100, 1100, 100), rando
 
 
 ### MERGE RESUTLS FROM EVERY PARTNERSHIPS
-def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), Dollar = True, resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Partnerships/'):
+def merge_files_partnerships(setting_tag, 
+                             A_list = range(100, 1100, 100),
+                            #  suffix = '_Dollar_FCFStest', # optimization vs. randomization
+                             suffix = '_partnerships', # all chains
+                             export_details = False,
+                             resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Partnerships/'):
 
     total_df = pd.DataFrame()
-
+    
+    ### IMPORT ALL INDIVIDUAL SUMMARY TABLE
     for A in A_list:
-        # file_name = f'Results{setting_tag}_A{A}'
-        file_name = f'Results{setting_tag}_A{A}_Dollar_FCFStest' # FCFS
+        file_name = f'Results{setting_tag}_A{A}{suffix}'
         current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
         total_df = pd.concat([total_df, current_df])
-
-        # add dollar results
-        # if Dollar:
-        #     file_name = f'Results{setting_tag}_A{A}_Dollar'
-        #     current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
-        #     current_df['A'] = A
-        #     total_df = pd.concat([total_df, current_df])
-
-    # total_df.to_csv(f'{resultdir}Results{setting_tag}_partnerships_merged.csv', encoding='utf-8', index=False, header=True)
-    total_df.to_csv(f'{resultdir}Results{setting_tag}_partnerships_FCFStest_merged.csv', encoding='utf-8', index=False, header=True)
+    if export_details: total_df.to_csv(f'{resultdir}Results{setting_tag}_partnerships.csv', encoding='utf-8', index=False, header=True)
     
+
     ### TABLE OF VACCINATIONS UNDER EACH A & PARTNERSHIPS
     summary_df = total_df.groupby(['A', 'Chain']).agg(Vaccination=('Vaccination', lambda x: round(x.sum(), 2)),
                                                       Vaccination_HPI1=('Vaccination HPI1', lambda x: round(x.sum(), 2)),
@@ -149,8 +142,15 @@ def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), Dollar
                                                       Vaccination_Walkable_HPI3=('Vaccination Walkable HPI3', lambda x: round(x.sum(), 2)),
                                                       Vaccination_Walkable_HPI4=('Vaccination Walkable HPI4', lambda x: round(x.sum(), 2))).reset_index()
     
-    # summary_df.to_csv(f'{resultdir}Final{setting_tag}_partnerships_merged.csv', encoding='utf-8', index=False, header=True)
-    summary_df.to_csv(f'{resultdir}Final{setting_tag}_partnerships_FCFStest_merged.csv', encoding='utf-8', index=False, header=True)
+    summary_df.to_csv(f'{resultdir}Final{setting_tag}_partnerships.csv', encoding='utf-8', index=False, header=True)
+
+
+    ### TABLE OF VACCINATION UNDER DIFF A (DOLLAR ONLY FOR COMPARISON)
+    # optimization_df = summary_df[summary_df['Chain'] == 'Pharmacy + Dollar']
+    # optimization_df = optimization_df.drop(columns=['Chain', 'Vaccination_Walkable',\
+    #                                                 'Vaccination_Walkable_HPI1', 'Vaccination_Walkable_HPI2',\
+    #                                                     'Vaccination_Walkable_HPI3', 'Vaccination_Walkable_HPI4'])
+    # optimization_df.to_csv(f'{resultdir}Final{setting_tag}_optimization.csv', encoding='utf-8', index=False, header=True)
 
     return
 
@@ -160,7 +160,59 @@ def merge_files_partnerships(setting_tag, A_list = range(100, 1100, 100), Dollar
 
 
 
-def merge_files_main(setting_tag, suffix='', resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/'):
+### MERGE RESUTLS FROM EVERY PARTNERSHIPS
+def merge_files_parameters(suffix = '_parameter',
+                           export_details = True,
+                           resultdir = '/export/storage_covidvaccine/Result/Sensitivity_results/Parameters/'):
+
+    total_df = pd.DataFrame()
+    
+    ### IMPORT ALL INDIVIDUAL SUMMARY TABLE
+    setting_tag_list = ['_10000_5_4q_mnl', '_10000_10_4q_mnl', '_8000_5_4q_mnl', '_12000_5_4q_mnl',
+                        '_10000_5_4q_mnl_logdistabove0.8', '_10000_5_4q_mnl_logdistabove1.6']
+    for setting_tag in setting_tag_list:
+        if setting_tag == '_10000_5_4q_mnl_logdistabove0.8': d = 0.5
+        elif setting_tag == '_10000_5_4q_mnl_logdistabove1.6': d = 1.0
+        else: d = 0
+
+        file_name = f'Results{setting_tag}{suffix}'
+        current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
+        current_df['d'] = d
+        total_df = pd.concat([total_df, current_df])
+
+    if export_details: total_df.to_csv(f'{resultdir}Results_parameters.csv', encoding='utf-8', index=False, header=True)
+    
+    # TODO: UNFINISHED, WAITING FOR PHARMACY-ONLY EVALUATION RESULTS
+    columns_to_keep = ['M', 'K', 'd', 'Pharmacies replaced',
+                       'Vaccination', 
+                       'Vaccination HPI1', 'Vaccination HPI2',
+                       'Vaccination HPI3', 'Vaccination HPI4',
+                       'Vaccination Walkable', 
+                       'Vaccination Walkable HPI1', 'Vaccination Walkable HPI2',
+                       'Vaccination Walkable HPI3', 'Vaccination Walkable HPI4']
+    
+    columns_to_round = ['Vaccination', 'Vaccination HPI1', 'Vaccination HPI2', 'Vaccination HPI3', 'Vaccination HPI4',
+                        'Vaccination Walkable', 'Vaccination Walkable HPI1', 'Vaccination Walkable HPI2',
+                        'Vaccination Walkable HPI3', 'Vaccination Walkable HPI4']
+    
+    summary_df = total_df[columns_to_keep]
+    summary_df[columns_to_round] = summary_df[columns_to_round].round(2)
+    summary_df = summary_df.iloc[::2].reset_index(drop=True) - summary_df.iloc[1::2].reset_index(drop=True)
+    summary_df_transposed = summary_df.T
+    # print(summary_df_transposed)
+    latex_table = summary_df_transposed.to_latex(index=True)
+    print(latex_table)
+
+    return
+
+
+# ======================================================================
+
+
+
+def merge_files_main(setting_tag,
+                     suffix='',
+                     resultdir='/export/storage_covidvaccine/Result/Sensitivity_results/'):
 
     file_name = f'Results{setting_tag}{suffix}'
     df = pd.read_csv(f'{resultdir}{file_name}.csv')
@@ -195,12 +247,13 @@ def merge_files_main(setting_tag, suffix='', resultdir = '/export/storage_covidv
     # columns_to_drop = ['Stores net gain HPI 1', 'Stores net gain HPI 2', 'Stores net gain HPI 3', 'Stores net gain HPI 4']
     # summary_df = summary_df.drop(columns=columns_to_drop)
 
-    summary_df.to_csv(f'{resultdir}Final{setting_tag}{suffix}.csv', encoding='utf-8', index=False, header=True)
+    summary_df.to_csv(f'{resultdir}Final{setting_tag}_replacement{suffix}.csv', encoding='utf-8', index=False, header=True)
 
     return
 
 
 if __name__ == "__main__":
     if main: merge_files_main(setting_tag)
-    if randomization: merge_files_randomization(setting_tag, random_seed_list=[42])
+    if randomization: merge_files_randomization(setting_tag)
     if partnerships: merge_files_partnerships(setting_tag)
+    if parameters: merge_files_parameters()
