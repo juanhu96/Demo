@@ -34,6 +34,8 @@ if logdist_above:
     logdist_above_arg = [arg for arg in sys.argv if 'logdistabove' in arg][0]
     logdist_above_thresh = float(logdist_above_arg.replace('logdistabove', ''))
 
+levelshift = any(['levelshift' in arg for arg in sys.argv]) # False for original model. Whether to have a level shift for logdistabove
+
 only_constant = any(['const' in arg for arg in sys.argv]) #if True, only estimate constant term in demand. default to False
 no_dist_heterogeneity = any(['nodisthet' in arg for arg in sys.argv]) #if True, no distance heterogeneity in demand. default to False
 cap_coefs_to0 = any(['capcoef' in arg for arg in sys.argv]) #if True, set coefficients on distance to 0 when capacity is 0. default to False
@@ -52,7 +54,7 @@ setting_tag += "_mnl" if mnl else ""
 setting_tag += "_flex" if flexible_consideration else ""
 setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').replace('[', '').replace(']', '')}" if flexible_consideration else ""
 setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
-
+setting_tag += "_levelshift" if levelshift else ""
 
 datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result/Demand"
@@ -143,15 +145,14 @@ elif distbins:
     for qq in range(1, nsplits+1):
         for dd in range(1, n_distbins):
             agent_formulation_str += f' distbin{dd}Xhpi_quantile{qq} +'
-    # remove the last +
-    agent_formulation_str = agent_formulation_str[:-1]
+    agent_formulation_str = agent_formulation_str[:-1] # remove the last +
 elif logdist_above: #for each HPI quantile, logdist for >1km + level shift for >1km
     agent_formulation_str = '0 +'
     for qq in range(1, nsplits+1):
-        # agent_formulation_str += f' logdist_abovethreshXhpi_quantile{qq} + abovethreshXhpi_quantile{qq} +' #with level shift
-        agent_formulation_str += f' logdist_abovethreshXhpi_quantile{qq} +' #without level shift
-    # remove the last +
-    agent_formulation_str = agent_formulation_str[:-1]
+        agent_formulation_str += f' logdist_abovethreshXhpi_quantile{qq} +' 
+        if levelshift:
+            agent_formulation_str += f' abovethreshXhpi_quantile{qq} +'
+    agent_formulation_str = agent_formulation_str[:-1] # remove the last +
 else:
     agent_formulation_str = '0 +'
     for qq in range(1, nsplits):
@@ -240,6 +241,7 @@ else:
 if logdist_above:
     agent_data_full = de.hpi_dist_terms(agent_data_full, nsplits=nsplits, add_hpi_bins=False, add_hpi_dummies=True, add_dist=False, logdist_above=logdist_above, logdist_above_thresh=logdist_above_thresh)
 
+
 agent_data_full['nodes'] = 0 #for pyblp
 # merge in market population
 mktpop = cw_pop.groupby('market_ids').agg({'population': 'sum'}).reset_index()
@@ -260,9 +262,6 @@ economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank, mnl=mnl)
 
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 
-if mnl:
-    print("MNL distance distribution by rank:")
-    print([np.mean([dd[ii] for dd in dists]) for ii in range(len(dists[0]))])
 #=================================================================
 # TEST
 # import copy
@@ -289,6 +288,7 @@ agent_results, results, agent_loc_data = fp.run_fp(
     micro_computation_chunks=1 if max_rank <= 50 else 10,
     cap_coefs_to0=cap_coefs_to0,
     mnl=mnl,
+    dampener=0.5, #TODO: delete
     verbose=True,
     setting_tag=setting_tag,
     outdir=outdir

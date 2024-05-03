@@ -51,13 +51,13 @@ def hpi_dist_terms(
         print(df.filter(regex='distbin').sum())
 
     if logdist_above:
-        if dist_varname == 'logdist':
-            print(f"dist_varname is logdist, logging threshold {logdist_above_thresh}, so logdist starting from {np.log(logdist_above_thresh)}")
-            logdist_above_thresh = np.log(logdist_above_thresh)
-
         for qq in range(1, nsplits+1):
-            df[f'abovethreshXhpi_quantile{qq}'] = (df[dist_varname] > logdist_above_thresh).astype(int) * df[f'hpi_quantile{qq}']
-            df[f'logdist_abovethreshXhpi_quantile{qq}'] = df[dist_varname] * df[f'abovethreshXhpi_quantile{qq}']
+            df[f'abovethreshXhpi_quantile{qq}'] = (df['dist'] > logdist_above_thresh).astype(int) * df[f'hpi_quantile{qq}']
+            df[f'logdist_abovethreshXhpi_quantile{qq}'] = np.where(
+                df[f'abovethreshXhpi_quantile{qq}'] == 1,
+                np.log(np.maximum(df['dist'] + 1 - logdist_above_thresh, 1e-10)),
+                0
+            )
             
     return df
 
