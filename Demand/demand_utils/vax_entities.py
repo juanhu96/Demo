@@ -71,3 +71,5 @@ class Economy:
         else:
             self.gumbel_draws = None
             self.utils = None
+
+        self.violation_count = [0 for ll in locids] # number of times each location has been overassigned

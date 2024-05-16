@@ -1,5 +1,5 @@
 # find distance to nearest pharmacy for each block
-#
+# run after read_block.py
 import pandas as pd
 import numpy as np
 import geopandas as gpd

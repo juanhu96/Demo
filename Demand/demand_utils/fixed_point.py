@@ -157,10 +157,10 @@ def run_fp(
         # save table for first and last iterations
         if iter == 0:
             table_path = f"{outdir}/coeftables/coeftable_{setting_tag}_iter0.tex" 
+            de.write_table(results, table_path)
         else:
             table_path = f"{outdir}/coeftables/coeftable_{setting_tag}.tex"
 
-        de.write_table(results, table_path)
 
         coefs = results.pi.flatten() if iter==0 else coefs*dampener + results.pi.flatten()*(1-dampener)
         if cap_coefs_to0:
@@ -190,16 +190,20 @@ def run_fp(
 
         af.assignment_stats(economy, max_rank=len(economy.offers[0]))
         converged = wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol=tol, mm_where=mm_where)
+        pd.DataFrame(economy.violation_count).to_csv(f"{outdir}/violation_count_{setting_tag}_iter{iter}.csv", index=False)
+        economy.violation_count = [0]*len(economy.violation_count)
         print(f"Iteration {iter} complete.\n\n")
         sys.stdout.flush()
         iter += 1
     
     print(results)
+    de.write_table(results, table_path)
 
     agent_results[['blkid', 'hpi_quantile', 'market_ids', 'abd', 'distcoef']].to_csv(f"{outdir}/agent_results_{setting_tag}.csv", index=False)
     results.to_pickle(f"{outdir}/results_{setting_tag}.pkl")
     agent_loc_data.to_csv(f"{outdir}/agent_loc_data_{setting_tag}.csv", index=False)
     print(f"Saved (agent_)results to {outdir}/(agent_)results_{setting_tag}.pkl")
+
 
     return agent_results, results, agent_loc_data
     

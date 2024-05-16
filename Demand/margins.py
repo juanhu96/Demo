@@ -12,14 +12,10 @@ except:
     from Demand.demand_utils import demest_funcs as de
     from Demand.demand_utils import fixed_point as fp
 
-
-
-
 datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result/Demand"
 
 setting_tag = "10000_5_4q_mnl"
-
 
 cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=["blkid", "market_ids", "population"])
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
@@ -27,94 +23,23 @@ df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 df = de.hpi_dist_terms(df, nsplits=4, add_hpi_bins=True, add_hpi_dummies=True, add_dist=False)
 results = pyblp.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
 
-# #=================================================================
-###testing###
 # read in agent_results
 agent_results = pd.read_csv(f"{outdir}/agent_results_{setting_tag}.csv")
 agent_results.columns
 # median abd 
 agent_withpop = agent_results.merge(cw_pop[['blkid', 'population']], on='blkid', how='left')
-blockpops_int = np.round(agent_withpop.population.values).astype(int)
-abd_expandpop = np.repeat(agent_withpop.abd.values, blockpops_int)
-median_abd = np.median(abd_expandpop)
-print(f"Median abd: {median_abd}")
-
-distdf_nearest = distdf.groupby('blkid').head(1).reset_index(drop=True)
-# 25th/75th percentile of nearest logdist 
-logdist_25 = distdf_nearest.logdist.quantile(0.25)
-logdist_75 = distdf_nearest.logdist.quantile(0.75)
-
-# median logdist of nearest pharmacy, 5th nearest pharmacy, 10th nearest pharmacy
-median_logdist_rank1 = distdf_nearest.logdist.median()
-median_logdist_rank5 = distdf.groupby('blkid').head(5).reset_index(drop=True).groupby('blkid').tail(1).reset_index(drop=True).logdist.median()
-median_logdist_rank10 = distdf.groupby('blkid').head(10).reset_index(drop=True).groupby('blkid').tail(1).reset_index(drop=True).logdist.median()
-print(f"Median dist of nearest pharmacy: {np.exp(median_logdist_rank1)}km.\nMedian dist of 5th nearest pharmacy: {np.exp(median_logdist_rank5)}km.\nMedian dist of 10th nearest pharmacy: {np.exp(median_logdist_rank10)}km.")
-
-coefs = results.pi.flatten()
-
 
 def share(abd, d, coef):
     u = np.exp(coef * d + abd)
     return u / (1 + u)
 
-# shares at median abd, assuming HPIQ1
-print(f"Dist (km): {np.exp(logdist_25)}")
-print(f"P25 dist, Q1: {share(median_abd, logdist_25, coefs[0])}")
-print(f"Dist (km): {np.exp(logdist_75)}")
-print(f"P75 dist, Q1: {share(median_abd, logdist_75, coefs[0])}")
-
-print(f"Dist (km): {np.exp(median_logdist_rank1)}")
-print(f"Median nearest dist, Q1: {share(median_abd, median_logdist_rank1, coefs[0])}")
-print(f"Dist (km): {np.exp(median_logdist_rank5)}")
-print(f"Median 5th nearest dist, Q1: {share(median_abd, median_logdist_rank5, coefs[0])}")
-print(f"Dist (km): {np.exp(median_logdist_rank10)}")
-print(f"Median 10th nearest dist, Q1: {share(median_abd, median_logdist_rank10, coefs[0])}")
-
 # #=================================================================
-# Margins plot (0-10km, 4 HPI quartiles)
-# find median abd by hpi quartile
-abd_byq = []
-for qq in range(1, 5):
-    agent_withpop_qq = agent_withpop[agent_withpop.hpi_quantile == qq]
-    blockpops_int_qq = np.round(agent_withpop_qq.population.values).astype(int)
-    abd_expandpop_qq = np.repeat(agent_withpop_qq.abd.values, blockpops_int_qq)
-    median_abd_qq = np.median(abd_expandpop_qq)
-    abd_byq.append(median_abd_qq)
-print(abd_byq)
-
-distmesh = np.linspace(0, 10, 100)
-shares_byq = []
-for qq in range(1, 5):
-    shares_qq = [share(abd_byq[qq-1], np.log(d), coefs[qq-1]) for d in distmesh]
-    shares_byq.append(shares_qq)
-
-## plot without the SE bands
-# import matplotlib.pyplot as plt
-# plt.figure(figsize=(10, 6))
-# colors = ['red', 'orange', 'green', 'blue']
-# labels = ['Bottom 25%', '25-50%', '50-75%', 'Top 25%']
-# for qq, color, label in zip(range(4), colors, labels):
-#     plt.plot(distmesh, np.array(shares_byq[qq]) * 100, label=label, linewidth=2, color=color)
-
-# plt.xlabel("Distance to nearest vaccination site (km)", fontsize=12)
-# plt.ylabel("Vaccinated (%)", fontsize=12)
-
-# # Reverse the order of legend entries and move it outside the plot
-# handles, labels = plt.gca().get_legend_handles_labels()
-# plt.legend(handles=handles[::-1], labels=labels[::-1], title='Healthy Places Index (quartile)',
-#            frameon=False, loc='upper left', bbox_to_anchor=(1, 1), fontsize=12, title_fontsize=12)
-
-# plt.tight_layout()
-# plt.savefig(f"{outdir}/margins/margins_{setting_tag}.png")
-
-
-# #=================================================================
-# SE bands
+# Margins Plot by HPI Quantile with SE bands
 # #=================================================================
 problem = results.problem
 byvar = 'hpi_quantile'
+byvals = set(agent_withpop[byvar]) # {1, 2, 3, 4}
 idf = agent_withpop.drop(columns=['hpi_quantile'])
-byvals = set(idf[byvar]) # {1, 2, 3, 4}
 print("parameters", results.parameters)
 Vmat = results.parameter_covariances
 dist_coefs = results.pi.flatten()
@@ -136,6 +61,38 @@ for (qq, qqval) in enumerate(byvals):
 df_marg['u_i'] = df_marg['meanutil'] + df_marg['dist_util']
 df_marg['share_i'] = np.exp(df_marg['u_i']) / (1 + np.exp(df_marg['u_i']))
 
+# predicted shares (point estimates)
+pred_s_df = df_marg.groupby([byvar, 'logdist_m']).apply(lambda x: np.average(x['share_i'], weights=x['population'])).reset_index(name='pred_s')
+pred_s = pred_s_df.pred_s.values
+
+# SE bands
+for (qq, qqval) in enumerate(byvals):
+    print(f"Computing SE bands for HPI Quantile {qqval}")
+    df_marg_qq = df_marg[df_marg[byvar] == qqval]
+    dudb_qq = np.zeros((len(results.beta_labels)+len(results.pi_labels), df_marg_qq.shape[0]))
+    dudb_qq[qq,:] = np.tile(dist_mesh_log, df_marg_qq.shape[0] // len(dist_mesh_log))
+    for (ii,vv) in enumerate(results.beta_labels): # 19 linear vars
+        dudb_qq[ii+len(byvals),:] = df_marg_qq[vv] if vv != '1' else 1
+    # weights_qq = np.array(df_marg_qq['population']).reshape(-1, 1)
+    weights_qq = np.array(df_marg_qq['population']).reshape(1, -1)
+    weights_qq.shape
+    dsdu_qq = df_marg_qq['share_i'] * (1 - df_marg_qq['share_i'])
+    dsdu_qq = np.array(dsdu_qq).reshape(1, -1)
+    dsdb_qq = dsdu_qq * dudb_qq
+    dsdb_qq.shape
+    qq_pop = np.sum(df_marg_qq['population'])
+    Vmarg_qq = dsdb_qq.T @ (Vmat/qq_pop) @ dsdb_qq
+    
+    break
+
+
+
+
+
+
+
+
+
 # populate a vector with the X values
 dudb = [np.zeros((Vmat.shape[0], len(dist_mesh_log))) for _ in range(len(byvals))] #4 matrices of 23 x 100 
 for (qq,qqval) in enumerate(byvals):
@@ -145,8 +102,6 @@ for (qq,qqval) in enumerate(byvals):
         mean_vv = np.average(problem.products[vv].flatten()[df[byvar]==qqval], weights=df.loc[df[byvar]==qqval, 'population']) if vv != '1' else 1
         dudb[qq][ii+qq2+1,:] = mean_vv
 
-pred_s_df = df_marg.groupby([byvar, 'logdist_m']).apply(lambda x: np.average(x['share_i'], weights=x['population'])).reset_index(name='pred_s')
-pred_s = pred_s_df.pred_s.values
 dsdu = pred_s * (1 - pred_s)
 dsdu = dsdu.reshape(1, -1)
 
@@ -174,40 +129,19 @@ df_out.to_stata(savepath, write_index=False)
 df_out
 
 # #=================================================================
+# Share difference between 1km and 2km - integrating over the distribution of ABD
 # #=================================================================
 
+# difference in share between 1km->2km for HPIQ1
+share_q1_1km = df_out.loc[(df_out.hpi_quantile == 1) & (df_out.dist_m == 1), 'share_i'].values[0]
+share_q1_2km = df_out.loc[(df_out.hpi_quantile == 1) & (df_out.dist_m == 2), 'share_i'].values[0]
+diff_q1_1to2km = share_q1_2km - share_q1_1km
+print(f"Difference in share between 1km->2km for HPIQ1: {diff_q1_1to2km:.3f}")
+# difference in share between 1km->2km for HPIQ4
+share_q4_1km = df_out.loc[(df_out.hpi_quantile == 4) & (df_out.dist_m == 1), 'share_i'].values[0]
+share_q4_2km = df_out.loc[(df_out.hpi_quantile == 4) & (df_out.dist_m == 2), 'share_i'].values[0]
+diff_q4_1to2km = share_q4_2km - share_q4_1km
+print(f"Difference in share between 1km->2km for HPIQ4: {diff_q4_1to2km:.3f}")
 
 
 
-
-
-
-# interquartile range of vax rates
-print(df.shares.quantile(0.75) - df.shares.quantile(0.25))
-# #=================================================================
-
-# DISTANCE BINS
-
-setting_tag = "10000_300_3q_distbins_at1_5"
-
-agent_results_full = pd.read_csv(f"{outdir}/agent_results_{setting_tag}.csv")
-agent_results = agent_results_full[agent_results_full.hpi_quantile == 1]
-agent_withpop = agent_results.merge(cw_pop[['blkid', 'population']], on='blkid', how='left')
-blockpops_int = np.round(agent_withpop.population.values).astype(int)
-abd_expandpop = np.repeat(agent_withpop.abd.values, blockpops_int)
-median_abd = np.median(abd_expandpop)
-print(f"Median abd: {median_abd}")
-results = pyblp.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
-coefs = results.pi.flatten()
-print(results.pi_labels)
-
-
-def share_bin(abd, coef):
-    u = np.exp(coef + abd)
-    return u / (1 + u)
-
-
-
-print(f"Distance 0-1km: {share_bin(median_abd, 0):.3f}")
-print(f"Distance 1-5km: {share_bin(median_abd, coefs[0]):.3f}")
-print(f"Distance 5+ km: {share_bin(median_abd, coefs[1]):.3f}")

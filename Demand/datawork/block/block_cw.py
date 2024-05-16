@@ -58,27 +58,27 @@ blk_ziptract = blk_ziptract.rename(columns={'population': 'blk_pop'})
 # save
 blk_ziptract.to_csv(f"{datadir}/Intermediate/blk_ziptract.csv", index=False)
 
-########################
-# read everything
-blk_tract = pd.read_csv(f"{datadir}/Intermediate/blk_tract.csv")
-ca_blk_pharm_dist = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv")
-block_data = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv")
-agent_results = pd.read_csv("/export/storage_covidvaccine/Result/Demand/agent_results_10000_200_3q.csv")
+# ########################
+# # read everything
+# blk_tract = pd.read_csv(f"{datadir}/Intermediate/blk_tract.csv")
+# ca_blk_pharm_dist = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv")
+# block_data = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv")
+# agent_results = pd.read_csv("/export/storage_covidvaccine/Result/Demand/agent_results_10000_200_3q.csv")
 
-# merge blk_tract and ca_blk_pharm_dist
-blk_tract.merge(ca_blk_pharm_dist, on='blkid', how='outer', indicator=True)['_merge'].value_counts() # all 
+# # merge blk_tract and ca_blk_pharm_dist
+# blk_tract.merge(ca_blk_pharm_dist, on='blkid', how='outer', indicator=True)['_merge'].value_counts() # all 
 
-# merge blk_tract and block_data
-blk_tract.merge(block_data, on='blkid', how='outer', indicator=True)['_merge'].value_counts() # 206 left only
+# # merge blk_tract and block_data
+# blk_tract.merge(block_data, on='blkid', how='outer', indicator=True)['_merge'].value_counts() # 206 left only
 
-# merge block_data and agent_results
-block_data.merge(agent_results, on='blkid', how='outer', indicator=True)['_merge'].value_counts() #362 left only
+# # merge block_data and agent_results
+# block_data.merge(agent_results, on='blkid', how='outer', indicator=True)['_merge'].value_counts() #362 left only
 
-# merge blk_tract and agent_results
-blk_tract.merge(agent_results, on='blkid', how='outer', indicator=True)['_merge'].value_counts() # 568 left only
+# # merge blk_tract and agent_results
+# blk_tract.merge(agent_results, on='blkid', how='outer', indicator=True)['_merge'].value_counts() # 568 left only
 
-# merge blk_zip and df
-df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
-blk_zip = pd.read_csv(f"{datadir}/Intermediate/blk_zip.csv")
-blk_zip_unique = blk_zip[['zip']].drop_duplicates()
-blk_zip_unique.merge(df, on='zip', how='outer', indicator=True)['_merge'].value_counts() # 49 left only
+# # merge blk_zip and df
+# df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
+# blk_zip = pd.read_csv(f"{datadir}/Intermediate/blk_zip.csv")
+# blk_zip_unique = blk_zip[['zip']].drop_duplicates()
+# blk_zip_unique.merge(df, on='zip', how='outer', indicator=True)['_merge'].value_counts() # 49 left only

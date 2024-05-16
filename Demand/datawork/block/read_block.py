@@ -50,22 +50,11 @@ blk.shape
 # assign a blkid for this project
 blk['blkid'] = blk.index
 
-# blk.to_csv(f"{datadir}/Intermediate/blk_coords_pop.csv", index=False)
-
-
-
-# blk = pd.read_csv(f"{datadir}/Intermediate/blk_coords_pop.csv")
-
-
-
-####################################
-
-
-
-# TODO: correcting population to 5+, integrate into above code
+# correcting population to 5+, integrate into above code
 
 blkpop5 = pd.read_csv(f"{datadir}/Raw/blocks/DECENNIALDHC2020.P12_2023-09-18T193028/DECENNIALDHC2020.P12-Data.csv", sep=',', usecols=[0,2,6,54], skiprows=1)
 blkpop5.columns = ['geoid', 'total', 'popunder5m', 'popunder5f']
+blkpop5['total'].sum()
 blkpop5['pop5plus'] = blkpop5['total'] - blkpop5['popunder5m'] - blkpop5['popunder5f']
 blkpop5 = blkpop5[['geoid', 'pop5plus']]
 blkpop5['geoid'] = blkpop5['geoid'].str.split('US').str[1].astype(int)
@@ -73,19 +62,16 @@ blkpop5['geoid'] = blkpop5['geoid'].str.split('US').str[1].astype(int)
 
 blk['geoid'] = blk['geoid'].str.split('US').str[1].astype(int)
 blk_m = pd.merge(blk, blkpop5, on='geoid', how='outer', indicator=True)
-# TODO: THIS DOESN'T MERGE
 blk_m.head()
 blk_m.shape
-blk_m['_merge'].value_counts() #some right_only - other levels of geography
+blk_m['_merge'].value_counts() #some right_only 
 blk_m = blk_m.loc[blk_m['_merge'] == 'both']
 
 blk_m['pop5plus'].describe()
 np.corrcoef(blk_m['population'], blk_m['pop5plus']) 
-
+blk_m['pop5plus'].sum()
 blk_m['population'] = blk_m['pop5plus']
 blk_m = blk_m[['lat', 'long', 'population', 'blkid']]
-
+blk_m = blk_m.loc[blk_m['population'] > 0]
 
 blk_m.to_csv(f"{datadir}/Intermediate/blk_coords_pop.csv", index=False)
-
-

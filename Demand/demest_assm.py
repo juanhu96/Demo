@@ -14,6 +14,8 @@ import numpy as np
 import pyblp
 import time
 
+print("Entering demest_assm.py at time:", time.strftime("%Y-%m-%d %H:%M:%S"))
+
 #=================================================================
 # SETTINGS
 #=================================================================
@@ -177,6 +179,8 @@ agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv", useco
 
 # read in crosswalk with population
 cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/cw_pop.csv")
+# total population
+print("Total population:", np.sum(cw_pop.population.values))
 
 # distdf is from block_dist.py. this is in long format. sorted by blkid, then logdist
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
@@ -262,15 +266,6 @@ economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank, mnl=mnl)
 
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 
-#=================================================================
-# TEST
-# import copy
-# dists_mm_sorted, sorted_indices, wdists, mm_where= fp.wdist_init(cw_pop, economy.dists)
-# a0 = copy.deepcopy(economy.assignments)
-# a1 = copy.deepcopy(economy.assignments)
-# converged = fp.wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, mm_where, tol=0.01)
-#=================================================================
-
 # RUN FIXED POINT
 
 print("Entering fixed point loop...\nTime:", round(time.time()-time_entered, 2), "seconds")
@@ -284,11 +279,11 @@ agent_results, results, agent_loc_data = fp.run_fp(
     df=df,
     product_formulations=product_formulations,
     agent_formulation=agent_formulation,
-    coefsavepath=coefsavepath, #TODO: save intermediate in iter
+    coefsavepath=coefsavepath, 
     micro_computation_chunks=1 if max_rank <= 50 else 10,
     cap_coefs_to0=cap_coefs_to0,
     mnl=mnl,
-    dampener=0.5, #TODO: delete
+    dampener=0.5,
     verbose=True,
     setting_tag=setting_tag,
     outdir=outdir
@@ -335,6 +330,7 @@ table_path = f"{outdir}/coeftables/coeftable_{setting_tag}.tex"
 de.write_table(results, table_path)
 
 print("Done!")
+print("Total time in minutes:", (time.time()-time_entered)/60)
 
 
 # #=================================================================

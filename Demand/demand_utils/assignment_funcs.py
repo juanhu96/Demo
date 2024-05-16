@@ -53,7 +53,6 @@ def random_fcfs(economy: Economy,
     print("time3 - time2:", round(time3-time2, 3))
     # Iterate over individuals in the shuffled ordering
     for (tt,ii) in economy.ordering:
-
         if mnl: # locations in preference order (sorted by utils descending)
             preforder = np.argsort(economy.utils[tt][ii])[::-1]
         else: # locations in existing order (sorted by distance)
@@ -66,6 +65,8 @@ def random_fcfs(economy: Economy,
             else:
                 offer_condition = ll not in full_locations or jj==len(preforder)-1
             if offer_condition:
+                if ll in full_locations and jj==len(preforder)-1:
+                    economy.violation_count[ll] += 1
                 economy.offers[tt][jj] += 1
                 if economy.abepsilon[tt][jj] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
                     economy.assignments[tt][jj] += 1
@@ -121,7 +122,7 @@ def assignment_stats(economy: Economy, max_rank: int = 10):
     # quantiles
     print("Quantiles of offered distances:")
     for qq in np.arange(0,1.1,0.1):
-        print(f"{qq} quantile: {np.quantile(offer_dists, qq):.5f}")
+        print(f"{qq:.1f} quantile: {np.quantile(offer_dists, qq):.5f}")
 
     # assignments
     assignments = economy.assignments
@@ -137,9 +138,15 @@ def assignment_stats(economy: Economy, max_rank: int = 10):
     # quantiles
     print("Quantiles of assignment distances:")
     for qq in np.arange(0,1.1,0.1):
-        print(f"{qq} quantile: {np.quantile(assignment_dists, qq):.5f}")
+        print(f"{qq:.1f} quantile: {np.quantile(assignment_dists, qq):.5f}")
 
-
+    print("Violations:")
+    print("Max violation:", max(economy.violation_count))
+    print("Number of locations with violations:", np.sum([1 for vv in economy.violation_count if vv > 0]))
+    print("Number of individuals with violations:", np.sum(economy.violation_count))
+    print("Mean violation (conditional on violation):", np.mean([vv for vv in economy.violation_count if vv > 0]))
+    print("Median violation (conditional on violation):", np.median([vv for vv in economy.violation_count if vv > 0]))
+        
     return frac_offered_any
 
 
