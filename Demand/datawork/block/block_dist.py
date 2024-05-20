@@ -38,8 +38,8 @@ print("Entering Stata...")
 
 # pharmacy distances
 outpath = f"{datadir}/Intermediate/ca_blk_pharm_dist.csv"
-within = 2000 # km
-limit = 300 # number of pharmacies to consider
+within = 10000 # km
+limit = 1000 # number of pharmacies to consider
 output = subprocess.run(["stata-mp", "-b", "do", f"{codedir}/Demand/datawork/geonear_pharmacies.do", baselocpath, pharmlocpath, outpath, str(within), str(limit)], capture_output=True, text=True)
 
 print(output.stdout)

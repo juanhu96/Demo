@@ -106,6 +106,10 @@ def run_fp(
         verbose:bool = False,
         setting_tag:str = None,
         outdir:str = None,
+        strict_capacity:bool = False,
+        dummy_location:bool = False,
+        dummy_location_dist:float = None,
+        pi_init:Optional[np.ndarray] = None
         ):
     """
     Run fixed point algorithm. 
@@ -130,29 +134,67 @@ def run_fp(
 
     while not converged and iter < maxiter:
         # subset agent_data to the offered locations
-        offer_weights = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
-        assert len(offer_weights) == agent_data_full.shape[0]
-        offer_inds = np.flatnonzero(offer_weights)
-        offer_weights = offer_weights[offer_inds]
+        offer_counts = np.concatenate(economy.offers) #initialized with everyone offered their nearest location
+        assert len(offer_counts) == agent_data_full.shape[0]
+        offer_inds = np.flatnonzero(offer_counts)
+        offer_counts = offer_counts[offer_inds]
         print(f"Number of agents: {len(offer_inds)}")
         agent_loc_data = agent_data_full.loc[offer_inds].copy()
-        agent_loc_data['weights'] = offer_weights/agent_loc_data['population'] #population here is ZIP code population
+        agent_loc_data['weights'] = offer_counts / agent_loc_data['population']
+        # agent_loc_data['population'] is the actual ZIP code population which works if we offer everyone.
 
-        pi_init = results.pi if iter > 0 else None
+        df['true_shares'] = df['shares']
+        if strict_capacity: #we need to compute the shares as a fraction of the offered population
+            agent_loc_data['frac_offered'] = agent_loc_data.groupby('market_ids')['weights'].transform('sum')
+            agent_loc_data['weights'] = offer_counts / (agent_loc_data['frac_offered'] * agent_loc_data['population'])
+            market_frac_offered = agent_loc_data[['market_ids', 'frac_offered']].groupby('market_ids', sort=True).first()
+            df['frac_offered'] = df['market_ids'].map(market_frac_offered['frac_offered'])
+            df['shares'] = df['true_shares'] / df['frac_offered']
+            print("df:\n", df[['true_shares', 'shares', 'frac_offered']].head(50))
+            print("agent_loc_data:\n", agent_loc_data[['weights', 'frac_offered', 'population']].head(50))
+            if any(df['shares'] > 1):
+                print(df.loc[df['shares'] > 1])
+                print("Number of markets with shares > 1:", len(df.loc[df['shares'] > 1, 'market_ids']))
+                # print out the agents for one of the markets 
+                market_ids_sample = df.loc[df['shares'] > 1, 'market_ids'].iloc[0]
+                print("agent_loc_data for one market that exceeds:\n", agent_loc_data.loc[agent_loc_data['market_ids'] == market_ids_sample])
+                # Cap shares at 1
+                df['shares'] = np.minimum(df['shares'], 0.99)
+                # raise ValueError("Shares exceed 1")
+            
+        
+        if dummy_location:
+            agent_loc_data['offered'] = 1
+            agent_loc_data['frac_offered'] = agent_loc_data.groupby('market_ids')['weights'].transform('sum')
+            agent_loc_data['weights'] = offer_counts / (agent_loc_data['frac_offered'] * agent_loc_data['population'])
+
+            violation_inds = np.flatnonzero(economy.agent_violations) # a count for each block
+            if len(violation_inds) > 0:
+                violation_weights = economy.agent_violations[violation_inds]
+                print(f"Number of agents with violations: {len(violation_inds)}")
+                violation_data = agent_data_full.loc[violation_inds].copy()
+                violation_data[[cc for cc in agent_loc_data.columns if cc.startswith('logdist')]] = np.log(dummy_location_dist) #dummy location
+                violation_data['weights'] = violation_weights / violation_data['population']
+                violation_data['offered'] = 0
+                agent_loc_data = pd.concat([agent_loc_data, violation_data], ignore_index=True)
+
+        if iter == 0:
+            if pi_init is not None:
+                pi_init = pi_init.reshape((1,4))
+        else:
+            pi_init = results.pi
 
         if verbose:
             print(f"\nIteration {iter}:\n")
             print("agent_loc_data:")
             print(agent_loc_data.head(50))
-            print("agent_unique_data:")
-            print(agent_unique_data.head(50))
             print("pi_init:")
             print(pi_init)
             print("Weight distribution by market:")
             print(agent_loc_data.groupby('market_ids')['weights'].sum().describe())
             sys.stdout.flush()
 
-        results = de.estimate_demand(df, agent_loc_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=verbose)
+        results = de.estimate_demand(df, agent_loc_data, product_formulations, agent_formulation, pi_init=pi_init, gtol=gtol, poolnum=poolnum, verbose=verbose, dummy_location=dummy_location)
 
         # save table for first and last iterations
         if iter == 0:
@@ -186,7 +228,7 @@ def run_fp(
         # assignment
         a0 = copy.deepcopy(economy.assignments)
 
-        af.random_fcfs(economy, distcoefs, abd, capacity, mnl=mnl)
+        af.random_fcfs(economy, distcoefs, abd, capacity, mnl=mnl, strict_capacity=strict_capacity, dummy_location=dummy_location)
 
         af.assignment_stats(economy, max_rank=len(economy.offers[0]))
         converged = wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol=tol, mm_where=mm_where)

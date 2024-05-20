@@ -1,3 +1,5 @@
+tablepath = "/export/storage_covidvaccine/Result/Demand/coeftables/"
+
 def combine_latex_tables(file_paths, model_names, header, table="appendix"):
     """
     Produce LaTeX table in the paper. 
@@ -102,8 +104,9 @@ def combine_latex_tables(file_paths, model_names, header, table="appendix"):
 
 
 
+
+
 # Combine tables for appendix
-tablepath = "/export/storage_covidvaccine/Result/Demand/coeftables/"
 file_paths = [
     f"{tablepath}coeftable_10000_5_4q_mnl.tex", 
     f"{tablepath}coeftable_10000_10_4q_mnl.tex", 
@@ -150,3 +153,50 @@ outpath_main = "/export/storage_covidvaccine/Result/Demand/coeftables/combined_t
 combined_table_main = combine_latex_tables(file_paths_main, None, header_main, table="main")
 with open(outpath_main, 'w') as f:
     f.write(combined_table_main)
+
+
+
+# Other tables (in the format of the main table)
+
+header_main = """
+\\begin{tabular}{lcc} 
+\\toprule
+& \\multicolumn{2}{c}{Model Outcome:} \\\\  
+& \\multicolumn{2}{c}{\\textit{Fraction Fully Vaccinated}}    \\\\
+\\cmidrule(lr){2-3}
+Independent variable                   & Coef.         & Std. error \\\\
+\\midrule
+"""
+file_paths_main = [f"{tablepath}coeftable_10000_1000_4q.tex"]
+outpath_main = "/export/storage_covidvaccine/Result/Demand/coeftables/combined_table_10000_1000_4q.tex"
+combined_table_main = combine_latex_tables(file_paths_main, None, header_main, table="main")
+with open(outpath_main, 'w') as f:
+    f.write(combined_table_main)
+
+
+
+# Combine tables to report
+file_paths = [
+    f"{tablepath}coeftable_10000_5_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_10_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_300_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_1000_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_300_4q.tex",
+    f"{tablepath}coeftable_10000_1000_4q.tex"]
+
+model_names = ["$M = 5$ ($\dagger$)", "$M = 10$", "$M = 300$", "$M = 1000$", "$M = 300$", "$M = 1000$"]
+
+header = """
+\\begin{table}[htb] \\centering \\setlength{\\tabcolsep}{2pt}
+{\\footnotesize
+\\begin{tabular}{l""" + "c" * len(file_paths) + """}
+\\toprule
+& \multicolumn{4}{c}{MNL}  & \multicolumn{2}{c}{Closest Location}  \\\\\n \\cmidrule(lr){2-5} \\cmidrule(lr){6-7}
+ Independent Variable & """
+
+combined_table = combine_latex_tables(file_paths, model_names, header, table="appendix")
+
+outpath = "/export/storage_covidvaccine/Result/Demand/coeftables/combined_table_aux.tex"
+print(combined_table)
+with open(outpath, 'w') as f:
+    f.write(combined_table)

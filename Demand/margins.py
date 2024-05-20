@@ -18,7 +18,7 @@ outdir = "/export/storage_covidvaccine/Result/Demand"
 setting_tag = "10000_5_4q_mnl"
 
 cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=["blkid", "market_ids", "population"])
-distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
+# distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 df = de.hpi_dist_terms(df, nsplits=4, add_hpi_bins=True, add_hpi_dummies=True, add_dist=False)
 results = pyblp.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
@@ -67,22 +67,23 @@ pred_s = pred_s_df.pred_s.values
 
 # SE bands
 for (qq, qqval) in enumerate(byvals):
-    print(f"Computing SE bands for HPI Quantile {qqval}")
-    df_marg_qq = df_marg[df_marg[byvar] == qqval]
-    dudb_qq = np.zeros((len(results.beta_labels)+len(results.pi_labels), df_marg_qq.shape[0]))
-    dudb_qq[qq,:] = np.tile(dist_mesh_log, df_marg_qq.shape[0] // len(dist_mesh_log))
-    for (ii,vv) in enumerate(results.beta_labels): # 19 linear vars
-        dudb_qq[ii+len(byvals),:] = df_marg_qq[vv] if vv != '1' else 1
-    # weights_qq = np.array(df_marg_qq['population']).reshape(-1, 1)
-    weights_qq = np.array(df_marg_qq['population']).reshape(1, -1)
-    weights_qq.shape
-    dsdu_qq = df_marg_qq['share_i'] * (1 - df_marg_qq['share_i'])
-    dsdu_qq = np.array(dsdu_qq).reshape(1, -1)
-    dsdb_qq = dsdu_qq * dudb_qq
-    dsdb_qq.shape
-    qq_pop = np.sum(df_marg_qq['population'])
-    Vmarg_qq = dsdb_qq.T @ (Vmat/qq_pop) @ dsdb_qq
-    
+    for (dd, ddval) in enumerate(dist_mesh_log):
+        print(f"Computing SE for HPI Quantile {qqval} and distance {ddval}")
+        df_marg_qd = df_marg[(df_marg[byvar] == qqval) & (df_marg['logdist_m'] == ddval)]
+        dudb_qd = np.zeros((len(results.beta_labels)+len(results.pi_labels), df_marg_qd.shape[0]))
+        dudb_qd[qq,:] = np.tile(dist_mesh_log, df_marg_qd.shape[0] // len(dist_mesh_log))
+        for (ii,vv) in enumerate(results.beta_labels): # 19 linear vars
+            dudb_qd[ii+len(byvals),:] = df_marg_qd[vv] if vv != '1' else 1
+        # weights_qq = np.array(df_marg_qd['population']).reshape(-1, 1)
+        weights_qq = np.array(df_marg_qd['population']).reshape(1, -1)
+        weights_qq.shape
+        dsdu_qq = df_marg_qd['share_i'] * (1 - df_marg_qd['share_i'])
+        dsdu_qq = np.array(dsdu_qq).reshape(1, -1)
+        dsdb_qq = dsdu_qq * dudb_qd
+        dsdb_qq.shape
+        qq_pop = np.sum(df_marg_qd['population'])
+        Vmarg_qq = dsdb_qq.T @ (Vmat/qq_pop) @ dsdb_qq
+        break 
     break
 
 

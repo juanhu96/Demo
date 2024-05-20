@@ -67,19 +67,34 @@ def add_ivcols(
         df:pd.DataFrame,
         agent_data:pd.DataFrame,
         agent_vars:List[str],
-        verbose:bool = False
+        dummy_location:bool = False,
         ) -> pd.DataFrame:
     """
     Make instruments in product_data using the weighted average of agent variables
     """
+    if dummy_location:
+        agent_data_for_iv = agent_data[agent_data['offered'] == 1]
+    else:
+        agent_data_for_iv = agent_data
+
     ivcols = []
     for (ii,vv) in enumerate(agent_vars):
-        if verbose:
-            print(f"demand_instruments{ii}: {vv}")
-        ivcol = pd.DataFrame({f'demand_instruments{ii}': agent_data.groupby('market_ids')[vv].apply(lambda x: np.average(x, weights=agent_data.loc[x.index, 'weights']))})
+        ivcol = pd.DataFrame({f'demand_instruments{ii}': agent_data_for_iv.groupby('market_ids')[vv].apply(lambda x: np.average(x, weights=agent_data_for_iv.loc[x.index, 'weights']))})
         ivcols.append(ivcol)
 
+    if dummy_location: #insert share_offered
+        currcol = 'demand_instruments' + str(len(agent_vars))
+        iv_col = pd.DataFrame({currcol: agent_data.groupby('market_ids')['offered'].mean()})
+        print("Share offered:")
+        print(iv_col[currcol].describe())
+        # if not all offered
+        if np.min(iv_col[currcol]) < 1:
+            print("Share offered given less than 1:")
+            print(iv_col.loc[iv_col[currcol] < 1, currcol].describe())
+            ivcols.append(iv_col)
+
     iv_df = pd.concat(ivcols, axis=1)
+    print("iv_df:\n", iv_df.head())
     df = df.merge(iv_df, left_on='market_ids', right_index=True)
     return df
 
@@ -94,7 +109,8 @@ def estimate_demand(
         gtol = 1e-10,
         iteration_config = pyblp.Iteration(method='lm'),
         optimization_config = None,
-        verbose:bool = True
+        verbose:bool = True,
+        dummy_location:bool = False
     ) -> Tuple[np.ndarray, pd.DataFrame]:
 
     """
@@ -107,7 +123,7 @@ def estimate_demand(
     agent_vars = str(agent_formulation).split(' + ')
     print(f"agent_vars: {agent_vars}")
 
-    df = add_ivcols(df, agent_data, agent_vars=agent_vars, verbose=verbose)
+    df = add_ivcols(df, agent_data, agent_vars=agent_vars, dummy_location=dummy_location)
     
     # set up and run BLP problem
     problem = pyblp.Problem(
