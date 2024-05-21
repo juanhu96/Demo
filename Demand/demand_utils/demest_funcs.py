@@ -82,15 +82,13 @@ def add_ivcols(
         ivcol = pd.DataFrame({f'demand_instruments{ii}': agent_data_for_iv.groupby('market_ids')[vv].apply(lambda x: np.average(x, weights=agent_data_for_iv.loc[x.index, 'weights']))})
         ivcols.append(ivcol)
 
-    if dummy_location: #insert share_offered
+    if dummy_location: #insert share_not_offered
         currcol = 'demand_instruments' + str(len(agent_vars))
-        iv_col = pd.DataFrame({currcol: agent_data.groupby('market_ids')['offered'].mean()})
-        print("Share offered:")
+        iv_col = pd.DataFrame({currcol: 1 - agent_data.groupby('market_ids')['offered'].mean()})
+        print("Share not offered:")
         print(iv_col[currcol].describe())
-        # if not all offered
-        if np.min(iv_col[currcol]) < 1:
-            print("Share offered given less than 1:")
-            print(iv_col.loc[iv_col[currcol] < 1, currcol].describe())
+        # if there are any markets with people not offered
+        if iv_col[currcol].max() > 0:
             ivcols.append(iv_col)
 
     iv_df = pd.concat(ivcols, axis=1)

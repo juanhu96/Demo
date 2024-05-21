@@ -74,7 +74,7 @@ def random_fcfs(economy: Economy,
                     if strict_capacity:
                         break
                 economy.offers[tt][jj] += 1
-                if violation and dummy_location: # if violation and dummy location, we assign to the dummy location
+                if violation and dummy_location: # if violation and dummy location, we assign to the dummy location instead
                     economy.offers[tt][jj] -= 1
                 if economy.abepsilon[tt][jj] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
                     if violation:

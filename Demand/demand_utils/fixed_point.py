@@ -166,7 +166,6 @@ def run_fp(
         if dummy_location:
             agent_loc_data['offered'] = 1
             agent_loc_data['frac_offered'] = agent_loc_data.groupby('market_ids')['weights'].transform('sum')
-            agent_loc_data['weights'] = offer_counts / (agent_loc_data['frac_offered'] * agent_loc_data['population'])
 
             violation_inds = np.flatnonzero(economy.agent_violations) # a count for each block
             if len(violation_inds) > 0:
@@ -177,6 +176,9 @@ def run_fp(
                 violation_data['weights'] = violation_weights / violation_data['population']
                 violation_data['offered'] = 0
                 agent_loc_data = pd.concat([agent_loc_data, violation_data], ignore_index=True)
+                print(f"Number of agents after adding violations: {len(agent_loc_data)}")
+                print(f"Number of agents in violation_data: {len(violation_data)}")
+                print("agent_loc_data:\n", agent_loc_data[['weights', 'frac_offered', 'population', 'offered']].head(50))
 
         if iter == 0:
             if pi_init is not None:

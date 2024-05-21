@@ -41,7 +41,6 @@ byvar = 'hpi_quantile'
 byvals = set(agent_withpop[byvar]) # {1, 2, 3, 4}
 idf = agent_withpop.drop(columns=['hpi_quantile'])
 print("parameters", results.parameters)
-Vmat = results.parameter_covariances
 dist_coefs = results.pi.flatten()
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 df = de.hpi_dist_terms(df, nsplits=4, add_hpi_bins=True, add_hpi_dummies=True, add_dist=False)
@@ -65,59 +64,62 @@ df_marg['share_i'] = np.exp(df_marg['u_i']) / (1 + np.exp(df_marg['u_i']))
 pred_s_df = df_marg.groupby([byvar, 'logdist_m']).apply(lambda x: np.average(x['share_i'], weights=x['population'])).reset_index(name='pred_s')
 pred_s = pred_s_df.pred_s.values
 
+
+byvals_rep = np.concatenate([np.repeat(ii, len(dist_mesh_log)) for ii in byvals], axis=0)
+
+df_out = pd.DataFrame({'logdist_m': np.tile(dist_mesh_log, len(byvals)), 'share_i': pred_s, byvar: byvals_rep})
+df_out = df_out.assign(dist_m = np.exp(df_out['logdist_m']))
+df_out['share_i'] = df_out['share_i'] * 100
+savepath = f"{datadir}/Analysis/Demand/marg_{setting_tag}_onlypreds.dta"
+df_out.to_stata(savepath, write_index=False)
+
+
+# #=================================================================
+# Share difference between 1km and 2km - integrating over the distribution of ABD
+# #=================================================================
+
+# difference in share between 1km->2km for HPIQ1
+share_q1_1km = df_out.loc[(df_out.hpi_quantile == 1) & (df_out.dist_m == 1), 'share_i'].values[0]
+share_q1_2km = df_out.loc[(df_out.hpi_quantile == 1) & (df_out.dist_m == 2), 'share_i'].values[0]
+diff_q1_1to2km = share_q1_2km - share_q1_1km
+print(f"Difference in share between 1km->2km for HPIQ1: {diff_q1_1to2km:.3f}%")
+# difference in share between 1km->2km for HPIQ4
+share_q4_1km = df_out.loc[(df_out.hpi_quantile == 4) & (df_out.dist_m == 1), 'share_i'].values[0]
+share_q4_2km = df_out.loc[(df_out.hpi_quantile == 4) & (df_out.dist_m == 2), 'share_i'].values[0]
+diff_q4_1to2km = share_q4_2km - share_q4_1km
+print(f"Difference in share between 1km->2km for HPIQ4: {diff_q4_1to2km:.3f}%")
+
+
+
+
+# #=================================================================
 # SE bands
+
+Vmat = results.parameter_covariances
+df_marg_mkt = df_marg.groupby(['market_ids', 'logdist_m']).first().reset_index()
+s_ub = []
+s_lb = []
 for (qq, qqval) in enumerate(byvals):
+    print(f"Computing SE bands for HPIQ{qqval}")
     for (dd, ddval) in enumerate(dist_mesh_log):
-        print(f"Computing SE for HPI Quantile {qqval} and distance {ddval}")
-        df_marg_qd = df_marg[(df_marg[byvar] == qqval) & (df_marg['logdist_m'] == ddval)]
-        dudb_qd = np.zeros((len(results.beta_labels)+len(results.pi_labels), df_marg_qd.shape[0]))
-        dudb_qd[qq,:] = np.tile(dist_mesh_log, df_marg_qd.shape[0] // len(dist_mesh_log))
+        df_marg_qd = df_marg_mkt[(df_marg_mkt[byvar] == qqval) & (df_marg_mkt['logdist_m'] == ddval)] # can just take the first from each zip
+        # dudb is just the derivative of the utility wrt the parameters (i.e. the variables)
+        dudb_qd = np.zeros((len(results.beta_labels)+len(results.pi_labels), df_marg_qd.shape[0])) # 23 x N
+        dudb_qd[qq,:] = ddval
         for (ii,vv) in enumerate(results.beta_labels): # 19 linear vars
             dudb_qd[ii+len(byvals),:] = df_marg_qd[vv] if vv != '1' else 1
-        # weights_qq = np.array(df_marg_qd['population']).reshape(-1, 1)
-        weights_qq = np.array(df_marg_qd['population']).reshape(1, -1)
-        weights_qq.shape
-        dsdu_qq = df_marg_qd['share_i'] * (1 - df_marg_qd['share_i'])
-        dsdu_qq = np.array(dsdu_qq).reshape(1, -1)
-        dsdb_qq = dsdu_qq * dudb_qd
-        dsdb_qq.shape
-        qq_pop = np.sum(df_marg_qd['population'])
-        Vmarg_qq = dsdb_qq.T @ (Vmat/qq_pop) @ dsdb_qq
-        break 
-    break
+        # compute the derivative of the share wrt the utility
+        dsdu_qd = np.array(df_marg_qd['share_i'] * (1 - df_marg_qd['share_i'])) # N
+        dsdb_qd = dudb_qd @ dsdu_qd # 23 x 1
+        N_qd = df_marg_qd.shape[0]
+        V_qd = (dsdb_qd.T @ (Vmat/(problem.N)) @ dsdb_qd)  / N_qd # scalar
+        SE_qd = V_qd**0.5
+        print(f"SE for HPIQ{qqval} at {ddval:.2f}: {SE_qd:.3f}")
+        s_ub.append(pred_s_df.loc[(pred_s_df.hpi_quantile == qqval) & (pred_s_df.logdist_m == ddval), 'pred_s'].values[0] + 1.96 * SE_qd)
+        s_lb.append(pred_s_df.loc[(pred_s_df.hpi_quantile == qqval) & (pred_s_df.logdist_m == ddval), 'pred_s'].values[0] - 1.96 * SE_qd)
 
 
 
-
-
-
-
-
-
-# populate a vector with the X values
-dudb = [np.zeros((Vmat.shape[0], len(dist_mesh_log))) for _ in range(len(byvals))] #4 matrices of 23 x 100 
-for (qq,qqval) in enumerate(byvals):
-    for (qq2,qqval2) in enumerate(byvals): # 4 nonlinear vars
-        dudb[qq][qq2,:] = dist_mesh_log * (qqval == qqval2)
-    for (ii,vv) in enumerate(results.beta_labels): # 19 linear vars
-        mean_vv = np.average(problem.products[vv].flatten()[df[byvar]==qqval], weights=df.loc[df[byvar]==qqval, 'population']) if vv != '1' else 1
-        dudb[qq][ii+qq2+1,:] = mean_vv
-
-dsdu = pred_s * (1 - pred_s)
-dsdu = dsdu.reshape(1, -1)
-
-dsdb = [np.zeros((Vmat.shape[0], len(dist_mesh_log))) for _ in range(len(byvals))]
-Vse = [np.zeros((len(dist_mesh_log),)) for _ in range(len(byvals))]
-for (qq,qqval) in enumerate(byvals):
-    qqind_in_s = np.where(pred_s_df[byvar] == qqval)[0]
-    dsdu_q = dsdu[:,qqind_in_s]
-    dsdb[qq] = dsdu_q * dudb[qq]
-    Vmarg = dsdb[qq].T @ (Vmat/problem.N) @ dsdb[qq]
-    Vse[qq] = np.diag(Vmarg)**0.5
-
-Vse_concat = np.concatenate(Vse, axis=0)
-s_ub = pred_s + 1.96 * Vse_concat
-s_lb = pred_s - 1.96 * Vse_concat
 
 byvals_rep = np.concatenate([np.repeat(ii, len(dist_mesh_log)) for ii in byvals], axis=0)
 df_out = pd.DataFrame({'logdist_m': np.tile(dist_mesh_log, len(byvals)), 'share_i': pred_s, 'share_ub': s_ub, 'share_lb': s_lb, byvar: byvals_rep})
@@ -128,21 +130,4 @@ for share_var in ['share_i', 'share_ub', 'share_lb']:
 savepath = f"{datadir}/Analysis/Demand/marg_{setting_tag}.dta"
 df_out.to_stata(savepath, write_index=False)
 df_out
-
-# #=================================================================
-# Share difference between 1km and 2km - integrating over the distribution of ABD
-# #=================================================================
-
-# difference in share between 1km->2km for HPIQ1
-share_q1_1km = df_out.loc[(df_out.hpi_quantile == 1) & (df_out.dist_m == 1), 'share_i'].values[0]
-share_q1_2km = df_out.loc[(df_out.hpi_quantile == 1) & (df_out.dist_m == 2), 'share_i'].values[0]
-diff_q1_1to2km = share_q1_2km - share_q1_1km
-print(f"Difference in share between 1km->2km for HPIQ1: {diff_q1_1to2km:.3f}")
-# difference in share between 1km->2km for HPIQ4
-share_q4_1km = df_out.loc[(df_out.hpi_quantile == 4) & (df_out.dist_m == 1), 'share_i'].values[0]
-share_q4_2km = df_out.loc[(df_out.hpi_quantile == 4) & (df_out.dist_m == 2), 'share_i'].values[0]
-diff_q4_1to2km = share_q4_2km - share_q4_1km
-print(f"Difference in share between 1km->2km for HPIQ4: {diff_q4_1to2km:.3f}")
-
-
 

@@ -43,7 +43,7 @@ def combine_latex_tables(file_paths, model_names, header, table="appendix"):
     se_dict = {row: [] for row in row_names}
     estimate_pad = 18
     
-    end_of_block_rows_for_main = ["Log(Distance) * HPI Quantile 1", "HPI Quantile 1", "Race Other", "Health Other", "Poverty", "Log(Population Density)"]
+    end_of_block_rows = ["Log(Distance) * HPI Quantile 1", "HPI Quantile 1", "Race Other", "Health Other", "Poverty", "Log(Population Density)"]
     
     # Read and parse each small table
     for file_path in file_paths:
@@ -77,10 +77,13 @@ def combine_latex_tables(file_paths, model_names, header, table="appendix"):
             coefs = " & ".join(coef_dict[row_name])
             body += f"{row_name_disp.ljust(rowname_pad)} & {coefs} \\\\ \n"
             ses = " & ".join(se_dict[row_name])
-            body += f"{''.ljust(rowname_pad)} & {ses} \\\\ \n\\addlinespace\n"
+            body += f"{''.ljust(rowname_pad)} & {ses} \\\\"
+            if row_name in end_of_block_rows:
+                body += "\n\\addlinespace"
+            body += "\n"
         else: # Main text: coef and se in same row
             body += f"{row_name_disp.ljust(rowname_pad)} & " + " & ".join([f"{coef_dict[row_name][ii]} & {se_dict[row_name][ii]}" for ii in range(len(file_paths))]) + " \\\\"
-            if row_name in end_of_block_rows_for_main:
+            if row_name in end_of_block_rows:
                 body += "\n\\addlinespace"
             body += "\n"
 
@@ -93,48 +96,13 @@ def combine_latex_tables(file_paths, model_names, header, table="appendix"):
     
         footer += """
 }
-\\begin{flushleft}
-\\footnotesize{\\textit{Note.} ($\dagger$) denotes our main specification.}
-\end{flushleft}
 """
-        footer += "\\end{table}"
     
     return header + body + footer
 
 
 
 
-
-
-# Combine tables for appendix
-file_paths = [
-    f"{tablepath}coeftable_10000_5_4q_mnl.tex", 
-    f"{tablepath}coeftable_10000_10_4q_mnl.tex", 
-    f"{tablepath}coeftable_8000_5_4q_mnl.tex", 
-    f"{tablepath}coeftable_12000_5_4q_mnl.tex", 
-    f"{tablepath}coeftable_10000_5_4q_mnl_logdistabove0.5.tex", 
-    f"{tablepath}coeftable_10000_5_4q_mnl_logdistabove1.0.tex", 
-    f"{tablepath}coeftable_10000_300_4q.tex"]
-
-model_names = ["$M = 5$ ($\dagger$)", "$M = 10$", "$K = 8000$", "$K = 12000$", "$\\bar{d}=0.5$", "$\\bar{d}=1$", "Closest Location"]
-
-header = """
-\\begin{table}[htb] \\centering \\setlength{\\tabcolsep}{2pt}
-{\\footnotesize
-\\caption{Robustness Check: Estimation Results} \\label{table:estimation_results_robustness}
-\\begin{tabular}{l""" + "c" * len(file_paths) + """}
-\\toprule
-& \multicolumn{2}{c}{Choice set}  & \multicolumn{2}{c}{Capacity} & \multicolumn{2}{c}{Distance form} & Appointment \\\\\n \\cmidrule(lr){2-3} \\cmidrule(lr){4-5} \\cmidrule(lr){6-7} \\cmidrule(lr){8-8} 
- Independent Variable & """
-
-combined_table = combine_latex_tables(file_paths, model_names, header, table="appendix")
-
-
-outpath = "/export/storage_covidvaccine/Result/Demand/coeftables/combined_table.tex"
-print(combined_table)
-# save 
-with open(outpath, 'w') as f:
-    f.write(combined_table)
 
 
 # Main table
@@ -156,6 +124,66 @@ with open(outpath_main, 'w') as f:
 
 
 
+# Appendix: demand+optimization robustness
+file_paths = [
+    f"{tablepath}coeftable_10000_5_4q_mnl.tex", 
+    f"{tablepath}coeftable_8000_5_4q_mnl.tex", 
+    f"{tablepath}coeftable_12000_5_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_5_4q_mnl_logdistabove0.5.tex", 
+    f"{tablepath}coeftable_10000_5_4q_mnl_logdistabove1.0.tex"]
+
+model_names = ["$M = 5$ ($\dagger$)", "$K = 8000$", "$K = 12000$", "$\\bar{d}=0.5$", "$\\bar{d}=1$"]
+
+header = """
+{\\footnotesize
+\\begin{tabular}{l""" + "c" * len(file_paths) + """}
+\\toprule
+& & \multicolumn{2}{c}{Capacity} & \multicolumn{2}{c}{Distance form} \\\\\n \\cmidrule(lr){3-4} \\cmidrule(lr){5-6}
+ Independent Variable & """
+
+combined_table = combine_latex_tables(file_paths, model_names, header, table="appendix")
+
+
+outpath = "/export/storage_covidvaccine/Result/Demand/coeftables/combined_table.tex"
+print(combined_table)
+# save 
+with open(outpath, 'w') as f:
+    f.write(combined_table)
+
+
+
+
+
+# Appendix: demand robustness
+file_paths = [
+    f"{tablepath}coeftable_10000_5_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_10_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_300_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_1000_4q_mnl.tex", 
+    f"{tablepath}coeftable_10000_300_4q.tex",
+    f"{tablepath}coeftable_10000_1000_4q.tex"]
+
+model_names = ["$M = 5$ ($\dagger$)", "$M = 10$", "$M = 300$", "$M = 1000$", "$M = 300$", "$M = 1000$"]
+
+header = """
+{\\footnotesize
+\\begin{tabular}{l""" + "c" * len(file_paths) + """}
+\\toprule
+& \multicolumn{4}{c}{MNL}  & \multicolumn{2}{c}{Closest Location}  \\\\\n \\cmidrule(lr){2-5} \\cmidrule(lr){6-7}
+ Independent Variable & """
+
+combined_table = combine_latex_tables(file_paths, model_names, header, table="appendix")
+
+outpath = "/export/storage_covidvaccine/Result/Demand/coeftables/combined_table_aux.tex"
+print(combined_table)
+with open(outpath, 'w') as f:
+    f.write(combined_table)
+
+
+
+
+
+
 # Other tables (in the format of the main table)
 
 header_main = """
@@ -174,29 +202,3 @@ with open(outpath_main, 'w') as f:
     f.write(combined_table_main)
 
 
-
-# Combine tables to report
-file_paths = [
-    f"{tablepath}coeftable_10000_5_4q_mnl.tex", 
-    f"{tablepath}coeftable_10000_10_4q_mnl.tex", 
-    f"{tablepath}coeftable_10000_300_4q_mnl.tex", 
-    f"{tablepath}coeftable_10000_1000_4q_mnl.tex", 
-    f"{tablepath}coeftable_10000_300_4q.tex",
-    f"{tablepath}coeftable_10000_1000_4q.tex"]
-
-model_names = ["$M = 5$ ($\dagger$)", "$M = 10$", "$M = 300$", "$M = 1000$", "$M = 300$", "$M = 1000$"]
-
-header = """
-\\begin{table}[htb] \\centering \\setlength{\\tabcolsep}{2pt}
-{\\footnotesize
-\\begin{tabular}{l""" + "c" * len(file_paths) + """}
-\\toprule
-& \multicolumn{4}{c}{MNL}  & \multicolumn{2}{c}{Closest Location}  \\\\\n \\cmidrule(lr){2-5} \\cmidrule(lr){6-7}
- Independent Variable & """
-
-combined_table = combine_latex_tables(file_paths, model_names, header, table="appendix")
-
-outpath = "/export/storage_covidvaccine/Result/Demand/coeftables/combined_table_aux.tex"
-print(combined_table)
-with open(outpath, 'w') as f:
-    f.write(combined_table)
