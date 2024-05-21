@@ -15,10 +15,9 @@ except:
 datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result/Demand"
 
-setting_tag = "10000_5_4q_mnl"
+setting_tag = "10000_5_4q_mnl" #set to working specification
 
 cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/block_data.csv", usecols=["blkid", "market_ids", "population"])
-# distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 df = de.hpi_dist_terms(df, nsplits=4, add_hpi_bins=True, add_hpi_dummies=True, add_dist=False)
 results = pyblp.read_pickle(f"{outdir}/results_{setting_tag}.pkl")
@@ -90,8 +89,6 @@ diff_q4_1to2km = share_q4_2km - share_q4_1km
 print(f"Difference in share between 1km->2km for HPIQ4: {diff_q4_1to2km:.3f}%")
 
 
-
-
 # #=================================================================
 # SE bands
 
@@ -104,20 +101,19 @@ for (qq, qqval) in enumerate(byvals):
     for (dd, ddval) in enumerate(dist_mesh_log):
         df_marg_qd = df_marg_mkt[(df_marg_mkt[byvar] == qqval) & (df_marg_mkt['logdist_m'] == ddval)] # can just take the first from each zip
         # dudb is just the derivative of the utility wrt the parameters (i.e. the variables)
-        dudb_qd = np.zeros((len(results.beta_labels)+len(results.pi_labels), df_marg_qd.shape[0])) # 23 x N
+        dudb_qd = np.zeros((len(results.beta_labels)+len(results.pi_labels), df_marg_qd.shape[0])) # 23 x N_qd
         dudb_qd[qq,:] = ddval
         for (ii,vv) in enumerate(results.beta_labels): # 19 linear vars
             dudb_qd[ii+len(byvals),:] = df_marg_qd[vv] if vv != '1' else 1
         # compute the derivative of the share wrt the utility
-        dsdu_qd = np.array(df_marg_qd['share_i'] * (1 - df_marg_qd['share_i'])) # N
-        dsdb_qd = dudb_qd @ dsdu_qd # 23 x 1
+        dsdu_qd = np.array(df_marg_qd['share_i'] * (1 - df_marg_qd['share_i'])) # N_qd. Equal to pdf of logit.
         N_qd = df_marg_qd.shape[0]
-        V_qd = (dsdb_qd.T @ (Vmat/(problem.N)) @ dsdb_qd)  / N_qd # scalar
+        dsdb_qd = dudb_qd @ dsdu_qd / N_qd # 23 x 1
+        V_qd = (dsdb_qd.T @ (Vmat/(problem.N)) @ dsdb_qd)  # scalar
         SE_qd = V_qd**0.5
         print(f"SE for HPIQ{qqval} at {ddval:.2f}: {SE_qd:.3f}")
         s_ub.append(pred_s_df.loc[(pred_s_df.hpi_quantile == qqval) & (pred_s_df.logdist_m == ddval), 'pred_s'].values[0] + 1.96 * SE_qd)
         s_lb.append(pred_s_df.loc[(pred_s_df.hpi_quantile == qqval) & (pred_s_df.logdist_m == ddval), 'pred_s'].values[0] - 1.96 * SE_qd)
-
 
 
 
@@ -128,6 +124,7 @@ df_out = df_out.assign(dist_m = np.exp(df_out['logdist_m']))
 for share_var in ['share_i', 'share_ub', 'share_lb']:
     df_out[share_var] = df_out[share_var] * 100
 savepath = f"{datadir}/Analysis/Demand/marg_{setting_tag}.dta"
+print(f"Saving to {savepath}")
 df_out.to_stata(savepath, write_index=False)
 df_out
 
