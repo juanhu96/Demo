@@ -171,13 +171,12 @@ def run_fp(
             if len(violation_inds) > 0:
                 violation_weights = economy.agent_violations[violation_inds]
                 print(f"Number of agents with violations: {len(violation_inds)}")
-                violation_data = agent_data_full.loc[violation_inds].copy()
+                violation_data = agent_unique_data.iloc[violation_inds].copy()
                 violation_data[[cc for cc in agent_loc_data.columns if cc.startswith('logdist')]] = np.log(dummy_location_dist) #dummy location
                 violation_data['weights'] = violation_weights / violation_data['population']
                 violation_data['offered'] = 0
                 agent_loc_data = pd.concat([agent_loc_data, violation_data], ignore_index=True)
                 print(f"Number of agents after adding violations: {len(agent_loc_data)}")
-                print(f"Number of agents in violation_data: {len(violation_data)}")
                 print("agent_loc_data:\n", agent_loc_data[['weights', 'frac_offered', 'population', 'offered']].head(50))
 
         if iter == 0:

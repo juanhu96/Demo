@@ -97,7 +97,6 @@ df_marg_mkt = df_marg.groupby(['market_ids', 'logdist_m']).first().reset_index()
 s_ub = []
 s_lb = []
 for (qq, qqval) in enumerate(byvals):
-    print(f"Computing SE bands for HPIQ{qqval}")
     for (dd, ddval) in enumerate(dist_mesh_log):
         df_marg_qd = df_marg_mkt[(df_marg_mkt[byvar] == qqval) & (df_marg_mkt['logdist_m'] == ddval)] # can just take the first from each zip
         # dudb is just the derivative of the utility wrt the parameters (i.e. the variables)
@@ -111,7 +110,6 @@ for (qq, qqval) in enumerate(byvals):
         dsdb_qd = dudb_qd @ dsdu_qd / N_qd # 23 x 1
         V_qd = (dsdb_qd.T @ (Vmat/(problem.N)) @ dsdb_qd)  # scalar
         SE_qd = V_qd**0.5
-        print(f"SE for HPIQ{qqval} at {ddval:.2f}: {SE_qd:.3f}")
         s_ub.append(pred_s_df.loc[(pred_s_df.hpi_quantile == qqval) & (pred_s_df.logdist_m == ddval), 'pred_s'].values[0] + 1.96 * SE_qd)
         s_lb.append(pred_s_df.loc[(pred_s_df.hpi_quantile == qqval) & (pred_s_df.logdist_m == ddval), 'pred_s'].values[0] - 1.96 * SE_qd)
 
