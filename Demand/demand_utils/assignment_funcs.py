@@ -25,7 +25,9 @@ def random_fcfs(economy: Economy,
                 abd: np.ndarray,
                 capacity: int,
                 mnl: bool = False,
-                evaluation: bool = False
+                evaluation: bool = False,
+                strict_capacity: bool = False,
+                dummy_location: bool = False
                 ):
     """
     Assign individuals to locations in random order, first-come-first-serve.
@@ -38,8 +40,9 @@ def random_fcfs(economy: Economy,
     time2 = time.time()
     if mnl:
         for tt in range(economy.n_geogs):
+            distutils = distcoefs[tt] * economy.dists[tt]
             for ii in range(len(economy.utils[tt])):
-                economy.utils[tt][ii] = economy.gumbel_draws[tt][ii] + economy.abepsilon[tt]
+                economy.utils[tt][ii] = economy.gumbel_draws[tt][ii] + distutils #utils is only needed for MNL probabilities
 
     print("Computed abepsilon in:", round(time2- time1, 3), "seconds.\nAssigning individuals...")
 
@@ -53,12 +56,11 @@ def random_fcfs(economy: Economy,
     print("time3 - time2:", round(time3-time2, 3))
     # Iterate over individuals in the shuffled ordering
     for (tt,ii) in economy.ordering:
-
         if mnl: # locations in preference order (sorted by utils descending)
             preforder = np.argsort(economy.utils[tt][ii])[::-1]
         else: # locations in existing order (sorted by distance)
             preforder = np.arange(len(economy.locs[tt]))
-
+        violation = False
         for (jj,ll_ind) in enumerate(preforder):
             ll = economy.locs[tt][ll_ind]
             if evaluation: 
@@ -66,8 +68,19 @@ def random_fcfs(economy: Economy,
             else:
                 offer_condition = ll not in full_locations or jj==len(preforder)-1
             if offer_condition:
+                if ll in full_locations and jj==len(preforder)-1:
+                    violation = True
+                    economy.violation_count[ll] += 1
+                    if strict_capacity:
+                        break
                 economy.offers[tt][jj] += 1
+                if violation and dummy_location: # if violation and dummy location, we assign to the dummy location instead
+                    economy.offers[tt][jj] -= 1
                 if economy.abepsilon[tt][jj] > economy.epsilon_diff[tt][ii]: # -> the individual is vaccinated here
+                    if violation:
+                        if dummy_location: # if violation and dummy location, we assign to the dummy location
+                            economy.agent_violations[tt] += 1 #--> this will be sent to the dummy location
+                            break
                     economy.assignments[tt][jj] += 1
                     economy.occupancies[ll] += 1
                     if economy.occupancies[ll] == capacity:
@@ -111,9 +124,6 @@ def assignment_stats(economy: Economy, max_rank: int = 10):
         frac_offered_any += frac_offered_ii
 
     print(f"% Offered any: {frac_offered_any * 100}")
-    max_rank_offered = np.max([np.max(np.flatnonzero(offers[tt])) for tt in range(economy.n_geogs)])
-    print(f"Max rank offered: {max_rank_offered}")
-    print(f"Number of individuals offered max_rank_offered: {np.sum([offers[tt][max_rank_offered] for tt in range(economy.n_geogs) if max_rank_offered < len(offers[tt])])}")
 
     # offer distances
     offer_dists = np.concatenate([np.repeat(economy.dists[tt], offers[tt]) for tt in range(economy.n_geogs)])
@@ -121,7 +131,7 @@ def assignment_stats(economy: Economy, max_rank: int = 10):
     # quantiles
     print("Quantiles of offered distances:")
     for qq in np.arange(0,1.1,0.1):
-        print(f"{qq} quantile: {np.quantile(offer_dists, qq):.5f}")
+        print(f"{qq:.1f} quantile: {np.quantile(offer_dists, qq):.5f}")
 
     # assignments
     assignments = economy.assignments
@@ -137,9 +147,15 @@ def assignment_stats(economy: Economy, max_rank: int = 10):
     # quantiles
     print("Quantiles of assignment distances:")
     for qq in np.arange(0,1.1,0.1):
-        print(f"{qq} quantile: {np.quantile(assignment_dists, qq):.5f}")
+        print(f"{qq:.1f} quantile: {np.quantile(assignment_dists, qq):.5f}")
 
-
+    print("Violations:")
+    print("Max violation:", max(economy.violation_count))
+    print("Number of locations with violations:", np.sum([1 for vv in economy.violation_count if vv > 0]))
+    print("Number of individuals with violations:", np.sum(economy.violation_count))
+    print("Mean violation (conditional on violation):", np.mean([vv for vv in economy.violation_count if vv > 0]))
+    print("Median violation (conditional on violation):", np.median([vv for vv in economy.violation_count if vv > 0]))
+        
     return frac_offered_any
 
 

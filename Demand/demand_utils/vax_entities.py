@@ -71,3 +71,6 @@ class Economy:
         else:
             self.gumbel_draws = None
             self.utils = None
+
+        self.violation_count = [0 for ll in locids] # number of times each location has been overassigned
+        self.agent_violations = np.zeros(n_geogs, dtype=int) # number of individuals who have been overassigned

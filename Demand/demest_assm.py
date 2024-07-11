@@ -14,12 +14,14 @@ import numpy as np
 import pyblp
 import time
 
+print("Entering demest_assm.py at time:", time.strftime("%Y-%m-%d %H:%M:%S"))
+
 #=================================================================
 # SETTINGS
 #=================================================================
 
 capacity = int(sys.argv[1]) if len(sys.argv) > 1 else 10000 #capacity per location.
-max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 300 #maximum rank to offer
+max_rank = int(sys.argv[2]) if len(sys.argv) > 2 else 5 #maximum rank to offer
 nsplits = int(sys.argv[3]) if len(sys.argv) > 3 else 4 #number of HPI quantiles
 hpi_level = 'zip' #zip or tract
 mnl = any([arg == 'mnl' for arg in sys.argv]) # False for original model
@@ -40,6 +42,14 @@ only_constant = any(['const' in arg for arg in sys.argv]) #if True, only estimat
 no_dist_heterogeneity = any(['nodisthet' in arg for arg in sys.argv]) #if True, no distance heterogeneity in demand. default to False
 cap_coefs_to0 = any(['capcoef' in arg for arg in sys.argv]) #if True, set coefficients on distance to 0 when capacity is 0. default to False
 
+strict_capacity = any(['strict_capacity' in arg for arg in sys.argv]) #if True, only allow assignment to locations with capacity. default to False
+
+dummy_location = any(['dummy_location' in arg for arg in sys.argv]) #if True, assign capacity-violators a dummy location that's very far. default to False. Argument will be e.g. "dummy_location10" to have dummy location at 10km.
+if dummy_location:
+    dummy_location_arg = [arg for arg in sys.argv if 'dummy_location' in arg][0]
+    dummy_location_dist = float(dummy_location_arg.replace('dummy_location', ''))
+
+
 # in rundemest_assm.sh we have, e.g.:
 # nohup python3 /users/facsupport/zhli/VaxDemandDistance/Demand/demest_assm.py 12000 1 4 "flex" &
 
@@ -55,6 +65,9 @@ setting_tag += "_flex" if flexible_consideration else ""
 setting_tag += f"thresh{str(list(flex_thresh.values())).replace(', ', '_').replace('[', '').replace(']', '')}" if flexible_consideration else ""
 setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
 setting_tag += "_levelshift" if levelshift else ""
+setting_tag += "_strict" if strict_capacity else ""
+setting_tag += "_dummyloc" if dummy_location else ""
+setting_tag += f"{dummy_location_dist}" if dummy_location else ""
 
 datadir = "/export/storage_covidvaccine/Data"
 outdir = "/export/storage_covidvaccine/Result/Demand"
@@ -115,6 +128,10 @@ print(f"No distance heterogeneity: {no_dist_heterogeneity}")
 print(f"Cap coefs to 0: {cap_coefs_to0}")
 print(f"np.random.seed: {randomseed}")
 print(f"Coef save path: {coefsavepath}")
+print(f"Strict capacity: {strict_capacity}")
+print(f"Dummy location: {dummy_location}")
+if dummy_location:
+    print(f"Dummy location distance: {dummy_location_dist}")
 
 #=================================================================
 # Data for demand estimation: market-level data, agent-level data
@@ -177,6 +194,8 @@ agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv", useco
 
 # read in crosswalk with population
 cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/cw_pop.csv")
+# total population
+print("Total population:", np.sum(cw_pop.population.values))
 
 # distdf is from block_dist.py. this is in long format. sorted by blkid, then logdist
 distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
@@ -262,16 +281,12 @@ economy = vaxclass.Economy(locs, dists, geog_pops, max_rank=max_rank, mnl=mnl)
 
 print("Done creating economy at time:", round(time.time()-time_entered, 2), "seconds")
 
-#=================================================================
-# TEST
-# import copy
-# dists_mm_sorted, sorted_indices, wdists, mm_where= fp.wdist_init(cw_pop, economy.dists)
-# a0 = copy.deepcopy(economy.assignments)
-# a1 = copy.deepcopy(economy.assignments)
-# converged = fp.wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, mm_where, tol=0.01)
-#=================================================================
-
 # RUN FIXED POINT
+
+
+if strict_capacity:
+    coefloadpath = coefsavepath.replace("_strict", "")
+    pi_init = np.load(coefloadpath + ".npy")
 
 print("Entering fixed point loop...\nTime:", round(time.time()-time_entered, 2), "seconds")
 sys.stdout.flush()
@@ -284,14 +299,18 @@ agent_results, results, agent_loc_data = fp.run_fp(
     df=df,
     product_formulations=product_formulations,
     agent_formulation=agent_formulation,
-    coefsavepath=coefsavepath, #TODO: save intermediate in iter
+    coefsavepath=coefsavepath, 
     micro_computation_chunks=1 if max_rank <= 50 else 10,
     cap_coefs_to0=cap_coefs_to0,
     mnl=mnl,
-    dampener=0.5, #TODO: delete
+    dampener=0.5,
     verbose=True,
     setting_tag=setting_tag,
-    outdir=outdir
+    outdir=outdir,
+    strict_capacity=strict_capacity,
+    dummy_location=dummy_location,
+    dummy_location_dist=dummy_location_dist if dummy_location else None,
+    pi_init = pi_init if strict_capacity else None
 )
 
 
@@ -335,6 +354,7 @@ table_path = f"{outdir}/coeftables/coeftable_{setting_tag}.tex"
 de.write_table(results, table_path)
 
 print("Done!")
+print("Total time in minutes:", (time.time()-time_entered)/60)
 
 
 # #=================================================================

@@ -1,4 +1,5 @@
 # prepare and merge block data for demand estimation
+# run after block_dist.py
 
 import pandas as pd
 import numpy as np
