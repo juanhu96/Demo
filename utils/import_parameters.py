@@ -45,10 +45,12 @@ def import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logd
     tract_hpi['Raw_Population'] = np.genfromtxt(f'{datadir}/CA_demand_over_5.csv', delimiter = ",", dtype = int)
     blk_tract_cw = pd.read_csv(f"{datadir}/Intermediate/blk_tract.csv", usecols=['tract', 'blkid'])
     temp = block.merge(blk_tract_cw, on='blkid', how='left')
-    blk_tract_pop = temp.groupby('tract')['population'].sum().reset_index() # only 8021
+    blk_tract_pop = temp.groupby('tract')['population'].sum().reset_index() # only 8021, this sums up to 39473108
     tract_hpi = tract_hpi.merge(blk_tract_pop[['tract','population']], on='tract', how='left')
-    tract_hpi['population'].fillna(tract_hpi['Raw_Population'], inplace=True)
+    tract_hpi['population'].fillna(tract_hpi['Raw_Population'], inplace=True) # 8057 tracts, sums up to 39494055
     Population = tract_hpi['population'].astype(int)
+    # print(blk_tract_pop['population'].sum())
+    # print(sum(Population))
 
     tract_hpi['Popdensity'] = np.genfromtxt(f'{datadir}/CA_density.csv', delimiter = ",", dtype = int)
     tract_hpi['Popdensity_group'] = pd.cut(tract_hpi['Popdensity'], bins=[0, 1000, 3000, np.inf], labels=['rural', 'suburban', 'urban'], right=False)
@@ -171,7 +173,11 @@ def import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logd
     ###########################################################################
 
     C_currentMinDist = C_current_mat * Closest_current
+    # row_maxima = np.amax(C_currentMinDist, axis=1)
+    # print(np.mean(row_maxima), np.median(row_maxima) , np.min(row_maxima), np.max(row_maxima))
     C_totalMinDist = C_total_mat * Closest_total
+    # row_maxima = np.amax(C_totalMinDist, axis=1)
+    # print(np.mean(row_maxima), np.median(row_maxima) , np.min(row_maxima), np.max(row_maxima))
     C_currentMinDist = np.where(C_currentMinDist == 0, MAXDIST, C_currentMinDist)
     C_totalMinDist = np.where(C_totalMinDist == 0, MAXDIST, C_totalMinDist)
 

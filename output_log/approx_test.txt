@@ -1,0 +1,14 @@
+_10000_5_4q_mnl
+Start initializing BLP matrices from estimation for Dollar under capacity 10000 with 4 groups, with setting tag _10000_5_4q_mnl
+
+The demand parameter imported is:  [0.755, -0.069]
+Constructing F_BLP_current...
+
+Between true and inverse approx: 0.0015107816567568825, 2.6060914083111284e-06, 0.007757244789316192
+
+Between true and preference approx: 0.0031102093226785393, 4.800595766742678e-06, 0.028804820281728944
+
+Between inverse approx and preference approx: 0.0029026623859869376, 4.3292382216043746e-06, 0.028884252963230307
+
+Finished computing, time spent: 341; Start exporting...
+

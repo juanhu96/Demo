@@ -9,7 +9,7 @@ Created on Jul, 2022
 import time
 import numpy as np
 import pandas as pd
-
+import random
 
 def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag, datadir='/export/storage_covidvaccine/Data/', resultdir='/export/storage_covidvaccine/Result/'):
     
@@ -41,11 +41,13 @@ def initial_BLP_estimation(Chain_type, capacity, groups, capcoef, mnl, flexible_
 
     C_total, num_tracts, num_current_stores, num_total_stores = import_dist(Chain_type)
     
-    if flexible_consideration:
-        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, tract_abd_values, loglin_coef, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag)
-    else:
-        print("Change M to 10 as we are not considering flexible consideration set\n")
-        construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, tract_abd_values, loglin_coef, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag, M=10)
+    construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, tract_abd_values, loglin_coef, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag, M = 5)
+
+    # if flexible_consideration:
+    #     construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, tract_abd_values, loglin_coef, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag)
+    # else:
+    #     print("Change M to 10 as we are not considering flexible consideration set\n")
+    #     construct_F_BLP(Chain_type, capacity, groups, capcoef, C_total, num_tracts, num_current_stores, num_total_stores, tract, tract_abd_values, loglin_coef, block, blk_tract, block_utils, distdf, distdf_chain, logdist_above, logdist_above_thresh, setting_tag, M=10)
 
     return
 
@@ -117,21 +119,19 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
 
         start = time.time()
 
-        for i in range(num_tracts):
-        # for i in range(1):
-
+        approx_err_1_list, approx_err_2_list, approx_err_3_list = [], [], []
+        random_indices = random.sample(range(num_tracts), 50)
+        for i in random_indices:
+        # for i in range(num_tracts):
             tract_id, tract_pop, tract_abd = tract['GEOID'][i], tract['POPULATION'][i], tract_abd_values[i]
             blk_tract_id = blk_tract[blk_tract.tract == tract_id].blkid.to_list()
             block_id = block[block.blkid.isin(blk_tract_id)].blkid.to_list()
             block_utils_id = block_utils[block_utils.blkid.isin(blk_tract_id)].blkid.to_list()
 
-
             if len(blk_tract_id) != len(block_id) or len(block_id) != len(block_utils_id) or len(block_utils_id) != len(blk_tract_id):
-                # print(i, len(blk_tract_id), len(block_id), len(block_utils_id))
                 common_blocks_id = set(blk_tract_id) & set(block_id) & set(block_utils_id)
             else:
                 common_blocks_id = blk_tract_id
-
 
             blocks_pop = block[block.blkid.isin(common_blocks_id)].population.to_numpy()
             blocks_abd = block_utils[block_utils.blkid.isin(common_blocks_id)].abd.to_numpy()
@@ -140,8 +140,11 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
 
             tract_pop = np.sum(blocks_pop)
             
-            for site in M_closest_current[i]:
-                
+            u_0, u_1, u_2, u_3, u_4 = [], [], [], [], []
+            tct_preference=[]
+            # for site in M_closest_current[i]:
+            for index, site in enumerate(M_closest_current[i]):
+
                 tract_site_willingness = 0    
                 dist_blocks_id = block_distdf[block_distdf.locid == site].blkid.to_list()
                 
@@ -153,12 +156,8 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
                 ############################################################
 
                 if len(dist_blocks_id) != len(common_blocks_id):
-                    
-                    # print("****************************\n")
-                    # print(i, site, len(blocks_pop), len(blocks_abd), len(dist_blocks_id))
-                    # print("****************************\n")
 
-                    # subset
+                    # take ths subset
                     temp_common_blocks_id = set(dist_blocks_id) & set(common_blocks_id)
                     temp_blocks_pop = block[block.blkid.isin(temp_common_blocks_id)].population.to_numpy()
                     temp_blocks_abd = block_utils[block_utils.blkid.isin(temp_common_blocks_id)].abd.to_numpy()
@@ -167,13 +166,13 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
                     temp_tract_pop = np.sum(temp_blocks_pop)
                     
                     logdists = temp_block_distdf[temp_block_distdf.locid == site].logdist.to_numpy()
-                    if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))    
+                    if logdist_above: 
+                        # logdists = np.maximum(logdists, np.log(logdist_above_thresh))  
+                        dists = temp_block_distdf[temp_block_distdf.locid == site].dist.to_numpy()
+                        logdists = np.log(np.maximum(dists + 1 - logdist_above_thresh, 1))
 
                     blocks_utility = temp_blocks_abd + temp_blocks_distcoef * logdists
                     tract_site_willingness = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
-
-                    # NOTE: v_ij = e^{mu_ij]}
-                    # TODO: compute the block-level probability, getting to vaccinate or not, then aggregate at the tract-level
                     # tract_site_preference = np.sum((temp_blocks_pop / temp_tract_pop) * np.exp(blocks_utility))
                     tract_site_preference = np.exp(np.sum((temp_blocks_pop / temp_tract_pop) * blocks_utility))
 
@@ -182,10 +181,12 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
                 else:
                     
                     logdists = block_distdf[block_distdf.locid == site].logdist.to_numpy()
-                    if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
+                    if logdist_above: 
+                        # logdists = np.maximum(logdists, np.log(logdist_above_thresh))
+                        dists = block_distdf[block_distdf.locid == site].dist.to_numpy()
+                        logdists = np.log(np.maximum(dists + 1 - logdist_above_thresh, 1))
 
                     blocks_utility = blocks_abd + blocks_distcoef * logdists
-
                     tract_site_willingness = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
 
                     # tract_site_preference = np.sum((blocks_pop / tract_pop) * np.exp(blocks_utility))
@@ -193,24 +194,44 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
 
                     loglin_willingness = tract_abd + loglin_coef * np.sum((blocks_pop / tract_pop) * logdists)
 
+                if index == 0: 
+                    u_0 = np.exp(blocks_utility)
+                elif index == 1:
+                    u_1 = np.exp(blocks_utility)
+                elif index == 2:
+                    u_2 = np.exp(blocks_utility)
+                elif index == 3:
+                    u_3 = np.exp(blocks_utility)
+                elif index == 4:
+                    u_4 = np.exp(blocks_utility)
+                tct_preference.append(tract_site_preference)
 
-                F_current[i][site] = tract_site_willingness
-                V_current[i][site] = tract_site_preference
-                LogLin_current[i][site] = loglin_willingness
+            approx_err_1, approx_err_2, approx_err_3 = test(blocks_pop / tract_pop, u_0, u_1, u_2, u_3, u_4, tct_preference)
+            approx_err_1_list.append(approx_err_1)
+            approx_err_2_list.append(approx_err_2)
+            approx_err_3_list.append(approx_err_3)
+
+                # F_current[i][site] = tract_site_willingness
+                # V_current[i][site] = tract_site_preference # a numerical easier approx for tract utility
+                # LogLin_current[i][site] = loglin_willingness
+        
+        print(f'Between true and inverse approx: {np.mean(approx_err_1_list)}, {np.min(approx_err_1_list)}, {np.max(approx_err_1_list)}\n')
+        print(f'Between true and preference approx: {np.mean(approx_err_2_list)}, {np.min(approx_err_2_list)}, {np.max(approx_err_2_list)}\n')
+        print(f'Between inverse approx and preference approx: {np.mean(approx_err_3_list)}, {np.min(approx_err_3_list)}, {np.max(approx_err_3_list)}\n')
 
         print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')
 
         F_current_df = pd.DataFrame(F_current)
         V_current_df = pd.DataFrame(V_current)
         LogLin_current_df = pd.DataFrame(LogLin_current)
-
+        return
         F_current_df.to_csv(f'{resultdir}BLP_matrix/BLP_matrix_current{setting_tag}.csv', header=False, index=False)
         V_current_df.to_csv(f'{resultdir}BLP_matrix/V_current{setting_tag}.csv', header=False, index=False)
         LogLin_current_df.to_csv(f'{resultdir}BLP_matrix/LogLin_current{setting_tag}.csv', header=False, index=False)
 
     ######################################################################
 
-
+    return
     print(f'Constructing F_BLP_{Chain_type}...\n')
 
     C_chains = C_total[:,num_current_stores:num_total_stores]
@@ -259,7 +280,10 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
                 temp_tract_pop = np.sum(temp_blocks_pop)
                     
                 logdists = temp_block_distdf[temp_block_distdf.locid == site].logdist.to_numpy()
-                if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
+                if logdist_above: 
+                    # logdists = np.maximum(logdists, np.log(logdist_above_thresh))
+                    dists = np.exp(temp_block_distdf[temp_block_distdf.locid == site].logdist.to_numpy())
+                    logdists = np.log(np.maximum(dists + 1 - logdist_above_thresh, 1))
 
                 blocks_utility = temp_blocks_abd + temp_blocks_distcoef * logdists
                 tract_site_willingness = np.sum((temp_blocks_pop / temp_tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
@@ -271,7 +295,10 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
             else:
                     
                 logdists = block_distdf[block_distdf.locid == site].logdist.to_numpy()
-                if logdist_above: logdists = np.maximum(logdists, np.log(logdist_above_thresh))
+                if logdist_above: 
+                    # logdists = np.maximum(logdists, np.log(logdist_above_thresh))
+                    dists = np.exp(block_distdf[block_distdf.locid == site].logdist.to_numpy()) # forgot to compute dist directly
+                    logdists = np.log(np.maximum(dists + 1 - logdist_above_thresh, 1))
 
                 blocks_utility = blocks_abd + blocks_distcoef * logdists
                 tract_site_willingness = np.sum((blocks_pop / tract_pop) * (np.exp(blocks_utility)/(1 + np.exp(blocks_utility))))
@@ -281,7 +308,7 @@ setting_tag, M=100, resultdir='/export/storage_covidvaccine/Result/'):
                 loglin_willingness = tract_abd + loglin_coef * np.sum((blocks_pop / tract_pop) * logdists)
 
             F_chains[i][site] = tract_site_willingness
-            V_chains[i][site] = tract_site_preference
+            V_chains[i][site] = tract_site_preference 
             LogLin_chains[i][site] = loglin_willingness
 
     print(f'Finished computing, time spent: {str(int(time.time()-start))}; Start exporting...\n')    
@@ -409,3 +436,46 @@ def zip_demand_check(capacity, groups, capcoef, block, block_utils, distdf, sett
 
     return
 
+
+
+def test(weights, u_0, u_1, u_2, u_3, u_4, tct_preference):
+    
+    weights = np.array(weights)
+    u_0, u_1, u_2, u_3, u_4 = np.array(u_0), np.array(u_1), np.array(u_2), np.array(u_3), np.array(u_4)
+
+    ## Single location
+    rho_0, rho_1, rho_2, rho_3, rho_4 = np.sum(weights * u_0/(1+u_0)), np.sum(weights * u_1/(1+u_1)), np.sum(weights * u_2/(1+u_2)), np.sum(weights * u_3/(1+u_3)), np.sum(weights * u_4/(1+u_4))
+    # single location induced utility (what we're using as approx)
+    y_0, y_1, y_2, y_3, y_4 = rho_0/(1-rho_0), rho_1/(1-rho_1), rho_2/(1-rho_2), rho_3/(1-rho_3), rho_4/(1-rho_4) 
+
+    # Multi location (M = 5)
+    rho_0, rho_1, rho_2, rho_3, rho_4 = 0,0,0,0,0
+
+    loc_0 = weights * (u_0 / (1 + u_0)) * (u_0 / (u_0 + u_1 + u_2 + u_3 + u_4))
+    loc_1 = weights * (u_1 / (1 + u_1)) * (u_1 / (u_0 + u_1 + u_2 + u_3 + u_4))
+    loc_2 = weights * (u_2 / (1 + u_2)) * (u_2 / (u_0 + u_1 + u_2 + u_3 + u_4))
+    loc_3 = weights * (u_3 / (1 + u_3)) * (u_3 / (u_0 + u_1 + u_2 + u_3 + u_4))
+    loc_4 = weights * (u_4 / (1 + u_4)) * (u_4 / (u_0 + u_1 + u_2 + u_3 + u_4))
+
+    rho_0 = np.sum(loc_0)
+    rho_1 = np.sum(loc_1)
+    rho_2 = np.sum(loc_2)
+    rho_3 = np.sum(loc_3)
+    rho_4 = np.sum(loc_4)
+
+    blk_share = np.array([rho_0, rho_1, rho_2, rho_3, rho_4]) # actual 
+    tct_share = np.array([y_0/(1+y_0) * y_0/(y_0 + y_1 + y_2 + y_3 + y_4),
+                          y_1/(1+y_1) * y_1/(y_0 + y_1 + y_2 + y_3 + y_4),
+                          y_2/(1+y_2) * y_2/(y_0 + y_1 + y_2 + y_3 + y_4),
+                          y_3/(1+y_3) * y_3/(y_0 + y_1 + y_2 + y_3 + y_4),
+                          y_4/(1+y_4) * y_4/(y_0 + y_1 + y_2 + y_3 + y_4)]) # what we are doing
+    
+    # using tract_site_preference directly
+    y_0, y_1, y_2, y_3, y_4 = tct_preference[0], tct_preference[1], tct_preference[2], tct_preference[3], tct_preference[4]
+    tct_prefernce_share = np.array([y_0/(1+y_0) * y_0/(y_0 + y_1 + y_2 + y_3 + y_4),
+                                    y_1/(1+y_1) * y_1/(y_0 + y_1 + y_2 + y_3 + y_4),
+                                    y_2/(1+y_2) * y_2/(y_0 + y_1 + y_2 + y_3 + y_4),
+                                    y_3/(1+y_3) * y_3/(y_0 + y_1 + y_2 + y_3 + y_4),
+                                    y_4/(1+y_4) * y_4/(y_0 + y_1 + y_2 + y_3 + y_4)])
+
+    return np.mean(np.abs((blk_share - tct_share) / blk_share)), np.mean(np.abs((blk_share - tct_prefernce_share) / blk_share)), np.mean(np.abs((tct_prefernce_share - tct_share) / tct_share))

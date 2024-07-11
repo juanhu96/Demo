@@ -62,6 +62,9 @@ def partnerships_summary(Model_list = ['MaxVaxHPIDistBLP', 'MaxVaxDistLogLin', '
                 # if Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': 
                 if Chain == 'Dollar' and Model == 'MaxVaxDistLogLin' and constraint == 'vaccinated': 
                     z, locs, dists, assignment = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, setting_tag, Pharmacy=True)
+                    # temp
+                    # if A is not None: temp_setting_tag = setting_tag.replace(f'_A{A}', '')
+                    # z, locs, dists, assignment = import_solution(evaluation, path, Model, Chain, K, num_tracts, num_total_stores, num_current_stores, random_seed, temp_setting_tag, Pharmacy=True)
                     chain_summary = create_row_randomFCFS('Pharmacy-only', Model, Chain, M, K, nsplits, 'none', 'Evaluation', z, block, locs, dists, assignment, pharmacy_locations, chain_locations, num_current_stores, num_total_stores)
                     chain_summary_table.append(chain_summary)
                 else:

@@ -18,6 +18,7 @@ from utils.partnerships_summary import partnerships_summary
 K = int(sys.argv[1])
 M = int(sys.argv[2])
 nsplits = int(sys.argv[3])
+summary_case = sys.argv[4]
 
 capcoef = any(['capcoef' in arg for arg in sys.argv])
 mnl = any([arg == 'mnl' for arg in sys.argv])
@@ -66,33 +67,38 @@ setting_tag += f"_randomseed{random_seed}" if random else ""
 #=================================================================
 
 
-def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, random_seed, setting_tag, main=False, partnerships=False, randomization=False):
+def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, random_seed, setting_tag, 
+            summary_case=None):
 
     print(f'Start creating summary table for {setting_tag}...\n')
 
-    if main:
+    if summary_case == 'main':
         # different partnerships: full replacement vs. pharmacy-only
         Model_list = ['MNL_partial_new', 'MaxVaxDistLogLin']
-        Chain_list = ['Dollar', 'HighSchools', 'Coffee']
+        Chain_list = ['Dollar'] 
         suffix = '_replacement'
 
-    elif partnerships: 
+    elif summary_case == 'partnerships': 
         # different partnerships: different A (requires 'add$A')
         Model_list = ['MNL_partial_new']
         Chain_list = ['Dollar', 'HighSchools', 'Coffee']
         suffix = '_partnerships'
 
-    elif randomization: 
-        # dollar: randomly add A vs. optimally add A
-        Model_list = ['MaxVaxDistLogLin', 'MNL_partial_new']
+    elif summary_case == 'randomization': 
+        # dollar: randomly add A
+        Model_list = ['MaxVaxDistLogLin']
         Chain_list = ['Dollar']
-
+        suffix = ''
     else: 
-        # main scenarios, for different parameters in sensitivity analysis
-        # need pharmacy-only results as baseline
-        Model_list = ['MNL_partial_new', 'MaxVaxDistLogLin']
-        # if M == 10: Model_list = ['MNL_partial', 'MaxVaxDistLogLin'] # test
-        Chain_list = ['Dollar']
+        # main scenarios, for different parameters in sensitivity analysis (A = 500)
+        # need pharmacy-only (A = 0) results as baseline
+        if A is not None:
+            Model_list = ['MNL_partial_new']
+            Chain_list = ['Dollar']
+        else:
+            Model_list = ['MaxVaxDistLogLin']
+            Chain_list = ['Dollar']
+        
         suffix = '_parameter'
 
     partnerships_summary(Model_list=Model_list,
@@ -114,4 +120,4 @@ def summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, rando
 
 
 if __name__ == "__main__":
-    summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, random_seed, setting_tag)
+    summary(K, M, nsplits, capcoef, flexible_consideration, replace, R, A, random_seed, setting_tag, summary_case)

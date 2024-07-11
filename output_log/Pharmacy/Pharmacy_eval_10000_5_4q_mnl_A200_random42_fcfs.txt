@@ -1,3 +1,9 @@
+/mnt/phd/jihu/VaxDemandDistance/utils/evaluate_model.py:72: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  selected_locations['id'] = range(selected_locations.shape[0])
 Start evaluate stage for setting _10000_5_4q_mnl_A200_randomseed42...
 
 Evaluating random order FCFS with Chain type: Dollar; Model: MaxVaxDistLogLin; M = 5, K = 10000, R = None, A = 200.
@@ -22,14 +28,18 @@ Randomly adding A = 200 under random seed of 42
    60  513  605  620  850  485  423  603  198  344  894  833  723  333
   453  327  110  829  960  352  265  912  673  420  583  635  588  864
   739  137  370  381]
+Distdf not computed for current setting, start computing; File saved as ca_blk_Dollar_dist_total_10000_5_4q_mnl_A200_randomseed42.csv
+
+
+
 Start constructing blocks...
 
 Start assignments...
 
-Computed abepsilon in: 1.477 seconds.
+Computed abepsilon in: 2.004 seconds.
 Assigning individuals...
-time3 - time2: 30.381
-time4 - time3: 332.092
-Number of full locations: 886  out of  4235
+time3 - time2: 40.658
+time4 - time3: 525.843
+Number of full locations: 737  out of  4235
 Finished evaluate stage for setting _10000_5_4q_mnl_A200_randomseed42!
 

@@ -5,8 +5,10 @@ Created on Jul, 2022
 @author: Jingyuan Hu
 
 Export selected locations
-python3 utils/export_locations.py Dollar 8000 5 4 True 100
 python3 utils/export_locations.py Dollar 10000 5 4 mnl
+python3 utils/export_locations.py Dollar 10000 5 4 mnl add500
+python3 utils/export_locations.py Coffee 10000 5 4 mnl add500
+python3 utils/export_locations.py HighSchools 10000 5 4 mnl add500
 """
 
 import os

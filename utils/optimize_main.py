@@ -75,10 +75,28 @@ def optimize_chain(Model: str,
                    scale_factor: int = 10000):
 
     print(f'Optimization results stored at {expdirpath}...\n')
+    
+    # a = np.array([[0.5, 0.2, 0.1], [0.2, 0.8, 0]])
+    # print(a)
+    # V_total = a / (1-a)
+    # print(V_total)
+
+    # v_total = V_total.flatten()
+    # print(v_total)
+    # V_temp = v_total.reshape((2, 3))
+    # V_nonzero = np.where(V_temp == 0, np.inf, V_temp)
+    # v_min = np.min(V_nonzero, axis=1)
+    # big_M = np.where(v_min != 0, 1/v_min, 0)
+    # print(f'Big M is {big_M} The min for correponding big M is {np.min(big_M)} and max is {np.max(big_M)}\n')
+    # gamma = (v_total * v_total) / (1 + v_total)
+    # return 
+
+
 
     Facility_BLP_models = ['MaxVaxHPIDistBLP']
     Facility_LogLin_models = ['MaxVaxDistLogLin']
-    Assortment_MNL_models = ['MNL', 'MNL_partial', 'MNL_partial_test', 'MNL_partial_new']
+    Assortment_MNL_models = ['MNL', 'MNL_partial', 'MNL_partial_new']
+    test_models = ['MNL_partial_new_test']
 
     # test(Chain, R, A, setting_tag)
 
@@ -87,7 +105,7 @@ def optimize_chain(Model: str,
     (Population, Quartile, abd, p_current, p_total, pc_current, pc_total, 
     C_total, Closest_current, Closest_total, _, _, C, num_tracts, 
     num_current_stores, num_total_stores) = import_basics(Chain, M, nsplits, flexible_consideration, logdist_above, logdist_above_thresh, scale_factor)
-
+    
     if Model in Facility_BLP_models: 
         V_current, V_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag)
 
@@ -97,6 +115,12 @@ def optimize_chain(Model: str,
     if Model in Assortment_MNL_models:
         V_current, V_total = import_estimation('V', Chain, R, A, None, setting_tag)
 
+    if Model in test_models:
+        F_current, F_total = import_estimation('BLP_matrix', Chain, R, A, None, setting_tag) # willingness
+        V_total = F_total / (1-F_total)
+        
+
+        
     # ================================================================================
 
 
@@ -113,7 +137,7 @@ def optimize_chain(Model: str,
         pv_total = pv_total * Closest_total
     
 
-    if Model in Assortment_MNL_models:
+    if Model in Assortment_MNL_models or Model in test_models:
 
         v_total = V_total.flatten()
         # test_new(Chain, R, A, v_total, p_total, Closest_total, num_tracts, num_current_stores, num_total_stores, setting_tag)
@@ -123,21 +147,21 @@ def optimize_chain(Model: str,
         pv_total = pv_total * Closest_total # make sure zero at other place
 
         ### M for MNL_partial_new
-        if Model == 'MNL_partial_new':
+        if Model == 'MNL_partial_new' or Model == 'MNL_partial_new_test':
             
             # test_new(Chain, R, A, v_total, p_total, Closest_total, num_tracts, num_current_stores, num_total_stores, setting_tag)
             # return
         
             V_temp = v_total.reshape((num_tracts, num_total_stores))
             V_nonzero = np.where(V_temp == 0, np.inf, V_temp)
+            # V_nonzero = np.where(V_temp == 0, 1000, V_temp) # np.inf results in v_min = 0, then big_M = 0
             v_min = np.min(V_nonzero, axis=1)
             big_M = np.where(v_min != 0, 1/v_min, 0)
             print(f'The min for correponding big M is {np.min(big_M)} and max is {np.max(big_M)}\n')
             gamma = (v_total * v_total) / (1 + v_total)
             pg_total = p_total * gamma
             pg_total = pg_total * Closest_total
-
-
+        
     # ================================================================================
 
 
@@ -179,7 +203,7 @@ def optimize_chain(Model: str,
                                   scale_factor=scale_factor,
                                   MIPGap=1e-2)
 
-    elif Model == 'MNL_partial_new':
+    elif Model == 'MNL_partial_new' or Model == 'MNL_partial_new_test':
 
         optimize_rate_MNL_partial_new(scenario='total', 
                                   pg=pg_total, # p * gamma

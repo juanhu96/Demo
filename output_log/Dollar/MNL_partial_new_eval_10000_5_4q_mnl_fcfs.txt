@@ -6,16 +6,15 @@ See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stab
   selected_locations['id'] = range(selected_locations.shape[0])
 Start evaluate stage for setting _10000_5_4q_mnl...
 
-Evaluation with random FCFS...
-
 Evaluating random order FCFS with Chain type: Dollar; Model: MNL_partial_new; M = 5, K = 10000, R = None, A = None.
  Results stored at /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/Dollar/
 
 Import optimization solution from file /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/Dollar//vaccinated/z_total_10000_5_4q_mnl
 
-Distdf not computed for current setting, start computing...
+The number of pharmacies opened: 3409, number of Dollar opened: 626
 
-Start computing distdf...
+Is there any fractional number in the final solution z: False
+Distdf not computed for current setting, start computing; File saved as ca_blk_Dollar_dist_total_10000_5_4q_mnl.csv
 
 
 
@@ -23,10 +22,10 @@ Start constructing blocks...
 
 Start assignments...
 
-Computed abepsilon in: 1.467 seconds.
+Computed abepsilon in: 2.179 seconds.
 Assigning individuals...
-time3 - time2: 33.173
-time4 - time3: 344.37
-Number of full locations: 779  out of  4035
+time3 - time2: 44.305
+time4 - time3: 583.303
+Number of full locations: 623  out of  4035
 Finished evaluate stage for setting _10000_5_4q_mnl!
 

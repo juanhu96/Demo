@@ -11,12 +11,9 @@ Evaluating random order FCFS with Chain type: HighSchools; Model: MNL_partial_ne
 
 Import optimization solution from file /export/storage_covidvaccine/Result/MNL_partial_new/M5_K10000_4q/HighSchools//vaccinated/z_total_10000_5_4q_mnl_A600
 
-The number of pharmacies opened: 4035, number of HighSchools opened: 598
+The number of pharmacies opened: 4035, number of HighSchools opened: 600
 
-Is there any fractional number in the final solution z: True
-The fractional numbers are
-index: 4762, value: 1.0000000000001896
-index: 4798, value: 1.0000000000000058
+Is there any fractional number in the final solution z: False
 Distdf not computed for current setting, start computing; File saved as ca_blk_HighSchools_dist_total_10000_5_4q_mnl_A600.csv
 
 
@@ -25,10 +22,10 @@ Start constructing blocks...
 
 Start assignments...
 
-Computed abepsilon in: 1.264 seconds.
+Computed abepsilon in: 2.043 seconds.
 Assigning individuals...
-time3 - time2: 28.358
-time4 - time3: 352.791
-Number of full locations: 451  out of  4635
+time3 - time2: 40.638
+time4 - time3: 560.623
+Number of full locations: 333  out of  4635
 Finished evaluate stage for setting _10000_5_4q_mnl_A600!
 

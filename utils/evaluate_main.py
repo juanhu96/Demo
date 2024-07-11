@@ -367,8 +367,9 @@ def evaluate_chain_RandomFCFS(Model,
             z_total = np.concatenate((np.ones(num_current_stores), selected_dollar))
             np.savetxt(f'{path}/{constraint}/z_Pharmacy_round{1}{setting_tag}.csv', z_total, delimiter=",")
 
-            if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
-                compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
+            # if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
+            #     compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
+            compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
 
             block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path, random_seed)
             run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path)
@@ -397,9 +398,10 @@ def evaluate_chain_RandomFCFS(Model,
 
             z_total = z_total.astype(int)
 
-        if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
-            compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
-
+        # if not os.path.exists(f"{path}/{constraint}/ca_blk_{Chain}_dist_total{setting_tag}.csv"):
+        #     compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
+        compute_distdf(Chain_dict[Chain], Chain, constraint, z_total, setting_tag, path)
+        
         block, block_utils, distdf = construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, R, A, setting_tag, constraint, path)
         run_assignment(Chain, M, K, nsplits, capcoef, mnl, setting_tag, constraint, block, block_utils, distdf, path)
         

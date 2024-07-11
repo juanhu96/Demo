@@ -22,10 +22,10 @@ Start constructing blocks...
 
 Start assignments...
 
-Computed abepsilon in: 1.556 seconds.
+Computed abepsilon in: 1.652 seconds.
 Assigning individuals...
-time3 - time2: 34.368
-time4 - time3: 368.188
-Number of full locations: 641  out of  4935
+time3 - time2: 38.668
+time4 - time3: 376.673
+Number of full locations: 498  out of  4935
 Finished evaluate stage for setting _10000_5_4q_mnl_A900!
 

@@ -12,11 +12,10 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 import pandas as pd
-
 main = False
-randomization = False
 partnerships = False
-parameters = True
+randomization = False
+parameters = False
 
 #=================================================================
 # SETTINGS
@@ -24,6 +23,12 @@ parameters = True
 K = int(sys.argv[1])
 M = int(sys.argv[2])
 nsplits = int(sys.argv[3])
+summary_case = sys.argv[4]
+
+if summary_case == 'main': main = True
+elif summary_case == 'partnerships': partnerships = True
+elif summary_case == 'randomization': randomization = True
+else: parameters = True
 
 capcoef = any(['capcoef' in arg for arg in sys.argv])
 mnl = any([arg == 'mnl' for arg in sys.argv])
@@ -81,7 +86,7 @@ def merge_files_randomization(setting_tag,
         for random_seed in random_seed_list:
             file_name = f'Results{setting_tag}_A{A}_randomseed{random_seed}'
             current_df = pd.read_csv(f'{resultdir}{file_name}.csv')
-            if random_seed == 42: current_df['A'] = A
+            # if random_seed == 42: current_df['A'] = A
             current_df['random_seed'] = random_seed
             total_df = pd.concat([total_df, current_df])
     if export_details: total_df.to_csv(f'{resultdir}Results{setting_tag}_randomization.csv', encoding='utf-8', index=False, header=True) # FCFS
@@ -144,13 +149,12 @@ def merge_files_partnerships(setting_tag,
     
     summary_df.to_csv(f'{resultdir}Final{setting_tag}_partnerships.csv', encoding='utf-8', index=False, header=True)
 
-
     ### TABLE OF VACCINATION UNDER DIFF A (DOLLAR ONLY FOR COMPARISON)
-    # optimization_df = summary_df[summary_df['Chain'] == 'Pharmacy + Dollar']
-    # optimization_df = optimization_df.drop(columns=['Chain', 'Vaccination_Walkable',\
-    #                                                 'Vaccination_Walkable_HPI1', 'Vaccination_Walkable_HPI2',\
-    #                                                     'Vaccination_Walkable_HPI3', 'Vaccination_Walkable_HPI4'])
-    # optimization_df.to_csv(f'{resultdir}Final{setting_tag}_optimization.csv', encoding='utf-8', index=False, header=True)
+    optimization_df = summary_df[summary_df['Chain'] == 'Pharmacy + Dollar']
+    optimization_df = optimization_df.drop(columns=['Chain', 'Vaccination_Walkable',\
+                                                    'Vaccination_Walkable_HPI1', 'Vaccination_Walkable_HPI2',\
+                                                        'Vaccination_Walkable_HPI3', 'Vaccination_Walkable_HPI4'])
+    optimization_df.to_csv(f'{resultdir}Final{setting_tag}_optimization.csv', encoding='utf-8', index=False, header=True)
 
     return
 
@@ -168,8 +172,18 @@ def merge_files_parameters(suffix = '_parameter',
     total_df = pd.DataFrame()
     
     ### IMPORT ALL INDIVIDUAL SUMMARY TABLE
-    setting_tag_list = ['_10000_5_4q_mnl', '_10000_10_4q_mnl', '_8000_5_4q_mnl', '_12000_5_4q_mnl',
+    # full replacement
+    setting_tag_list_pharmacy = ['_10000_5_4q_mnl', '_10000_10_4q_mnl', '_8000_5_4q_mnl', '_12000_5_4q_mnl',
                         '_10000_5_4q_mnl_logdistabove0.8', '_10000_5_4q_mnl_logdistabove1.6']
+    # add 500
+    setting_tag_list_A500 = ['_10000_5_4q_mnl_A500', '_10000_10_4q_mnl_A500', '_8000_5_4q_mnl_A500', '_12000_5_4q_mnl_A500',
+                        '_10000_5_4q_mnl_logdistabove0.8_A500', '_10000_5_4q_mnl_logdistabove1.6_A500']
+
+    setting_tag_list = []
+    for item1, item2 in zip(setting_tag_list_pharmacy, setting_tag_list_A500):
+        setting_tag_list.append(item1)
+        setting_tag_list.append(item2)
+
     for setting_tag in setting_tag_list:
         if setting_tag == '_10000_5_4q_mnl_logdistabove0.8': d = 0.5
         elif setting_tag == '_10000_5_4q_mnl_logdistabove1.6': d = 1.0
@@ -182,8 +196,7 @@ def merge_files_parameters(suffix = '_parameter',
 
     if export_details: total_df.to_csv(f'{resultdir}Results_parameters.csv', encoding='utf-8', index=False, header=True)
     
-    # TODO: UNFINISHED, WAITING FOR PHARMACY-ONLY EVALUATION RESULTS
-    columns_to_keep = ['M', 'K', 'd', 'Pharmacies replaced',
+    columns_to_keep = ['M', 'K', 'd',
                        'Vaccination', 
                        'Vaccination HPI1', 'Vaccination HPI2',
                        'Vaccination HPI3', 'Vaccination HPI4',
@@ -197,10 +210,30 @@ def merge_files_parameters(suffix = '_parameter',
     
     summary_df = total_df[columns_to_keep]
     summary_df[columns_to_round] = summary_df[columns_to_round].round(2)
-    summary_df = summary_df.iloc[::2].reset_index(drop=True) - summary_df.iloc[1::2].reset_index(drop=True)
-    summary_df_transposed = summary_df.T
-    # print(summary_df_transposed)
-    latex_table = summary_df_transposed.to_latex(index=True)
+    # print(summary_df)
+    # summary_df = summary_df.iloc[::2].reset_index(drop=True) - summary_df.iloc[1::2].reset_index(drop=True)
+    summary_df = summary_df.iloc[1::2].reset_index(drop=True) - summary_df.iloc[::2].reset_index(drop=True)
+    vaccination_df = summary_df[['M', 'K', 'd', 'Vaccination', 'Vaccination HPI1', 'Vaccination HPI2', 'Vaccination HPI3', 'Vaccination HPI4']]
+    vaccination_df['Type'] = 'Total'
+
+    walkable_df = summary_df[['M', 'K', 'd', 'Vaccination Walkable', 'Vaccination Walkable HPI1', 'Vaccination Walkable HPI2', 'Vaccination Walkable HPI3', 'Vaccination Walkable HPI4']]
+    new_column_names = {
+    'Vaccination Walkable': 'Vaccination',
+    'Vaccination Walkable HPI1': 'Vaccination HPI1',
+    'Vaccination Walkable HPI2': 'Vaccination HPI2',
+    'Vaccination Walkable HPI3': 'Vaccination HPI3',
+    'Vaccination Walkable HPI4': 'Vaccination HPI4'
+    }
+    walkable_df.rename(columns=new_column_names, inplace=True)
+    walkable_df['Type'] = 'Walkable'
+
+    combined_df = pd.concat([vaccination_df, walkable_df], ignore_index=True)
+    interleave_indices = [val for pair in zip(range(len(vaccination_df)), range(len(vaccination_df), len(combined_df))) for val in pair]
+    interleaved_df = combined_df.iloc[interleave_indices].reset_index(drop=True)
+    interleaved_df = interleaved_df[['Type', 'Vaccination', 'Vaccination HPI1', 'Vaccination HPI2', 'Vaccination HPI3', 'Vaccination HPI4']]
+    # print(interleaved_df)
+
+    latex_table = interleaved_df.to_latex(index=False)
     print(latex_table)
 
     return

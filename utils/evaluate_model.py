@@ -108,7 +108,7 @@ def construct_blocks(Chain, M, K, nsplits, flexible_consideration, flex_thresh, 
     block = pd.read_csv(f'{datadir}/Analysis/Demand/block_data.csv', usecols=["blkid", "market_ids", "population"]) 
     blocks_unique = np.unique(block.blkid.values)
     markets_unique = np.unique(block.market_ids.values)
-
+    # print(np.sum(block.population)) # 37336716
     block = block.loc[block.blkid.isin(blocks_unique), :]
     block.sort_values(by=['blkid'], inplace=True)
 
