@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Modified on Sep, 2024 by Jingyuan Hu
+"""
+
 # make crosswalks between blocks and ZIPs and between blocks and tracts
 # run after read_block.py
 
@@ -5,7 +11,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 
-datadir = "/export/storage_covidvaccine/Data/"
+datadir = "/export/storage_covidvaccine/Demo/Data"
 
 blk_coords = pd.read_csv(f"{datadir}/Intermediate/blk_coords_pop.csv", usecols=['blkid', 'lat', 'long'])
 

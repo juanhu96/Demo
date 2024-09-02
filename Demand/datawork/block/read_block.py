@@ -1,10 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Modified on Sep, 2024 by Jingyuan Hu
+"""
+
 # read in block coordinates and population, save as blk_coords_pop.csv
 
 import numpy as np
 import pandas as pd
 
-datadir = "/export/storage_covidvaccine/Data/"
-
+datadir = "/export/storage_covidvaccine/Demo/Data"
 
 # read in block coordinates and population, save as blk_coords_pop.csv
 # source: https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/California/

@@ -1,9 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Modified on Sep, 2024 by Jingyuan Hu
+"""
+
 # Intersect ZIP and tract shapefiles. ZIPs are 2020, tracts are 2010 (for compatibility with HPI and ACS data).
 # Produce a crosswalk between ZIPs and tracts.
 import pandas as pd
 import geopandas as gpd
 
-datadir = "/export/storage_covidvaccine/Data"
+datadir = "/export/storage_covidvaccine/Demo/Data"
 
 # read in full national zips
 zips = gpd.read_file(f"{datadir}/Raw/AdminShapefiles/tl_2020_us_zcta520/tl_2020_us_zcta520.shp")

@@ -2,13 +2,6 @@
 
 ### M, K
 
-### COMPUTE DISTDF (ESTIMATION) & DIST_MATRIX (OPTIMZIATION)
-
-block_dist_chains.py
-
-process_raw_data.R 
-
-
 ### ESTIMATION
 nohup python3 Demand/demest_assm.py 10000 5 4 mnl > output_log/Demand_.txt
 

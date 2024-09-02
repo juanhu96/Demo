@@ -1,0 +1,121 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-STATA-PC        https://www.stata.com
+                                   979-696-4600        stata@stata.com
+
+Stata license: 5-user 16-core network perpetual
+Serial number: 501806317788
+  Licensed to: UCLA Anderson School of Management
+               Los Angeles, CA
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+. do /mnt/phd/jihu/Demo/Demand/datawork/geonear_current.do /export/storage_covi
+> dvaccine/Demo/Data/Intermediate/blk_coords.dta /export/storage_covidvaccine/D
+> emo/Data/Intermediate/current_locations.dta /export/storage_covidvaccine/Demo
+> /Data/Intermediate/ca_blk_current_dist.csv 100 1000 
+
+. // NOTE: rename the input data's latitude and longitude variables to "latitud
+> e" and "longitude" before running this script.
+. cap log close
+
+. // JINGYUAN: commented out log file so that we won't be writing on the same l
+> og file
+. // log using "geonear.log", replace
+. 
+. *Pass in parameters.
+. local baselocs "`1'"
+
+. local nborlocs "`2'"
+
+. local outpath "`3'"
+
+. local within "`4'"
+
+. local limit "`5'"
+
+. 
+. if "`within'" == "" local within 200 //max distance in km to search for neigh
+> bors
+
+. if "`limit'" == "" local limit 300 //max number of neighbors to return
+
+. 
+. di "baselocs: `baselocs'"
+baselocs: /export/storage_covidvaccine/Demo/Data/Intermediate/blk_coords.dta
+
+. di "nborlocs: `nborlocs'"
+nborlocs: /export/storage_covidvaccine/Demo/Data/Intermediate/current_locations
+> .dta
+
+. di "outpath: `outpath'"
+outpath: /export/storage_covidvaccine/Demo/Data/Intermediate/ca_blk_current_dis
+> t.csv
+
+. di "within: `within'"
+within: 100
+
+. di "limit: `limit'"
+limit: 1000
+
+. 
+. use "`baselocs'", clear
+
+. 
+. ds
+latitude   longitude  blkid
+
+. 
+. geonear blkid latitude longitude using "`nborlocs'", neighbors(id latitude lo
+> ngitude) long within(`within') limit(`limit')
+
+current   base    nbor      ops in       cumul   cumul %     remaining
+ region   locs    locs      region     ops (M)    % done    (hh:mm:ss)
+   973     379      18       6,822         4.2      98.3      00:00:00
+
+-------------------------------------------------------------------------------
+Unique base locations   = 377,322        Unique neighbor locations = 18        
+Bases * Neighbors  (M)  = 6.8            Number of regions         = 998       
+Computed distances (M)  = 4.27           Total run time (seconds)  = 10.904
+-------------------------------------------------------------------------------
+
+. 
+. rename id locid
+
+. rename km_to_id dist
+
+. 
+. gen logdist = log(dist)
+
+. 
+. count
+  2,421,422
+
+. ds
+blkid    locid    dist     logdist
+
+. 
+. gsort blkid logdist //this is important as future code assumes this
+
+. 
+. export delim "`outpath'", replace
+file /export/storage_covidvaccine/Demo/Data/Intermediate/ca_blk_current_dist.cs
+> v saved
+
+. 
+. cap log close
+
+. 
+end of do-file

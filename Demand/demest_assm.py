@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Modified on Sep, 2024 by Jingyuan Hu
+"""
+
 # demand estimation with capacity constraints
 
 # 0. Draw a random order for demanders once.
@@ -69,8 +75,9 @@ setting_tag += "_strict" if strict_capacity else ""
 setting_tag += "_dummyloc" if dummy_location else ""
 setting_tag += f"{dummy_location_dist}" if dummy_location else ""
 
-datadir = "/export/storage_covidvaccine/Data"
-outdir = "/export/storage_covidvaccine/Result/Demand"
+datadir = "/export/storage_covidvaccine/Demo/Data"
+outdir = "/export/storage_covidvaccine/Demo/Result"
+
 
 datestr = time.strftime("%Y%m%d-%H%M")
 if len(sys.argv) > 1:

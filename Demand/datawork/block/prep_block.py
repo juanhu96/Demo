@@ -1,12 +1,18 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Modified on Sep, 2024 by Jingyuan Hu
+"""
+
 # prepare and merge block data for demand estimation
 # run after block_dist.py
 
 import pandas as pd
 import numpy as np
 
-datadir = "/export/storage_covidvaccine/Data"
+datadir = "/export/storage_covidvaccine/Demo/Data"
 
-distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist_nearest.csv")
+distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_current_dist_nearest.csv")
 
 cw = pd.read_csv(f"{datadir}/Intermediate/blk_zip.csv", usecols=['zip', 'blkid'])
 
@@ -37,6 +43,3 @@ blocks = blocks.assign(
 # save
 blocks.to_csv(f"{datadir}/Analysis/Demand/block_data.csv", index=False)
 
-
-# agent_data = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv")
-# agent_data.columns
