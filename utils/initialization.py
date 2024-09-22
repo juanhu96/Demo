@@ -10,15 +10,18 @@ import os
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
-from utils.initial_BLP import initial_BLP_estimation, demand_check
+
+try:
+    from initial_BLP import initial_BLP_estimation
+except:
+    from utils.initial_BLP import initial_BLP_estimation
 
 #=================================================================
 # SETTINGS
 
-Chain = sys.argv[1]
-K = int(sys.argv[2])
-M = int(sys.argv[3])
-nsplits = int(sys.argv[4])
+K = int(sys.argv[1])
+M = int(sys.argv[2])
+nsplits = int(sys.argv[3])
 capcoef = any(['capcoef' in arg for arg in sys.argv])
 mnl = any([arg == 'mnl' for arg in sys.argv])
 logdist_above = any(['logdistabove' in arg for arg in sys.argv])
@@ -41,19 +44,14 @@ setting_tag += f"_logdistabove{logdist_above_thresh}" if logdist_above else ""
 
 
 
-def initialization(Chain, K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag, mode='initial'):
+def initialization(K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag):
 
     print(setting_tag)    
-
-    if mode == 'initial': 
-        initial_BLP_estimation(Chain, K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag)
-    elif mode == 'check': 
-        demand_check(Chain, K, nsplits, setting_tag) # TODO: need to update
-    else: raise Exception("Mode undefined, has to be initial or check\n")
+    initial_BLP_estimation(K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag)
 
     return
 
 
 
 if __name__ == "__main__":
-    initialization(Chain, K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag)
+    initialization(K, nsplits, capcoef, mnl, flexible_consideration, logdist_above, logdist_above_thresh, setting_tag)

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Aug, 2024
 @author: Jingyuan Hu
@@ -37,41 +35,28 @@ PREPARATION FOR DEMAND ESTIMATION
 DEMAND ESTIMATION
 
 8. demest_assm.py: demand estimation with capacity constraints
+
+nsplits = 4, represents the unique values of RC (e.g., HPI quartile) in the data
+
 python3 Demand/demest_assm.py 10000 5 4 mnl
 
 
+#########################################################################################
+
+INITIALIZATION
+
+9. initialization.py: compute distance matrix and BLP matrix
+
+python3 utils/initialization.py 10000 5 4 mnl
+
+
+10. main.py: run optimization and pick the best set of locations
+
+python3 main.py 10000 5 4 optimize mnl
+
+
+11. main.py: evaluate new set of locations, report area-level rates
+
+python3 main.py 10000 5 4 evaluate mnl
+
 """
-
-import pandas as pd
-
-#########
-
-# datadir = "/export/storage_covidvaccine/Demo/"
-# area_file_path = f'{datadir}area_file.csv' 
-# location_file_path = f'{datadir}location_file.csv'
-# Areas = pd.read_csv(area_file_path, usecols=['ZIP', 'Rates', 'X', 'RC']) # X: unemployment rate, RC: HPI quartile
-# Locations = pd.read_csv(location_file_path, usecols=['Lat', 'Long', 'Open'])
-
-# print(Areas.head(), Locations.head())
-# M, K
-
-#########
-
-### NOTES: I WOULD FOCUS ON CALIFORNIA ONLY FOR NOW
-### OTHERWISE THIS REQUIRES KEEPING THE SHAPEFILES/COORDINATES/OTHER INFO FOR THE ENTIRE STATE
-
-
-# GET ALL THE BLOCKS WITHIN THE ZIP
-
-
-
-#########
-
-# RUN THE DEMAND ESTIMATION
-
-
-
-
-#########
-
-

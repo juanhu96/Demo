@@ -76,7 +76,7 @@ setting_tag += "_dummyloc" if dummy_location else ""
 setting_tag += f"{dummy_location_dist}" if dummy_location else ""
 
 datadir = "/export/storage_covidvaccine/Demo/Data"
-outdir = "/export/storage_covidvaccine/Demo/Result"
+outdir = "/export/storage_covidvaccine/Demo/Result/Demand"
 
 
 datestr = time.strftime("%Y%m%d-%H%M")
@@ -146,11 +146,14 @@ if dummy_location:
 
 ref_lastq = False
 
-controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
-    'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
-    'collegegrad', 'unemployment', 'poverty', 'logmedianhhincome', 
-    'logmedianhomevalue', 'logpopdensity']
-df_colstokeep = controls + ['market_ids', 'firm_ids', 'shares', 'prices'] + ['hpi'] + ['popdensity_group']
+# controls = ['race_black', 'race_asian', 'race_hispanic', 'race_other',
+#     'health_employer', 'health_medicare', 'health_medicaid', 'health_other',
+#     'collegegrad', 'unemployment', 'poverty', 'logmedianhhincome', 
+#     'logmedianhomevalue', 'logpopdensity']
+# df_colstokeep = controls + ['market_ids', 'firm_ids', 'shares', 'prices'] + ['hpi'] + ['popdensity_group']
+
+controls = ['X', 'Y']
+df_colstokeep = controls + ['market_ids', 'firm_ids', 'shares', 'prices'] + ['RC']
 
 formulation1_str = "1 + prices"
 for qq in range(1, nsplits):
@@ -194,7 +197,13 @@ agent_formulation = pyblp.Formulation(agent_formulation_str)
 # read in product_data
 df = pd.read_csv(f"{datadir}/Analysis/Demand/demest_data.csv")
 df = df.loc[:, df_colstokeep]
-df = de.hpi_dist_terms(df, nsplits=nsplits, add_hpi_bins=True, add_hpi_dummies=True, add_dist=False)
+# df = de.hpi_dist_terms(df, nsplits=nsplits, add_hpi_bins=True, add_hpi_dummies=True, add_dist=False)
+
+# NOTE: manually handle RC
+df['hpi_quantile'] = df['RC']
+for rc_value in df['RC'].unique():
+    df[f'hpi_quantile{rc_value}'] = (df['RC'] == rc_value).astype(int)
+
 
 # read in agent_data
 agent_data_read = pd.read_csv(f"{datadir}/Analysis/Demand/agent_data.csv", usecols=['blkid', 'market_ids'])
@@ -205,7 +214,7 @@ cw_pop = pd.read_csv(f"{datadir}/Analysis/Demand/cw_pop.csv")
 print("Total population:", np.sum(cw_pop.population.values))
 
 # distdf is from block_dist.py. this is in long format. sorted by blkid, then logdist
-distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_pharm_dist.csv", dtype={'locid': int, 'blkid': int})
+distdf = pd.read_csv(f"{datadir}/Intermediate/ca_blk_current_dist.csv", dtype={'locid': int, 'blkid': int})
 
 # keep blkids in data
 distdf = distdf.loc[distdf.blkid.isin(agent_data_read.blkid.unique()), :]
@@ -345,11 +354,12 @@ try:
     print(f"Saved results to {outdir}/results_{setting_tag}.pkl")
     agent_loc_data.to_csv(f"{outdir}/agent_loc_data_{setting_tag}.csv", index=False)
 except: #if no storage space 
-    agent_results[['blkid', 'market_ids', 'abd', 'distcoef']].to_csv(f"/export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv", index=False)
-    print(f"Saved agent_results to /export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv")
-    results.to_pickle(f"/export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
-    print(f"Saved results to /export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
-    agent_loc_data.to_csv(f"/export/storage_adgandhi/MiscLi/agent_loc_data_{setting_tag}.csv", index=False)
+    print("No storage sapce. Failed to save agent_results, results, and agent_loc_data.")
+    # agent_results[['blkid', 'market_ids', 'abd', 'distcoef']].to_csv(f"/export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv", index=False)
+    # print(f"Saved agent_results to /export/storage_adgandhi/MiscLi/agent_results_{setting_tag}.csv")
+    # results.to_pickle(f"/export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
+    # print(f"Saved results to /export/storage_adgandhi/MiscLi/results_{setting_tag}.pkl")
+    # agent_loc_data.to_csv(f"/export/storage_adgandhi/MiscLi/agent_loc_data_{setting_tag}.csv", index=False)
 
 
 

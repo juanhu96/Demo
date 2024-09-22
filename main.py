@@ -16,12 +16,10 @@ from utils.evaluate_main import evaluate_main
 #=================================================================
 # SETTINGS
 
-Model = sys.argv[1] # Model
-Chain = sys.argv[2]
-K = int(sys.argv[3])
-M = int(sys.argv[4])
-nsplits = int(sys.argv[5])
-stage = sys.argv[6]
+K = int(sys.argv[1])
+M = int(sys.argv[2])
+nsplits = int(sys.argv[3])
+stage = sys.argv[4]
 
 capcoef = any(['capcoef' in arg for arg in sys.argv])
 mnl = any([arg == 'mnl' for arg in sys.argv])
@@ -68,8 +66,6 @@ setting_tag += f"_loglintemp" if loglintemp else ""
 setting_tag += f"_randomseed{random_seed}" if random else ""
 
 params = {
-    'Model': Model,
-    'Chain': Chain,
     'K': K,
     'M': M,
     'nsplits': nsplits,
@@ -98,11 +94,7 @@ def main(params):
     'evaluate': evaluate_main
     }
 
-    if stage in stage_functions: 
-        print(f"Start {stage} stage for setting {setting_tag}...\n")
-        stage_functions[stage](**params)
-        print(f"Finished {stage} stage for setting {setting_tag}!\n")
-
+    if stage in stage_functions: stage_functions[stage](**params)
     else: raise Exception("Stage undefined\n")
 
 
