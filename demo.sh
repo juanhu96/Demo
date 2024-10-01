@@ -63,21 +63,19 @@
 
 #!/bin/bash
 
-# Check if the correct number of arguments is passed
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <value1> <value2>"
     echo "Example: $0 10000 5 where the first number (10000) is the capacity per location and the second number (5) is size of your choice set"
     exit 1
 fi
 
-# Get the user-specified values from the arguments
 value1=$1
 value2=$2
 
-# Output file path
-output_file="output_log.txt"
+timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+output_file="output_log_${timestamp}.txt"
 
-# Run each Python command and append its output to the output file
+
 # python3 read_block.py >> "$output_file" 2>&1
 # python3 ziptract.py >> "$output_file" 2>&1
 # python3 block_cw.py >> "$output_file" 2>&1
