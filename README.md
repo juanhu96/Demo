@@ -35,9 +35,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 Run the following snippet in a Unix terminal to install ETO and complete a test run.
 ```bash
 git clone https://github.com/juanhu96/Demo
-cd demo
+cd Demo
 pip install -e .              # install in editable mode
-bash batch/job_template.sh    # batch run
+./demo.sh 10000 5             # run example
 ```
 To run this with your own location and facility data, please replace areas.csv, locations.csv with your own file.
 
@@ -49,16 +49,50 @@ ETO requires Python 3.5+ and Gurobi 10.0+. For instructions on how to download a
 ### Data Included
 Data included in the repository that are used for the package:
  - [`AdminShapefiles`](https://www.census.gov/cgi-bin/geo/shapefiles/index.php)
-   - 2010 tract boundaries (for compatibility with HPI)
-   - 2020 ZIP boundaries 
+   - `tl_2010_06_tract10`: 2010 tract boundaries (for compatibility with HPI)
+   - `tl_2020_us_zcta520`: 2020 ZIP boundaries 
    - Tract and ZIP datasets intersected in `ziptract.py`.
- - Tract demographics: [ACS 2019 5-year data](https://www.census.gov/topics/research/guidance/planning-databases.2020.html), saved in `Data/Raw/Census/`.
- - ZIP demographics: ACS 2019 5-year data pulled by Cubit.
- - Tract and ZIP health insurance data: Census table B27010.
- - `Location/01_DollarStores - 10_Libraries`: locations of the various public/private partnerships, purchased from data company
- - Centroids:
-   - Tract: 2010 tract-level population centroids obtained from https://www.baruch.cuny.edu/confluence/display/geoportal/US+Census+Population+Centroids
-   - ZIP: `zipcodeR` package (imported in `aux_zip.R`)
+ - `blocks`:
+   - Population aged 5+: data.census.gov [link](https://data.census.gov/table?t=Resident+Population&g=040XX00US06$1000000&y=2020&tid=DECENNIALDHC2020.P1)
+   - Coordinates: [link](https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/California/)
+ - `tracts`:
+   - `tract_centroids.csv`: 2010 tract-level population centroids obtained from https://www.baruch.cuny.edu/confluence/display/geoportal/US+Census+Population+Centroids
+
+#### Data Structure
+The data should be downloaded and arranged in the following structure to enable correct access:
+```
+├── Data/
+│   └── Raw/
+│       └── AdminShapefiles
+│           └── tl_2010_06_tract10
+│               └── tl_2010_06_tract10.dbf
+│               └── tl_2010_06_tract10.prj
+│               └── tl_2010_06_tract10.shp
+│               └── tl_2010_06_tract10.shp.xml
+│               └── tl_2010_06_tract10.shx
+│           └── tl_2020_us_zcta520
+│               └── tl_2020_us_zcta520.cpg
+│               └── tl_2020_us_zcta520.dbf
+│               └── tl_2020_us_zcta520.prj
+│               └── tl_2020_us_zcta520.shp
+│               └── tl_2020_us_zcta520.shp.ea.iso.xml
+│               └── tl_2020_us_zcta520.shx
+│               └── zip_ca.cpg
+│               └── zip_ca.dbf
+│               └── zip_ca.prj
+│               └── zip_ca.shp
+│               └── zip_ca.shx
+│       └── blocks
+│           └── ca000012020.csv
+│           └── ca000022020.csv
+│           └── ca000032020.csv
+│           └── cageo2020.csv
+│       └── tracts
+│           └── tract_centroids.csv
+│   └── Intermediate/ # intermediate files for input
+│   └── Analysis/     # output file from estimation
+```
+
 
 ### Main Scripts:
 The framework runs the following main pythons files in order:
