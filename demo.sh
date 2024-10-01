@@ -73,7 +73,7 @@ value1=$1
 value2=$2
 
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-output_file="output_log_${timestamp}.txt"
+output_file="log/output_log_${timestamp}.txt"
 
 
 # python3 read_block.py >> "$output_file" 2>&1

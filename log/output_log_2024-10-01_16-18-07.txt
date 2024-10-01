@@ -70,7 +70,7 @@ Cutting planes:
   RLT: 43
   Relax-and-lift: 20
 
-Explored 1 nodes (5399 simplex iterations) in 0.91 seconds (0.84 work units)
+Explored 1 nodes (5399 simplex iterations) in 0.93 seconds (0.84 work units)
 Thread count was 32 (of 256 available processors)
 
 Solution count 6: 175586 170286 170159 ... 148503
