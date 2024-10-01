@@ -84,12 +84,12 @@ latitude   longitude  blkid
 
 current   base    nbor      ops in       cumul   cumul %     remaining
  region   locs    locs      region     ops (M)    % done    (hh:mm:ss)
-  1211     297      18       5,346         4.9      72.7      00:00:04
+  1080     192      18       3,456         4.4      64.3      00:00:06
 
 -------------------------------------------------------------------------------
 Unique base locations   = 377,322        Unique neighbor locations = 18        
 Bases * Neighbors  (M)  = 6.8            Number of regions         = 1,673     
-Computed distances (M)  = 6.79           Total run time (seconds)  = 15.483
+Computed distances (M)  = 6.79           Total run time (seconds)  = 17.818
 -------------------------------------------------------------------------------
 
 . 
