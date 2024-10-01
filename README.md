@@ -1,5 +1,7 @@
 # Closer to Home: An Estimate-then-Optimize Approach to Improve Access to Healthcare Services
 
+This repository contains all the code used in the numerical experiments in the paper:
+
 ## Data sources
  - Vaccination rates: [CA HHS Portal](https://data.chhs.ca.gov/dataset/covid-19-vaccine-progress-dashboard-data-by-zip-code) [Legacy table based on age 5+ denominators up to July 12, 2022](https://data.chhs.ca.gov/dataset/ead44d40-fd63-4f9f-950a-3b0111074de8/resource/580fb3a5-2451-4e18-be50-5a22f1ee7341/download/covid19vaccinesbyzipcode_071222.csv)
  - [HPI](https://api.healthyplacesindex.org/)
