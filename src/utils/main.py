@@ -10,8 +10,12 @@ import os
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
-from utils.optimize_main import optimize_main
-from utils.evaluate_main import evaluate_main
+try:
+    from utils.optimize_main import optimize_main
+    from utils.evaluate_main import evaluate_main
+except:
+    from optimize_main import optimize_main
+    from evaluate_main import evaluate_main
 
 #=================================================================
 # SETTINGS

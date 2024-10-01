@@ -13,8 +13,8 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.optimize_model import optimize_rate_MNL, optimize_rate_MNL_partial, optimize_rate_MNL_partial_new
-from utils.import_parameters import import_basics, import_estimation
+from optimize_model import optimize_rate_MNL, optimize_rate_MNL_partial, optimize_rate_MNL_partial_new
+from import_parameters import import_basics, import_estimation
 
 
 def optimize_main(K: int,

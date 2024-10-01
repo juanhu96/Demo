@@ -83,9 +83,9 @@ output_file="output_log_${timestamp}.txt"
 # python3 dist_all.py >> "$output_file" 2>&1
 # python3 prep_block.py >> "$output_file" 2>&1
 # python3 prep_zip.py >> "$output_file" 2>&1
-# python3 Demand/demest_assm.py 10000 5 4 mnl >> "$output_file" 2>&1
-# python3 utils/initialization.py 10000 5 4 mnl >> "$output_file" 2>&1
-python3 main.py 10000 5 4 optimize mnl >> "$output_file" 2>&1
-# python3 main.py 10000 5 4 evaluate mnl >> "$output_file" 2>&1
+# python3 src/Demand/demest_assm.py 10000 5 4 mnl >> "$output_file" 2>&1
+# python3 src/utils/initialization.py 10000 5 4 mnl >> "$output_file" 2>&1
+python3 src/utils/main.py 10000 5 4 optimize mnl >> "$output_file" 2>&1
+# python3 src/utils/main.py 10000 5 4 evaluate mnl >> "$output_file" 2>&1
 
 echo "Model executed successfully! The selected location is exported as ... and the log file is saved as $output_file."

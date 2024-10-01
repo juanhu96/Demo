@@ -13,8 +13,8 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-from utils.evaluate_model import compute_distdf, construct_blocks, run_assignment, summary_statistics
-from utils.import_parameters import import_basics, import_estimation
+from evaluate_model import compute_distdf, construct_blocks, run_assignment, summary_statistics
+from import_parameters import import_basics, import_estimation
 
 
 def evaluate_main(K: int,

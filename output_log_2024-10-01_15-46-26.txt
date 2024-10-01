@@ -1,0 +1,81 @@
+Optimization results stored at /export/storage_covidvaccine/Demo/Result/M5_K10000_4q/...
+
+(117, 22)
+(117, 18)
+Closest_total and C follows fix rank of 5
+
+Importing estimation from V_10000_5_4q_mnl.csv
+
+The min for correponding big M is 0.1566905300706197 and max is 339.966932167004
+
+Set parameter ServerPassword
+Set parameter CSQueueTimeout to value 120
+Set parameter CSIdleTimeout to value 60
+Set parameter ServerTimeout to value 10
+Set parameter TokenServer to value "164.67.163.231"
+Set parameter MIPFocus to value 3
+Set parameter TimeLimit to value 21600
+Set parameter MIPGap to value 0.01
+============== START BUILDING ================
+
+****************** FINISHED CONSTRUCTING, START OPTIMIZING ******************
+
+Gurobi Optimizer version 10.0.1 build v10.0.1rc0 (linux64)
+
+CPU model: AMD EPYC 7742 64-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 128 physical cores, 256 logical processors, using up to 32 threads
+
+Optimize a model with 6926 rows, 7978 columns and 16019 nonzeros
+Model fingerprint: 0x50b3318b
+Variable types: 7839 continuous, 139 integer (139 binary)
+Coefficient statistics:
+  Matrix range     [3e-03, 2e+08]
+  Objective range  [2e-02, 2e+08]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e-01, 3e+02]
+Warning: Model contains large matrix coefficients
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 4289 rows and 6725 columns
+Presolve time: 0.03s
+Presolved: 2637 rows, 1253 columns, 6712 nonzeros
+Variable types: 1231 continuous, 22 integer (22 binary)
+Found heuristic solution: objective 148503.16821
+Found heuristic solution: objective 158051.78485
+Found heuristic solution: objective 162748.51042
+Root relaxation presolved: 2637 rows, 1253 columns, 6712 nonzeros
+
+
+Root relaxation: objective 1.800000e+05, 1169 iterations, 0.03 seconds (0.03 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 180000.000    0    8 162748.510 180000.000  10.6%     -    0s
+H    0     0                    170158.93197 180000.000  5.78%     -    0s
+     0     0 180000.000    0   11 170158.932 180000.000  5.78%     -    0s
+     0     0 180000.000    0   11 170158.932 180000.000  5.78%     -    0s
+H    0     0                    170286.36349 175739.332  3.20%     -    0s
+     0     0 175739.332    0   10 170286.363 175739.332  3.20%     -    0s
+H    0     0                    175586.39194 175739.332  0.09%     -    0s
+     0     0 175586.392    0   13 175586.392 175586.392  0.00%     -    0s
+
+Cutting planes:
+  Gomory: 2
+  Lift-and-project: 2
+  Implied bound: 5
+  Projected implied bound: 3
+  MIR: 17
+  Flow cover: 71
+  RLT: 43
+  Relax-and-lift: 20
+
+Explored 1 nodes (5399 simplex iterations) in 0.91 seconds (0.84 work units)
+Thread count was 32 (of 256 available processors)
+
+Solution count 6: 175586 170286 170159 ... 148503
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 1.755863919384e+05, best bound 1.755863919384e+05, gap 0.0000%
+Optimization finished. Locations output saved at /export/storage_covidvaccine/Demo/Result/M5_K10000_4q//locations_output_10000_5_4q_mnl.csv
+
