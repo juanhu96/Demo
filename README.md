@@ -1,16 +1,18 @@
 ## ETO Easy Implementation
 
-This repository contains all the code used an easy implmentation package based on framework purposed in the paper: 
+This repository contains all the code used for an easy package based on the framework purposed in the paper: 
+
 `Bravo, F., Gandhi, A., Hu, J., & Long, E. F. Closer to Home: An Estimate-then-Optimize Approach to Improve Access to Healthcare Services.`
 
+
 ### Background
-The ETO framework allows decision maker to understand how travel cost affects service utilization rate per facility location and selects the best set of locations to maximize the expected demand served. For more information, please refer to the paper.
+The ETO framework helps decision-makers understand how travel costs impact service utilization rates at each facility and identifies the optimal locations to maximize expected demand. For more details, please refer to the paper.
 
 
 #### Reference
 If you use ETO in your research, we would appreciate a citation to the following paper:
 <a href="https://ssrn.com/abstract=4008669" target="_blank"> Closer to Home: An Estimate-then-Optimize Approach to Improve Access to Healthcare Services</a>
-Fernanda Bravo, Ashvin Gandhi, Jingyuan Hu, Elisa Long
+
 ```bibtex
 @article{bravo2024closer,
   title={Closer to Home: An Estimate-then-Optimize Approach to Improve Access to Healthcare Services},
@@ -19,6 +21,7 @@ Fernanda Bravo, Ashvin Gandhi, Jingyuan Hu, Elisa Long
   note={Available at SSRN: \url{https://ssrn.com/abstract=4008669}}
 }
 ```
+
 
 #### License
 This code is available under the MIT License.
@@ -31,15 +34,16 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
 ### Installation
 Run the following snippet in a Unix terminal to install ETO and complete a test run.
 ```bash
 git clone https://github.com/juanhu96/Demo
 cd Demo
 pip install -e .              # install in editable mode
-./demo.sh 10000 5             # run example
+./eto.sh 10000 5             # run example
 ```
-To run this with your own location and facility data, please replace areas.csv, locations.csv with your own file.
+To run this with your own location and facility data, please replace `areas.csv`, `locations.csv` in the folder with your own file.
 
 
 #### Requirements
@@ -98,17 +102,17 @@ The data should be downloaded and arranged in the following structure to enable 
 The framework runs the following main pythons files in order:
 
 Data preparation
-- `Demand/datawork/block/read_block.py`: read in block coordinates and population
-- `Demand/datawork/ziptract.py`: read in ZIP and tract shapefiles, make crosswalk between ZIPs and tracts
-- `Demand/datawork/block/block_cw.py`: make crosswalks between blocks and ZIPs and between blocks and tracts
-- `Demand/datawork/block/block_dist.py`: find distance to nearest locations for each block (requires locations.csv)
-- `Demand/datawork/dist_all.py`: distance between each block and all current locations
-- `Demand/datawork/block/prep_block.py`: prepare and merge block data for demand estimation
-- `Demand/datawork/prep_zip.py`: subsumes prep_demest.do and trace back to raw data (requires areas.csv)
+- `src/Demand/datawork/block/read_block.py`: read in block coordinates and population
+- `src/Demand/datawork/ziptract.py`: read in ZIP and tract shapefiles, make crosswalk between ZIPs and tracts
+- `src/Demand/datawork/block/block_cw.py`: make crosswalks between blocks and ZIPs and between blocks and tracts
+- `src/Demand/datawork/block/block_dist.py`: find distance to nearest locations for each block (requires locations.csv)
+- `src/Demand/datawork/dist_all.py`: distance between each block and all current locations
+- `src/Demand/datawork/block/prep_block.py`: prepare and merge block data for demand estimation
+- `src/Demand/datawork/prep_zip.py`: subsumes prep_demest.do and trace back to raw data (requires areas.csv)
 
 Estimation
-- `Demand/demest_assm.py`: demand estimation with capacity constraints
+- `src/Demand/demest_assm.py`: demand estimation with capacity constraints
 
 Optimization
-- `utils/initialization.py `: compute distance matrix and BLP matrix and inputs requried for optimization
-- `main.py`: run optimization and pick the best set of locations and evaluate the new set of locations
+- `src/utils/initialization.py `: compute distance matrix and BLP matrix and inputs requried for optimization
+- `src/utils/main.py`: run optimization and pick the best set of locations and evaluate the new set of locations
