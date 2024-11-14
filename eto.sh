@@ -54,10 +54,6 @@
 # python3 main.py 10000 5 4 optimize mnl
 
 
-# 11. main.py: evaluate new set of locations, report area-level rates
-
-# python3 main.py 10000 5 4 evaluate mnl
-
 #########################################################################################
 
 #!/bin/bash
@@ -75,16 +71,15 @@ timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
 output_file="log/output_log_${timestamp}.txt"
 
 
-# python3 src/Demand/datawork/block/read_block.py >> "$output_file" 2>&1
-# python3 src/Demand/datawork/ziptract.py >> "$output_file" 2>&1
-# python3 src/Demand/datawork/block/block_cw.py >> "$output_file" 2>&1
-# python3 src/Demand/datawork/block/block_dist.py >> "$output_file" 2>&1
-# python3 src/Demand/datawork/dist_all.py >> "$output_file" 2>&1
-# python3 src/Demand/datawork/block/prep_block.py >> "$output_file" 2>&1
-# python3 src/Demand/datawork/prep_zip.py >> "$output_file" 2>&1
-python3 src/Demand/demest_assm.py $value1 $value2 4 mnl >> "$output_file" 2>&1
-# python3 src/utils/initialization.py $value1 $value2 4 mnl >> "$output_file" 2>&1
-# python3 src/utils/main.py 10000 5 4 optimize mnl >> "$output_file" 2>&1
-# python3 src/utils/main.py 10000 5 4 evaluate mnl >> "$output_file" 2>&1
+python3 src/Demand/datawork/block/read_block.py >> "$output_file" 2>&1 &&
+python3 src/Demand/datawork/ziptract.py >> "$output_file" 2>&1 &&
+python3 src/Demand/datawork/block/block_cw.py >> "$output_file" 2>&1 &&
+python3 src/Demand/datawork/block/block_dist.py >> "$output_file" 2>&1 &&
+python3 src/Demand/datawork/dist_all.py >> "$output_file" 2>&1 &&
+python3 src/Demand/datawork/block/prep_block.py >> "$output_file" 2>&1 &&
+python3 src/Demand/datawork/prep_zip.py >> "$output_file" 2>&1 &&
+python3 src/Demand/demest_assm.py $value1 $value2 4 mnl >> "$output_file" 2>&1 &&
+python3 src/utils/initialization.py $value1 $value2 4 mnl >> "$output_file" 2>&1 &&
+python3 src/utils/main.py 10000 5 4 optimize mnl >> "$output_file" 2>&1 &&
 
 echo "Model executed successfully! The selected location is exported as ... and the log file is saved as $output_file."
