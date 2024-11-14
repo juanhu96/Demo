@@ -233,7 +233,7 @@ def run_fp(
 
         af.assignment_stats(economy, max_rank=len(economy.offers[0]))
         converged = wdist_checker(a0, economy.assignments, dists_mm_sorted, sorted_indices, wdists, tol=tol, mm_where=mm_where)
-        pd.DataFrame(economy.violation_count).to_csv(f"{outdir}/violation_count_{setting_tag}_iter{iter}.csv", index=False)
+        # pd.DataFrame(economy.violation_count).to_csv(f"{outdir}/violation_count_{setting_tag}_iter{iter}.csv", index=False)
         economy.violation_count = [0]*len(economy.violation_count)
         print(f"Iteration {iter} complete.\n\n")
         sys.stdout.flush()

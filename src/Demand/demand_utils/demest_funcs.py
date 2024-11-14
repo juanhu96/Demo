@@ -124,6 +124,14 @@ def estimate_demand(
     df = add_ivcols(df, agent_data, agent_vars=agent_vars, dummy_location=dummy_location)
     
     # set up and run BLP problem
+
+    # JH: temp
+    # print("Product formulations: ", product_formulations)
+    # print("Agent formulation: ", agent_formulation)
+    # print("Agent data columns: ", agent_data.columns)
+    # print("Agent data head: ", agent_data.head())
+    # print("Product data", df.head())
+
     problem = pyblp.Problem(
         product_formulations=product_formulations, 
         product_data=df, 
