@@ -98,6 +98,49 @@ The data should be downloaded and arranged in the following structure to enable 
 ```
 
 
+### Folder and File Structure
+The repository is organized into the following main directories and files:
+
+```
+├── Data/
+│   ├── Raw/                # Raw data files
+│   │   ├── AdminShapefiles/
+│   │   ├── blocks/
+│   │   └── tracts/
+│   ├── Intermediate/       # Intermediate files for input
+│   └── Analysis/           # Output files from estimation
+├── src/                    # Source code for data preparation, estimation, and optimization
+│   ├── Demand/             # Source code for demand estimation
+│   │   ├── datawork/
+│   │   └── demest_assm.py
+│   └── utils/              # Source code for optimization
+│       ├── initialization.py 
+│       └── main.py
+├── eto.sh                  # Shell script to run the example
+└── README.md               # Project documentation
+```
+
+- `Data/`: Contains all data-related files and directories.
+  - `Raw/`: Raw data files organized into subdirectories.
+    - `AdminShapefiles/`: Shapefiles for administrative boundaries.
+    - `blocks/`: Block-level data files.
+    - `tracts/`: Tract-level data files.
+  - `Intermediate/`: Intermediate files generated during data processing.
+  - `Analysis/`: Output files from the estimation process.
+
+- `src/`: Contains the source code for data preparation, demand estimation, and optimization.
+  - `Demand/`: Scripts related to demand estimation.
+    - `datawork/`: Scripts for data preparation.
+    - `demest_assm.py`: Script for demand estimation with capacity constraints.
+  - `utils/`: Utility scripts for optimization.
+    - `initialization.py`: Script to compute distance matrix and BLP matrix.
+    - `main.py`: Script to run optimization and evaluate new locations.
+
+- `eto.sh`: Shell script to run the example.
+- `README.md`: Project documentation.
+
+
+
 ### Main Scripts:
 The framework runs the following main pythons files in order:
 
@@ -116,3 +159,36 @@ Estimation
 Optimization
 - `src/utils/initialization.py `: compute distance matrix and BLP matrix and inputs requried for optimization
 - `src/utils/main.py`: run optimization and pick the best set of locations and evaluate the new set of locations
+
+
+### Detailed Steps to Run the Demo
+
+1. **Clone the Repository**:
+  ```bash
+  git clone https://github.com/juanhu96/Demo
+  cd Demo
+  ```
+
+2. **Set Up the Environment**:
+  - Ensure you have Python 3.5+ installed.
+  - Install the required Python packages:
+    ```bash
+    pip install -e .
+    ```
+
+3. **Install Gurobi**:
+  - Follow the instructions [here](https://support.gurobi.com/hc/en-us/articles/4534161999889-How-do-I-install-Gurobi-Optimizer) to download and install Gurobi 10.0+.
+
+4. **Download Census Data**:
+  - Download the required census data files and place them in the appropriate folders as described in the `Data Included` section.
+
+5. **Replace Data Files**:
+  - Replace `areas.csv` and `locations.csv` in the `Data/Raw/` folder with your own data files.
+
+6. **Run the Shell Script**:
+  - Execute the shell script to run the example:
+    ```bash
+    sh eto.sh 10000 5
+    ```
+
+By following these steps, you should be able to successfully run the demo and see the results.
