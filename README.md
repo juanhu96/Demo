@@ -23,7 +23,7 @@ If you use SETO in your research, we would appreciate a citation to the followin
 ```
 
 ### Installation
-Run the following snippet in a Unix terminal to install ETO and complete a test run.
+Run the following snippet in a Unix terminal to install SETO and complete a test run.
 ```bash
 git clone https://github.com/juanhu96/Demo
 cd Demo
@@ -34,7 +34,7 @@ To run this with your own location and facility data, please replace `areas.csv`
 
 
 #### Requirements
-ETO requires Python 3.5+ and Gurobi 10.0+. For instructions on how to download and install Gurobi optimizer, [click here](https://support.gurobi.com/hc/en-us/articles/4534161999889-How-do-I-install-Gurobi-Optimizer). The code should be compatible with later versions of Gurobi.
+SETO requires Python 3.5+ and Gurobi 10.0+. For instructions on how to download and install Gurobi optimizer, [click here](https://support.gurobi.com/hc/en-us/articles/4534161999889-How-do-I-install-Gurobi-Optimizer). The code should be compatible with later versions of Gurobi.
 
 
 ### Data Included
