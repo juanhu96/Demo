@@ -1,8 +1,8 @@
-## ETO Easy Implementation
+## SETO Easy Implementation
 
 This repository contains all the code used for an easy package based on the framework purposed in the paper: 
 
-`Bravo, F., Gandhi, A., Hu, J., & Long, E. F. Closer to Home: An Estimate-then-Optimize Approach to Improve Access to Healthcare Services.`
+`Bravo, F., Gandhi, A., Hu, J., & Long, E. F. Closer to Home: An Structural Estimate-then-Optimize Approach to Improve Access to Healthcare Services.`
 
 
 ### Background
@@ -10,30 +10,17 @@ The ETO framework helps decision-makers understand how travel costs impact servi
 
 
 #### Reference
-If you use ETO in your research, we would appreciate a citation to the following paper:
-<a href="https://ssrn.com/abstract=4008669" target="_blank"> Closer to Home: An Estimate-then-Optimize Approach to Improve Access to Healthcare Services</a>
+If you use SETO in your research, we would appreciate a citation to the following paper:
+<a href="https://ssrn.com/abstract=4008669" target="_blank"> Closer to Home: An Structural Estimate-then-Optimize Approach to Improve Access to Healthcare Services</a>
 
 ```bibtex
 @article{bravo2024closer,
-  title={Closer to Home: An Estimate-then-Optimize Approach to Improve Access to Healthcare Services},
+  title={Closer to Home: An Structural Estimate-then-Optimize Approach to Improve Access to Healthcare Services},
   author={Bravo, Fernanda and Gandhi, Ashvin and Hu, Jingyuan and Long, Elisa F}
-  year={2024},
-  note={Available at SSRN: \url{https://ssrn.com/abstract=4008669}}
+  year={2025},
+  note={Management Science: \url{https://ssrn.com/abstract=4008669}}
 }
 ```
-
-
-#### License
-This code is available under the MIT License.
-
-Copyright (C) 2024 Fernanda Bravo, Ashvin Gandhi, Jingyuan Hu, Elisa Long
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 
 ### Installation
 Run the following snippet in a Unix terminal to install ETO and complete a test run.
