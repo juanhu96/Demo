@@ -6,7 +6,7 @@ This repository contains all the code used for an easy package based on the fram
 
 
 ### Background
-The ETO framework helps decision-makers understand how travel costs impact service utilization rates at each facility and identifies the optimal locations to maximize expected demand. For more details, please refer to the paper.
+The SETO framework helps decision-makers understand how travel costs impact service utilization rates at each facility and identifies the optimal locations to maximize expected demand. For more details, please refer to the paper.
 
 
 #### Reference
